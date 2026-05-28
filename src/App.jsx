@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { LayoutDashboard, BarChart3, Swords, Settings, ShoppingBag, Sparkles, Coins, Zap } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { LayoutDashboard, BarChart3, Swords, Settings, ShoppingBag, Sparkles, Coins, Zap, AlertTriangle } from 'lucide-react';
 import { useStore } from './hooks/useStore';
 import { useLevelUp } from './hooks/useLevelUp';
 import { usePenaltyCheck } from './hooks/usePenaltyCheck';
@@ -13,6 +13,42 @@ import { getCurrentWeekId } from './logic/dungeons';
 import { getRankByLevel, getWeeklyDungeonForRank } from './data/questCatalog';
 import { getFlowStateDisplay } from './logic/questEngine';
 import { getCharacterBuild } from './data/stats';
+
+// Error Boundary to catch runtime crashes and show reset UI
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-black text-cyan-400 p-6">
+          <div className="glass-panel-strong p-8 max-w-md w-full text-center space-y-4">
+            <AlertTriangle size={48} className="mx-auto text-red-400" />
+            <h2 className="font-orbitron text-xl font-bold tracking-wider">SYSTEM ERROR</h2>
+            <p className="text-sm text-cyan-500/70">
+              Corrupted data detected. Reset to restore the System.
+            </p>
+            <button
+              onClick={() => {
+                localStorage.removeItem('soloLevelingData');
+                window.location.reload();
+              }}
+              className="w-full bg-red-900/30 hover:bg-red-900/50 border border-red-500/40 text-red-300 py-3 rounded-lg font-semibold transition-colors"
+            >
+              Reset System
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 // Floating particle component
 function FloatingParticles() {
@@ -69,6 +105,7 @@ export default function App() {
   ];
 
   return (
+    <ErrorBoundary>
     <div className="min-h-screen pb-20 relative">
       {/* Background effects */}
       <FloatingParticles />
@@ -171,5 +208,6 @@ export default function App() {
         </div>
       </nav>
     </div>
+    </ErrorBoundary>
   );
 }

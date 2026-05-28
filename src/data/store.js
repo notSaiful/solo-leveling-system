@@ -1,6 +1,8 @@
 const STORAGE_KEY = 'soloLevelingData';
+const SCHEMA_VERSION = 2;
 
 export const DEFAULT_STATE = {
+  version: SCHEMA_VERSION,
   user: { name: 'Seeker', currentRank: 'E', overallLevel: 0, joinedDate: new Date().toISOString(), jobClass: null },
   pillars: {
     deen: { level: 0, xp: 0, streak: 0, shadowsUnlocked: [], activeDebuff: null },
@@ -31,6 +33,11 @@ export function loadState() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return DEFAULT_STATE;
     const parsed = JSON.parse(raw);
+    // Schema mismatch: reset to default (prevents crashes from stale data)
+    if (parsed.version !== SCHEMA_VERSION) {
+      localStorage.removeItem(STORAGE_KEY);
+      return DEFAULT_STATE;
+    }
     return { ...DEFAULT_STATE, ...parsed, pillars: { ...DEFAULT_STATE.pillars, ...parsed.pillars } };
   } catch {
     return DEFAULT_STATE;
