@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import RankBadge from './RankBadge';
 import XpBar from './XpBar';
 import QuestCard from './QuestCard';
@@ -25,19 +25,17 @@ export default function Dashboard({ state, setState }) {
   const rank = getRankByLevel(state.user.overallLevel);
   const today = new Date().toISOString().split('T')[0];
 
-  // Initialize quests on render (idempotent)
-  const initializedState = useMemo(() => {
-    let s = state;
-    s = initializeDailyQuests(s);
-    s = initializeLevelQuest(s);
-    s = initializeWeeklyDungeon(s);
-    return s;
+  // Initialize quests after render (not during render to avoid reversion loops)
+  useEffect(() => {
+    setState(prev => {
+      let s = prev;
+      s = initializeDailyQuests(s);
+      s = initializeLevelQuest(s);
+      s = initializeWeeklyDungeon(s);
+      return s;
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.user.overallLevel, state.lastQuestDate, state.weeklyDungeons.weekId]);
-
-  // Sync initialized state if changed
-  if (initializedState !== state) {
-    setState(initializedState);
-  }
 
   // Shadow bonuses
   const shadowBonuses = useMemo(() => getShadowBonuses(state), [state.shadows]);
@@ -73,7 +71,7 @@ export default function Dashboard({ state, setState }) {
     setState(prev => {
       let next = completeDailyQuest(prev, questUniqueId);
 
-      // Apply shadow bonuses
+      // Apply shadow + streak bonuses
       const quest = prev.dailyQuests.find(q => q.uniqueId === questUniqueId);
       if (quest) {
         const bonuses = getShadowBonuses(next);
@@ -82,8 +80,30 @@ export default function Dashboard({ state, setState }) {
         if (quest.pillar === 'body') multiplier *= bonuses.bodyXp;
         if (quest.pillar === 'money') multiplier *= bonuses.moneyXp;
 
-        // Apply streak bonus
-        multiplier *= streakBonus.multiplier;
+        // Streak bonus (computed fresh from next state for correctness)
+        const s = getStreakBonus(next.pillars[quest.pillar].streak);
+        multiplier *= s.multiplier;
+
+        // Add bonus XP on top of what completeDailyQuest already gave
+        const baseXp = quest.xp || 0;
+        const boostedXp = Math.floor(baseXp * multiplier);
+        const bonusXp = boostedXp - baseXp;
+
+        if (bonusXp > 0) {
+          const p = quest.pillar;
+          const newPillars = { ...next.pillars };
+          newPillars[p] = {
+            ...newPillars[p],
+            xp: newPillars[p].xp + bonusXp,
+          };
+          // Re-check pillar level-up with bonus XP
+          const needed = xpForNextLevel(newPillars[p].level);
+          if (newPillars[p].xp >= needed) {
+            newPillars[p].level += 1;
+            newPillars[p].xp -= needed;
+          }
+          next = { ...next, pillars: newPillars };
+        }
 
         // Recalculate overall level
         next = recalculateOverallLevel(next);
