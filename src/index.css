@@ -3,6 +3,10 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
   body {
     @apply bg-system-bg text-gray-100 font-inter;
     background-image:
@@ -12,17 +16,32 @@
     padding-bottom: env(safe-area-inset-bottom);
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  /* iOS WebKit requires cursor:pointer for fast taps */
+  button, a, [role="button"], label, input, select, textarea, .cursor-pointer {
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  /* Allow text selection on inputs */
+  input, textarea, select {
+    -webkit-user-select: auto;
+    user-select: auto;
   }
 }
 
 @layer components {
   .glass-panel {
-    @apply bg-system-card backdrop-blur-md border border-system-border rounded-lg;
+    @apply border border-system-border rounded-lg;
+    background: rgba(15, 15, 15, 0.95);
     box-shadow: 0 0 20px rgba(0, 212, 255, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   }
 
   .glass-panel-strong {
-    @apply bg-system-card backdrop-blur-xl border border-system-cyan/40 rounded-lg;
+    @apply border border-system-cyan/40 rounded-lg;
+    background: rgba(15, 15, 15, 0.98);
     box-shadow: 0 0 30px rgba(0, 212, 255, 0.15), 0 0 60px rgba(0, 212, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.1);
   }
 
