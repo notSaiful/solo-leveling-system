@@ -1,25 +1,32 @@
 #!/bin/bash
 set -e
 
-echo "🔧 Building Solo Leveling System for iOS..."
+echo "🔧 Solo Leveling System — iOS Build"
+echo ""
+
+cd "$(dirname "$0")/.."
 
 # Build web assets
+echo "📦 Building web assets..."
 npm run build
 
 # Sync to iOS
+echo "📲 Syncing to iOS project..."
 npx cap sync ios
 
-# Open Xcode project
-npx cap open ios
+# Auto-detect team ID
+TEAM_ID=""
+if [ -z "$DEVELOPMENT_TEAM" ]; then
+  echo "🔍 Auto-detecting Apple Development Team ID..."
+  TEAM_ID=$(./ios/App/detect-team.sh 2>/dev/null || true)
+  if [ -n "$TEAM_ID" ]; then
+    export DEVELOPMENT_TEAM="$TEAM_ID"
+    echo "✅ Found Team ID: $DEVELOPMENT_TEAM"
+  fi
+fi
 
-echo "✅ Xcode project opened."
+# Build IPA via command line (faster than GUI)
 echo ""
-echo "To build IPA:"
-echo "1. In Xcode, select your Apple ID in Signing & Capabilities"
-echo "2. Select 'Any iOS Device' as target"
-echo "3. Product → Archive"
-echo "4. Distribute App → Ad Hoc / App Store / Development"
-echo ""
-echo "To run on simulator:"
-echo "1. Select an iPhone simulator"
-echo "2. Press Cmd+R"
+echo "🚀 Building IPA..."
+cd ios/App
+./build-ipa.sh
