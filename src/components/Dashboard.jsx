@@ -363,7 +363,7 @@ export default function Dashboard({ state, setState }) {
           </div>
         )}
 
-        <CustomQuestBuilder onAdd={addCustomQuest} />
+        <CustomQuestBuilder onAdd={addCustomQuest} state={state} />
       </div>
     </div>
   );

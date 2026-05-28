@@ -9,6 +9,7 @@ import WeeklyDungeon from './components/WeeklyDungeon';
 import SystemMessage from './components/SystemMessage';
 import RewardStore from './components/RewardStore';
 import StatDistribution from './components/StatDistribution';
+import AIAssistant from './components/AIAssistant';
 import { getCurrentWeekId } from './logic/dungeons';
 import { getRankByLevel, getWeeklyDungeonForRank } from './data/questCatalog';
 import { getFlowStateDisplay } from './logic/questEngine';
@@ -159,6 +160,7 @@ export default function App() {
         {activeTab === 'settings' && (
           <div className="max-w-2xl mx-auto p-2 sm:p-4 space-y-4">
             <h2 className="font-orbitron text-xl font-bold text-cyan-400 tracking-wider">System Settings</h2>
+
             <div className="glass-panel p-3 sm:p-4 space-y-3">
               <div>
                 <label className="text-sm text-cyan-500/60">Player Name</label>
@@ -169,10 +171,39 @@ export default function App() {
                   className="w-full mt-1 bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-base text-cyan-100 focus:outline-none focus:border-cyan-500/50"
                 />
               </div>
+            </div>
+
+            {/* AI Assistant Settings */}
+            <div className="glass-panel p-3 sm:p-4 space-y-3 border border-cyan-700/30">
+              <div className="flex items-center gap-2 mb-2">
+                <Sparkles size={16} className="text-cyan-400" />
+                <span className="font-orbitron text-sm font-semibold text-cyan-300 tracking-wider">AI ASSISTANT</span>
+              </div>
+              <p className="text-xs text-cyan-500/50 mb-2">The SYSTEM Assistant uses OpenRouter (kimi-k2.6) to evaluate quests, provide motivation, and guide your journey.</p>
+              <div>
+                <label className="text-sm text-cyan-500/60">OpenRouter API Key</label>
+                <input
+                  type="password"
+                  defaultValue={localStorage.getItem('openrouter_api_key') || ''}
+                  onChange={(e) => {
+                    setApiKey(e.target.value);
+                    // Visual feedback
+                    e.target.style.borderColor = 'rgba(34, 211, 238, 0.5)';
+                    setTimeout(() => { e.target.style.borderColor = ''; }, 500);
+                  }}
+                  placeholder="sk-or-v1-..."
+                  className="w-full mt-1 bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-base text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+                />
+                <p className="text-[10px] text-cyan-600/40 mt-1">Stored locally in your browser. Never shared.</p>
+              </div>
+            </div>
+
+            <div className="glass-panel p-3 sm:p-4 space-y-3">
               <button
                 onClick={() => {
                   if (confirm('Reset all progress? This cannot be undone.')) {
                     localStorage.removeItem('soloLevelingData');
+                    localStorage.removeItem('system_chat_history');
                     window.location.reload();
                   }
                 }}
@@ -184,6 +215,9 @@ export default function App() {
           </div>
         )}
       </main>
+
+      {/* AI Assistant Floating Widget */}
+      <AIAssistant state={state} />
 
       {/* Bottom Nav */}
       <nav className="fixed bottom-0 left-0 right-0 z-20 bg-black/90 border-t border-cyan-900/50 pb-safe">

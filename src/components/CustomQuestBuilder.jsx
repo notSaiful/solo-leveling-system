@@ -1,18 +1,35 @@
 import { useState } from 'react';
-import { Plus, AlertTriangle, Check, X } from 'lucide-react';
+import { Plus, AlertTriangle, Check, X, Bot, Loader2 } from 'lucide-react';
 import { validateQuestAlignment } from '../logic/alignment';
+import { evaluateCustomQuest, hasApiKey } from '../services/aiAssistant';
 
-export default function CustomQuestBuilder({ onAdd }) {
+export default function CustomQuestBuilder({ onAdd, state }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [xp, setXp] = useState(10);
   const [alignment, setAlignment] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [aiEvaluating, setAiEvaluating] = useState(false);
+  const [aiEvaluation, setAiEvaluation] = useState(null);
 
   const checkAlignment = () => {
     const result = validateQuestAlignment(title, description);
     setAlignment(result);
     return result;
+  };
+
+  const handleAiEvaluate = async () => {
+    if (!title.trim()) return;
+    setAiEvaluating(true);
+    setAiEvaluation(null);
+    try {
+      const result = await evaluateCustomQuest(title, description || '', state);
+      setAiEvaluation(result);
+    } catch (err) {
+      setAiEvaluation(`⚠️ ${err.message}`);
+    } finally {
+      setAiEvaluating(false);
+    }
   };
 
   const handleSubmit = () => {
@@ -34,6 +51,7 @@ export default function CustomQuestBuilder({ onAdd }) {
     setDescription('');
     setXp(10);
     setAlignment(null);
+    setAiEvaluation(null);
     setShowForm(false);
   };
 
@@ -60,14 +78,14 @@ export default function CustomQuestBuilder({ onAdd }) {
         placeholder="Quest title"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        className="w-full bg-cyan-950/30 border border-cyan-800/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50 placeholder-cyan-700/50"
+        className="w-full bg-cyan-950/30 border border-cyan-800/50 rounded-lg px-3 py-2 text-base text-cyan-100 focus:outline-none focus:border-cyan-500/50 placeholder-cyan-700/50"
       />
 
       <textarea
         placeholder="Description (for alignment check)"
         value={description}
         onChange={(e) => setDescription(e.target.value)}
-        className="w-full bg-cyan-950/30 border border-cyan-800/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50 h-20 resize-none placeholder-cyan-700/50"
+        className="w-full bg-cyan-950/30 border border-cyan-800/50 rounded-lg px-3 py-2 text-base text-cyan-100 focus:outline-none focus:border-cyan-500/50 h-20 resize-none placeholder-cyan-700/50"
       />
 
       <div className="flex gap-3">
@@ -76,7 +94,7 @@ export default function CustomQuestBuilder({ onAdd }) {
           placeholder="XP"
           value={xp}
           onChange={(e) => setXp(e.target.value)}
-          className="w-24 bg-cyan-950/30 border border-cyan-800/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+          className="w-24 bg-cyan-950/30 border border-cyan-800/50 rounded-lg px-3 py-2 text-base text-cyan-100 focus:outline-none focus:border-cyan-500/50"
         />
         <button
           onClick={checkAlignment}
@@ -86,6 +104,19 @@ export default function CustomQuestBuilder({ onAdd }) {
         </button>
       </div>
 
+      {/* AI Evaluation Button */}
+      {hasApiKey() && (
+        <button
+          onClick={handleAiEvaluate}
+          disabled={aiEvaluating || !title.trim()}
+          className="w-full bg-cyan-900/20 hover:bg-cyan-800/30 border border-cyan-700/40 rounded-lg py-2 text-sm text-cyan-300 transition-colors flex items-center justify-center gap-2 disabled:opacity-40"
+        >
+          {aiEvaluating ? <Loader2 size={14} className="animate-spin" /> : <Bot size={14} />}
+          {aiEvaluating ? 'SYSTEM evaluating...' : 'Ask SYSTEM to Evaluate Quest'}
+        </button>
+      )}
+
+      {/* Local Alignment Result */}
       {alignment && (
         <div className={`p-3 rounded-lg text-sm ${
           alignment.status === 'approved' ? 'bg-cyan-900/20 border border-cyan-700/50 text-cyan-400' :
@@ -107,10 +138,20 @@ export default function CustomQuestBuilder({ onAdd }) {
         </div>
       )}
 
+      {/* AI Evaluation Result */}
+      {aiEvaluation && (
+        <div className="p-3 rounded-lg text-sm bg-black/40 border border-cyan-700/30 text-cyan-200 whitespace-pre-wrap">
+          <div className="flex items-center gap-2 mb-1 text-cyan-400 font-semibold text-xs uppercase tracking-wider">
+            <Bot size={12} /> SYSTEM Evaluation
+          </div>
+          {aiEvaluation}
+        </div>
+      )}
+
       <button
         onClick={handleSubmit}
         disabled={!alignment || alignment.status === 'rejected'}
-        className="w-full bg-cyan-700/30 hover:bg-cyan-600/30 disabled:opacity-30 disabled:cursor-not-allowed text-cyan-300 font-semibold py-2 rounded-lg transition-colors border border-cyan-600/30"
+        className="w-full bg-cyan-700/30 hover:bg-cyan-600/30 disabled:opacity-30 disabled:cursor-not-allowed text-cyan-300 font-semibold py-3 rounded-lg transition-colors border border-cyan-600/30 min-h-[44px]"
       >
         Create Quest
       </button>
