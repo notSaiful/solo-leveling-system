@@ -67,9 +67,9 @@ export default function StatDistribution({ state, setState }) {
               <div className="text-xs text-gray-500">Distribute your stat points</div>
             </div>
           </div>
-          <div className="bg-rank-s/20 border border-rank-s/50 px-4 py-2 rounded-lg">
+          <div className="bg-yellow-400/20 border border-yellow-400/50 px-4 py-2 rounded-lg">
             <span className="font-bold text-rank-s">{remainingPoints}</span>
-            <span className="text-xs text-rank-s/70 ml-1">POINTS LEFT</span>
+            <span className="text-xs text-yellow-400/70 ml-1">POINTS LEFT</span>
           </div>
         </div>
 
@@ -92,7 +92,7 @@ export default function StatDistribution({ state, setState }) {
           return (
             <motion.div
               key={key}
-              className={`glass-panel p-4 ${hasChange ? 'border-rank-s/40' : ''}`}
+              className={`glass-panel p-4 ${hasChange ? 'border-yellow-400/40' : ''}`}
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-3">
@@ -150,7 +150,7 @@ export default function StatDistribution({ state, setState }) {
         <div className="flex gap-3">
           <button
             onClick={commitChanges}
-            className="flex-1 bg-rank-s hover:bg-rank-s/80 text-black font-bold py-3 rounded-lg transition-colors"
+            className="flex-1 bg-yellow-400 hover:bg-yellow-400/80 text-black font-bold py-3 rounded-lg transition-colors"
           >
             Commit Changes
           </button>

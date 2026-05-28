@@ -354,6 +354,70 @@ export function getStatPointsForLevel(level, prevLevel = 0) {
   return points;
 }
 
+// ─── WEEKLY DUNGEON COMPLETION ───
+export function completeWeeklyDungeon(state, pillar) {
+  const dungeon = state.weeklyDungeons?.[pillar];
+  if (!dungeon) return state;
+
+  const allStepsComplete = dungeon.steps?.every(s => s.completed);
+  if (!allStepsComplete) return state;
+
+  // Already claimed
+  if (state.weeklyDungeons[`${pillar}Completed`]) return state;
+
+  const rank = getRankByLevel(state.user.overallLevel);
+  const baseXp = dungeon.xp || 200;
+  const scaledXp = Math.floor(baseXp * (rank.xpMultiplier || 1));
+  const scaledGold = Math.floor(scaledXp * 0.6);
+
+  // Update pillar XP
+  const newPillars = { ...state.pillars };
+  newPillars[pillar] = {
+    ...newPillars[pillar],
+    xp: newPillars[pillar].xp + scaledXp,
+    streak: newPillars[pillar].streak + 1,
+  };
+
+  // Check pillar level up
+  const pillarLevel = newPillars[pillar].level;
+  const pillarXp = newPillars[pillar].xp;
+  const needed = xpForNextLevel(pillarLevel);
+  if (pillarXp >= needed) {
+    newPillars[pillar].level = pillarLevel + 1;
+    newPillars[pillar].xp = pillarXp - needed;
+  }
+
+  // Mark dungeon pillar as completed
+  const newWeeklyDungeons = {
+    ...state.weeklyDungeons,
+    [`${pillar}Completed`]: true,
+  };
+
+  // Add history
+  const historyEntry = {
+    type: 'dungeon',
+    pillar,
+    title: dungeon.title,
+    xp: scaledXp,
+    gold: scaledGold,
+    date: new Date().toISOString(),
+    completed: true,
+  };
+
+  let nextState = {
+    ...state,
+    pillars: newPillars,
+    gold: state.gold + scaledGold,
+    weeklyDungeons: newWeeklyDungeons,
+    history: [...state.history, historyEntry],
+  };
+
+  // Recalculate overall level
+  nextState = recalculateOverallLevel(nextState);
+
+  return nextState;
+}
+
 // ─── PROGRESS PERCENTAGE ───
 export function getLevelProgress(pillarState) {
   const needed = xpForNextLevel(pillarState.level);

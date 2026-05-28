@@ -1,14 +1,29 @@
 import { useState } from 'react';
-import { ShoppingBag, Coins, Check, Lock } from 'lucide-react';
+import { ShoppingBag, Coins, Check, Lock, Sparkles, ChevronRight, Star } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { REWARD_ITEMS, purchaseReward } from '../data/rewards';
+import { REWARD_ITEMS, REWARD_RARITY, purchaseReward, getStoreItemsForRank, getFeaturedItems, getNextUnlockPreview, isItemUnlocked } from '../data/rewards';
 
 export default function RewardStore({ state, setState }) {
   const [confirmItem, setConfirmItem] = useState(null);
+  const [activeFilter, setActiveFilter] = useState('all');
+  const userRank = state.user.currentRank;
+
+  const allItems = getStoreItemsForRank(userRank);
+  const featuredItems = getFeaturedItems(userRank);
+  const nextUnlock = getNextUnlockPreview(userRank);
+
+  const filteredItems = activeFilter === 'all'
+    ? allItems
+    : activeFilter === 'locked'
+      ? allItems.filter(i => !i.unlocked)
+      : allItems.filter(i => i.category === activeFilter);
+
+  const categories = ['all', 'food', 'education', 'fitness', 'tech', 'travel', 'charity', 'wealth', 'luxury', 'wellness', 'entertainment', 'locked'];
 
   const handlePurchase = (itemId) => {
     const result = purchaseReward(state.gold, itemId, state.purchasedRewards);
     if (result.success) {
+      const item = REWARD_ITEMS.find(i => i.id === itemId);
       setState(prev => ({
         ...prev,
         gold: result.gold,
@@ -19,7 +34,7 @@ export default function RewardStore({ state, setState }) {
             type: 'reward',
             title: 'REWARD ACQUIRED',
             subtitle: result.message,
-            message: 'You earned this through your grind. Enjoy it.',
+            message: `Rank: ${REWARD_RARITY[item.rarity]?.label || item.rarity} | ${item.description}`,
           },
         ],
       }));
@@ -50,64 +65,137 @@ export default function RewardStore({ state, setState }) {
         </div>
       </div>
 
-      {/* Items Grid */}
+      {/* Rank Indicator */}
+      <div className="glass-panel p-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Star size={16} className={`text-rank-${userRank.toLowerCase()}`} />
+          <span className="text-sm text-cyan-300">Your Rank: <span className={`font-bold text-rank-${userRank.toLowerCase()}`}>{userRank}-Rank</span></span>
+        </div>
+        <div className="text-xs text-cyan-500/50">
+          {allItems.filter(i => i.unlocked).length}/{allItems.length} items unlocked
+        </div>
+      </div>
+
+      {/* Featured Section */}
+      {featuredItems.length > 0 && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-xs font-semibold text-cyan-300/70 tracking-wider uppercase">
+            <Sparkles size={14} className="text-yellow-400" />
+            Featured for {userRank}-Rank
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {featuredItems.map(item => {
+              const canAfford = state.gold >= item.cost;
+              const rarityConfig = REWARD_RARITY[item.rarity];
+              const isConfirming = confirmItem === item.id;
+
+              return (
+                <motion.div
+                  key={item.id}
+                  whileHover={{ scale: 1.02 }}
+                  className={`glass-panel p-4 border ${rarityConfig.border} ${!item.unlocked ? 'opacity-40' : ''}`}
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <div className="font-semibold text-cyan-100">{item.name}</div>
+                      <div className={`text-[10px] uppercase tracking-wider ${rarityConfig.color}`}>{rarityConfig.label}</div>
+                    </div>
+                    <div className="flex items-center gap-1 text-yellow-400">
+                      <Coins size={14} />
+                      <span className="font-bold">{item.cost.toLocaleString()}</span>
+                    </div>
+                  </div>
+                  <div className="text-xs text-cyan-400/40 mb-3">{item.description}</div>
+                  <div className="flex items-center justify-between">
+                    <span className={`text-[10px] px-2 py-1 rounded uppercase tracking-wider ${rarityConfig.bg} ${rarityConfig.color} border ${rarityConfig.border}`}>
+                      {item.category}
+                    </span>
+
+                    {!item.unlocked ? (
+                      <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                        <Lock size={12} /> {item.unlockRank}-Rank
+                      </span>
+                    ) : isConfirming ? (
+                      <div className="flex gap-2">
+                        <button onClick={() => handlePurchase(item.id)} className="bg-cyan-600 hover:bg-cyan-500 text-white text-xs px-3 py-1 rounded transition-colors">Confirm</button>
+                        <button onClick={() => setConfirmItem(null)} className="bg-cyan-950 hover:bg-cyan-900 text-cyan-300 text-xs px-3 py-1 rounded transition-colors">Cancel</button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => canAfford && setConfirmItem(item.id)}
+                        disabled={!canAfford}
+                        className={`text-xs px-3 py-1 rounded transition-colors ${canAfford ? 'bg-cyan-900/30 hover:bg-cyan-800/40 text-cyan-400 border border-cyan-600/30' : 'bg-cyan-950/50 text-cyan-700 cursor-not-allowed border border-cyan-900/30'}`}
+                      >
+                        {canAfford ? 'Purchase' : <span className="flex items-center gap-1"><Lock size={12} /> Need Gold</span>}
+                      </button>
+                    )}
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Category Filter */}
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {categories.map(cat => (
+          <button
+            key={cat}
+            onClick={() => setActiveFilter(cat)}
+            className={`text-[10px] px-3 py-1.5 rounded-full uppercase tracking-wider whitespace-nowrap transition-colors ${
+              activeFilter === cat
+                ? 'bg-cyan-900/40 text-cyan-300 border border-cyan-500/30'
+                : 'bg-cyan-950/20 text-cyan-600/50 border border-cyan-900/20 hover:text-cyan-400'
+            }`}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+
+      {/* All Items Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {REWARD_ITEMS.map(item => {
+        {filteredItems.map(item => {
           const canAfford = state.gold >= item.cost;
           const isConfirming = confirmItem === item.id;
+          const rarityConfig = REWARD_RARITY[item.rarity];
 
           return (
             <motion.div
               key={item.id}
-              whileHover={{ scale: 1.02 }}
-              className={`glass-panel p-4 border ${
-                canAfford ? 'border-cyan-500/20' : 'border-cyan-900/20 opacity-50'
-              }`}
+              whileHover={{ scale: item.unlocked ? 1.02 : 1 }}
+              className={`glass-panel p-4 border ${item.unlocked ? rarityConfig.border : 'border-gray-800/20'} ${!item.unlocked ? 'opacity-30' : ''}`}
             >
               <div className="flex justify-between items-start mb-2">
                 <div className="font-semibold text-cyan-100">{item.name}</div>
                 <div className="flex items-center gap-1 text-yellow-400">
                   <Coins size={14} />
-                  <span className="font-bold">{item.cost}</span>
+                  <span className="font-bold">{item.cost.toLocaleString()}</span>
                 </div>
               </div>
               <div className="text-xs text-cyan-400/40 mb-3">{item.description}</div>
               <div className="flex items-center justify-between">
-                <span className={`text-[10px] px-2 py-1 rounded uppercase tracking-wider ${
-                  item.category === 'education' ? 'bg-purple-900/20 text-purple-400/70 border border-purple-700/30' :
-                  item.category === 'food' ? 'bg-orange-900/20 text-orange-400/70 border border-orange-700/30' :
-                  item.category === 'charity' ? 'bg-green-900/20 text-green-400/70 border border-green-700/30' :
-                  'bg-cyan-900/20 text-cyan-400/70 border border-cyan-700/30'
-                }`}>
-                  {item.category}
+                <span className={`text-[10px] px-2 py-1 rounded uppercase tracking-wider ${rarityConfig.bg} ${rarityConfig.color} border ${rarityConfig.border}`}>
+                  {rarityConfig.label}
                 </span>
 
-                {isConfirming ? (
+                {!item.unlocked ? (
+                  <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                    <Lock size={12} /> {item.unlockRank}-Rank
+                  </span>
+                ) : isConfirming ? (
                   <div className="flex gap-2">
-                    <button
-                      onClick={() => handlePurchase(item.id)}
-                      className="bg-cyan-600 hover:bg-cyan-500 text-white text-xs px-3 py-1 rounded transition-colors"
-                    >
-                      Confirm
-                    </button>
-                    <button
-                      onClick={() => setConfirmItem(null)}
-                      className="bg-cyan-950 hover:bg-cyan-900 text-cyan-300 text-xs px-3 py-1 rounded transition-colors"
-                    >
-                      Cancel
-                    </button>
+                    <button onClick={() => handlePurchase(item.id)} className="bg-cyan-600 hover:bg-cyan-500 text-white text-xs px-3 py-1 rounded transition-colors">Confirm</button>
+                    <button onClick={() => setConfirmItem(null)} className="bg-cyan-950 hover:bg-cyan-900 text-cyan-300 text-xs px-3 py-1 rounded transition-colors">Cancel</button>
                   </div>
                 ) : (
                   <button
                     onClick={() => canAfford && setConfirmItem(item.id)}
                     disabled={!canAfford}
-                    className={`text-xs px-3 py-1 rounded transition-colors ${
-                      canAfford
-                        ? 'bg-cyan-900/30 hover:bg-cyan-800/40 text-cyan-400 border border-cyan-600/30'
-                        : 'bg-cyan-950/50 text-cyan-700 cursor-not-allowed border border-cyan-900/30'
-                    }`}
+                    className={`text-xs px-3 py-1 rounded transition-colors ${canAfford ? 'bg-cyan-900/30 hover:bg-cyan-800/40 text-cyan-400 border border-cyan-600/30' : 'bg-cyan-950/50 text-cyan-700 cursor-not-allowed border border-cyan-900/30'}`}
                   >
-                    {canAfford ? 'Purchase' : <span className="flex items-center gap-1"><Lock size={12} /> Locked</span>}
+                    {canAfford ? 'Purchase' : 'Need Gold'}
                   </button>
                 )}
               </div>
@@ -115,6 +203,25 @@ export default function RewardStore({ state, setState }) {
           );
         })}
       </div>
+
+      {/* Next Unlock Teaser */}
+      {nextUnlock && (
+        <div className="glass-panel p-4 border border-dashed border-cyan-700/30">
+          <div className="flex items-center gap-2 text-xs text-cyan-500/70 mb-2">
+            <ChevronRight size={14} />
+            <span className="uppercase tracking-wider">Unlocks at {nextUnlock.rank}-Rank</span>
+          </div>
+          <div className="space-y-1">
+            {nextUnlock.items.slice(0, 3).map(item => (
+              <div key={item.id} className="flex items-center gap-2 text-sm text-cyan-700/50">
+                <Lock size={12} />
+                <span>{item.name}</span>
+                <span className="text-yellow-700/40 text-xs">({item.cost.toLocaleString()} Gold)</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Purchase History */}
       {state.purchasedRewards.length > 0 && (
@@ -127,9 +234,7 @@ export default function RewardStore({ state, setState }) {
                   <Check size={14} className="text-cyan-400" />
                   <span className="text-cyan-200">{item.name}</span>
                 </div>
-                <span className="text-cyan-500/40 text-xs">
-                  {new Date(item.purchasedAt).toLocaleDateString()}
-                </span>
+                <span className="text-cyan-500/40 text-xs">{new Date(item.purchasedAt).toLocaleDateString()}</span>
               </div>
             ))}
           </div>

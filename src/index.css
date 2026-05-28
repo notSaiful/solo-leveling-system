@@ -180,6 +180,14 @@
   .animate-float {
     animation: float 6s ease-in-out infinite;
   }
+
+  /* Rank Colors */
+  .text-rank-e { color: #9ca3af; }
+  .text-rank-d { color: #22d3ee; }
+  .text-rank-c { color: #60a5fa; }
+  .text-rank-b { color: #c084fc; }
+  .text-rank-a { color: #fb923c; }
+  .text-rank-s { color: #facc15; }
 }
 
 @keyframes float {
