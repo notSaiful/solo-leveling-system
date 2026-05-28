@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { getRankByLevel } from '../data/ranks';
+import { getRankByLevel } from '../data/questCatalog';
 
 export default function RankBadge({ level }) {
   const rank = getRankByLevel(level);
@@ -14,23 +14,23 @@ export default function RankBadge({ level }) {
       {/* Outer glow ring */}
       <div
         className="absolute inset-[-8px] rounded-full blur-md opacity-50"
-        style={{ backgroundColor: rank.color }}
+        style={{ backgroundColor: rank.hexColor }}
       />
 
       <div
         className="w-20 h-20 rounded-full flex items-center justify-center text-3xl font-black font-orbitron border-2 relative"
         style={{
-          backgroundColor: `${rank.color}15`,
-          borderColor: rank.color,
-          color: rank.color,
-          boxShadow: `0 0 30px ${rank.color}50, inset 0 0 20px ${rank.color}20`,
+          backgroundColor: `${rank.hexColor}15`,
+          borderColor: rank.hexColor,
+          color: rank.hexColor,
+          boxShadow: `0 0 30px ${rank.hexColor}50, inset 0 0 20px ${rank.hexColor}20`,
         }}
       >
         {rank.key}
       </div>
 
       <div className="mt-3 text-center">
-        <div className="font-orbitron font-bold text-sm tracking-wider" style={{ color: rank.color }}>
+        <div className="font-orbitron font-bold text-sm tracking-wider" style={{ color: rank.hexColor }}>
           {rank.name}
         </div>
         <div className="text-[10px] text-cyan-500/50 tracking-widest uppercase">

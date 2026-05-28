@@ -12,18 +12,27 @@ import {
   completeRedemptionQuest,
   recalculateOverallLevel,
   getFlowStateDisplay,
+  checkFlowState,
   getStreakBonus,
   getLevelProgress,
 } from '../logic/questEngine';
 import { getRankByLevel, xpForNextLevel } from '../data/questCatalog';
-import { applyStatModifiers, getStatPointsForLevel } from '../data/stats';
 import { isDebuffActive } from '../logic/penalties';
-import { getShadowBonuses, applyShadowBonuses } from '../data/shadows';
+import { getShadowBonuses } from '../data/shadows';
 import { AlertTriangle, Skull, Zap, Coins, Sparkles, Activity, Swords, Shield, Crown } from 'lucide-react';
+
+const rankColorMap = {
+  'text-gray-400': '#9ca3af',
+  'text-cyan-400': '#22d3ee',
+  'text-blue-400': '#60a5fa',
+  'text-purple-400': '#c084fc',
+  'text-orange-400': '#fb923c',
+  'text-yellow-400': '#facc15',
+};
 
 export default function Dashboard({ state, setState }) {
   const rank = getRankByLevel(state.user.overallLevel);
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toLocaleDateString('en-CA');
 
   // Initialize quests after render (not during render to avoid reversion loops)
   useEffect(() => {
@@ -101,6 +110,19 @@ export default function Dashboard({ state, setState }) {
           if (newPillars[p].xp >= needed) {
             newPillars[p].level += 1;
             newPillars[p].xp -= needed;
+            // Award stat points for the bonus-triggered level-up
+            const pillarRank = getRankByLevel(newPillars[p].level);
+            const spAwarded = pillarRank.statPointsPerLevel || 1;
+            next.statPoints = (next.statPoints || 0) + spAwarded;
+            next.systemMessages = [
+              ...(next.systemMessages || []),
+              {
+                type: 'levelUp',
+                title: `${p.toUpperCase()} LEVEL UP!`,
+                subtitle: `Level ${newPillars[p].level} — ${spAwarded} Stat Points awarded`,
+                message: 'Distribute them in the Build tab.',
+              },
+            ];
           }
           next = { ...next, pillars: newPillars };
         }
@@ -108,6 +130,9 @@ export default function Dashboard({ state, setState }) {
         // Recalculate overall level
         next = recalculateOverallLevel(next);
       }
+
+      // Update flow state after any quest completion
+      next = { ...next, flowState: checkFlowState(next.history || []) };
 
       return next;
     });
@@ -118,20 +143,77 @@ export default function Dashboard({ state, setState }) {
     setState(prev => {
       let next = completeLevelQuest(prev, levelQuestIndex, questIndex);
       next = recalculateOverallLevel(next);
+      next = { ...next, flowState: checkFlowState(next.history || []) };
       return next;
     });
   };
 
   // Handle redemption quest completion
   const handleCompleteRedemption = (redemptionId) => {
-    setState(prev => completeRedemptionQuest(prev, redemptionId));
+    setState(prev => {
+      let next = completeRedemptionQuest(prev, redemptionId);
+      next = { ...next, flowState: checkFlowState(next.history || []) };
+      return next;
+    });
   };
 
   const addCustomQuest = (quest) => {
+    const uniqueId = `custom-${quest.id || Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     setState(prev => ({
       ...prev,
-      customQuests: [...prev.customQuests, { ...quest, lastCompleted: null }],
+      customQuests: [...prev.customQuests, { ...quest, uniqueId, lastCompleted: null }],
     }));
+  };
+
+  const handleCompleteCustom = (questUniqueId) => {
+    setState(prev => {
+      const quest = prev.customQuests.find(q => q.uniqueId === questUniqueId);
+      if (!quest || quest.lastCompleted === today) return prev;
+      const alreadyDone = prev.history.some(h => {
+        const hDate = h.date ? new Date(h.date).toLocaleDateString('en-CA') : '';
+        return hDate.startsWith(today) && h.questId === quest.id;
+      });
+      if (alreadyDone) return prev;
+
+      const baseXp = quest.xp || 20;
+      const gold = Math.floor(baseXp * 0.5);
+      const pillar = quest.pillar || 'deen';
+      const newPillars = { ...prev.pillars };
+      newPillars[pillar] = {
+        ...newPillars[pillar],
+        xp: newPillars[pillar].xp + baseXp,
+        streak: newPillars[pillar].streak + 1,
+      };
+      let next = {
+        ...prev,
+        customQuests: prev.customQuests.map(q => q.uniqueId === questUniqueId ? { ...q, lastCompleted: today, completedAt: new Date().toISOString() } : q),
+        pillars: newPillars,
+        gold: prev.gold + gold,
+        history: [...prev.history, { type: 'custom', questId: quest.id, title: quest.title, pillar, xp: baseXp, gold, date: new Date().toISOString(), completed: true }],
+      };
+      // Check pillar level-up
+      const needed = xpForNextLevel(newPillars[pillar].level);
+      if (newPillars[pillar].xp >= needed) {
+        newPillars[pillar].level += 1;
+        newPillars[pillar].xp -= needed;
+        const pillarRank = getRankByLevel(newPillars[pillar].level);
+        const spAwarded = pillarRank.statPointsPerLevel || 1;
+        next.statPoints = (next.statPoints || 0) + spAwarded;
+        next.systemMessages = [
+          ...(next.systemMessages || []),
+          {
+            type: 'levelUp',
+            title: `${pillar.toUpperCase()} LEVEL UP!`,
+            subtitle: `Level ${newPillars[pillar].level} — ${spAwarded} Stat Points awarded`,
+            message: 'Distribute them in the Build tab.',
+          },
+        ];
+        next = { ...next, pillars: newPillars };
+      }
+      next = recalculateOverallLevel(next);
+      next = { ...next, flowState: checkFlowState(next.history || []) };
+      return next;
+    });
   };
 
   const pillarLabels = { deen: 'Deen', body: 'Body', money: 'Money' };
@@ -158,7 +240,7 @@ export default function Dashboard({ state, setState }) {
             <XpBar
               current={state.pillars.deen.xp + state.pillars.body.xp + state.pillars.money.xp}
               max={xpForNextLevel(state.user.overallLevel) * 3}
-              color={rank.color}
+              color={rankColorMap[rank.color] || '#22d3ee'}
               label="Overall"
               level={state.user.overallLevel}
             />
@@ -351,12 +433,12 @@ export default function Dashboard({ state, setState }) {
             <div className="text-xs text-cyan-500/40 font-semibold uppercase tracking-widest">Custom</div>
             {state.customQuests.map(quest => (
               <QuestCard
-                key={quest.id}
+                key={quest.uniqueId}
                 quest={{
                   ...quest,
-                  completedToday: state.history.some(h => h.date === today && h.questId === quest.id),
+                  completedToday: quest.lastCompleted === today,
                 }}
-                onComplete={() => handleCompleteDaily(quest.uniqueId)}
+                onComplete={() => handleCompleteCustom(quest.uniqueId)}
                 rank={rank.key}
               />
             ))}

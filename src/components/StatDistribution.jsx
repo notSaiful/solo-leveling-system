@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Minus, RotateCcw, Sparkles } from 'lucide-react';
-import { STAT_NAMES, STAT_DEFAULTS, getStatPointsForLevel } from '../data/stats';
+import { STAT_NAMES, STAT_DEFAULTS } from '../data/stats';
 import { getCharacterBuild } from '../data/stats';
 
 export default function StatDistribution({ state, setState }) {
@@ -63,8 +63,8 @@ export default function StatDistribution({ state, setState }) {
           <div className="flex items-center gap-3">
             <Sparkles size={24} className="text-rank-s" />
             <div>
-              <div className="font-orbitron font-bold text-gray-200">Character Stats</div>
-              <div className="text-xs text-gray-500">Distribute your stat points</div>
+              <div className="font-orbitron font-bold text-cyan-100">Character Stats</div>
+              <div className="text-xs text-cyan-400">Distribute your stat points</div>
             </div>
           </div>
           <div className="bg-yellow-400/20 border border-yellow-400/50 px-4 py-2 rounded-lg">
@@ -74,11 +74,11 @@ export default function StatDistribution({ state, setState }) {
         </div>
 
         {/* Build Display */}
-        <div className="bg-dark-border/50 rounded-lg p-3 flex items-center gap-3">
+        <div className="bg-cyan-900/40 rounded-lg p-3 flex items-center gap-3">
           <div className="text-2xl">{build.icon}</div>
           <div>
-            <div className="font-semibold text-gray-200">{build.name}</div>
-            <div className="text-xs text-gray-400">{build.description}</div>
+            <div className="font-semibold text-cyan-100">{build.name}</div>
+            <div className="text-xs text-cyan-300">{build.description}</div>
           </div>
         </div>
       </div>
@@ -98,21 +98,21 @@ export default function StatDistribution({ state, setState }) {
                 <div className="flex items-center gap-3">
                   <span className="text-xl">{config.icon}</span>
                   <div>
-                    <div className="font-semibold text-gray-200">{config.name}</div>
-                    <div className="text-xs text-gray-500">{config.description}</div>
+                    <div className="font-semibold text-cyan-100">{config.name}</div>
+                    <div className="text-xs text-cyan-400">{config.description}</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => adjustStat(key, -1)}
                     disabled={current <= 1}
-                    className="w-8 h-8 rounded-lg bg-dark-border hover:bg-red-900/30 disabled:opacity-30 flex items-center justify-center transition-colors"
+                    className="w-8 h-8 rounded-lg bg-cyan-900/40 hover:bg-red-900/30 disabled:opacity-30 flex items-center justify-center transition-colors"
                   >
                     <Minus size={14} />
                   </button>
 
                   <div className={`text-xl font-bold w-12 text-center ${
-                    hasChange ? 'text-rank-s' : 'text-gray-200'
+                    hasChange ? 'text-rank-s' : 'text-cyan-100'
                   }`}>
                     {current}
                   </div>
@@ -120,7 +120,7 @@ export default function StatDistribution({ state, setState }) {
                   <button
                     onClick={() => adjustStat(key, 1)}
                     disabled={remainingPoints <= 0}
-                    className="w-8 h-8 rounded-lg bg-dark-border hover:bg-green-900/30 disabled:opacity-30 flex items-center justify-center transition-colors"
+                    className="w-8 h-8 rounded-lg bg-cyan-900/40 hover:bg-green-900/30 disabled:opacity-30 flex items-center justify-center transition-colors"
                   >
                     <Plus size={14} />
                   </button>
@@ -128,7 +128,7 @@ export default function StatDistribution({ state, setState }) {
               </div>
 
               {/* Stat Bar */}
-              <div className="h-2 bg-dark-border rounded-full overflow-hidden">
+              <div className="h-2 bg-cyan-900/40 rounded-full overflow-hidden">
                 <motion.div
                   className="h-full rounded-full"
                   style={{ backgroundColor: config.color }}
@@ -136,7 +136,7 @@ export default function StatDistribution({ state, setState }) {
                   transition={{ duration: 0.3 }}
                 />
               </div>
-              <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <div className="flex justify-between text-xs text-cyan-400 mt-1">
                 <span>Base: {stats[key] || 10}</span>
                 {hasChange && <span className="text-rank-s">+{pendingChanges[key]}</span>}
               </div>
@@ -156,7 +156,7 @@ export default function StatDistribution({ state, setState }) {
           </button>
           <button
             onClick={resetChanges}
-            className="px-4 bg-dark-border hover:bg-gray-700 text-gray-300 rounded-lg transition-colors"
+            className="px-4 bg-cyan-900/40 hover:bg-cyan-800/40 text-cyan-200 rounded-lg transition-colors"
           >
             <RotateCcw size={18} />
           </button>
@@ -164,8 +164,8 @@ export default function StatDistribution({ state, setState }) {
       )}
 
       {/* Info */}
-      <div className="glass-panel p-4 text-sm text-gray-400 space-y-2">
-        <div className="font-semibold text-gray-300 mb-2">Stat Effects</div>
+      <div className="glass-panel p-4 text-sm text-cyan-300 space-y-2">
+        <div className="font-semibold text-cyan-200 mb-2">Stat Effects</div>
         <ul className="space-y-1 text-xs">
           <li>💪 <strong>Strength:</strong> +2% Body XP per point above 10</li>
           <li>🧠 <strong>Intelligence:</strong> +2% Deen XP per point above 10</li>

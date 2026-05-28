@@ -234,7 +234,7 @@ export default function RewardStore({ state, setState }) {
                   <Check size={14} className="text-cyan-400" />
                   <span className="text-cyan-200">{item.name}</span>
                 </div>
-                <span className="text-cyan-500/40 text-xs">{new Date(item.purchasedAt).toLocaleDateString()}</span>
+                <span className="text-cyan-500/40 text-xs">{item.purchasedAt ? new Date(item.purchasedAt).toLocaleDateString() : ''}</span>
               </div>
             ))}
           </div>

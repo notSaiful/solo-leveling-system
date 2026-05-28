@@ -1,8 +1,11 @@
 export function checkStreakBreak(history, pillar, date) {
   const yesterday = new Date(date);
   yesterday.setDate(yesterday.getDate() - 1);
-  const yStr = yesterday.toISOString().split('T')[0];
-  const hadQuestYesterday = history.some(h => h.date === yStr && h.pillar === pillar && h.completed);
+  const yStr = yesterday.toLocaleDateString('en-CA');
+  const hadQuestYesterday = history.some(h => {
+    const hDate = h.date ? new Date(h.date).toLocaleDateString('en-CA') : '';
+    return hDate.startsWith(yStr) && h.pillar === pillar && h.completed;
+  });
   return !hadQuestYesterday;
 }
 
@@ -48,7 +51,7 @@ export function getRedemptionQuest(pillar) {
 }
 
 export function checkAndApplyPenalties(state) {
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toLocaleDateString('en-CA');
   const missedDays = getMissedDays(state.lastActiveDate);
 
   if (missedDays === 0) return { penalties: [], redemptionQuests: [], updatedPillars: state.pillars };

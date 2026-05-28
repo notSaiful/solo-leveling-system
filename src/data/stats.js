@@ -17,11 +17,6 @@ export const STAT_DEFAULTS = {
   mana: 10,
 };
 
-// Stat points per level up
-export function getStatPointsForLevel(level) {
-  return 3 + Math.floor(level / 5);
-}
-
 // How stats affect gameplay
 export function applyStatModifiers(baseXp, stats, pillar) {
   let multiplier = 1.0;

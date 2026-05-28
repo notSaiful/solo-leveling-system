@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Plus, AlertTriangle, Check, X, Bot, Loader2 } from 'lucide-react';
 import { validateQuestAlignment } from '../logic/alignment';
-import { evaluateCustomQuest, hasApiKey } from '../services/aiAssistant';
+import { evaluateCustomQuest } from '../services/aiAssistant';
 
 export default function CustomQuestBuilder({ onAdd, state }) {
   const [title, setTitle] = useState('');
@@ -40,7 +40,7 @@ export default function CustomQuestBuilder({ onAdd, state }) {
       id: `custom-${Date.now()}`,
       title,
       description,
-      xp: parseInt(xp),
+      xp: Math.max(1, parseInt(xp, 10) || 0),
       pillar: result.pillar,
       alignmentStatus: result.status,
       justification: description,
@@ -105,16 +105,14 @@ export default function CustomQuestBuilder({ onAdd, state }) {
       </div>
 
       {/* AI Evaluation Button */}
-      {hasApiKey() && (
-        <button
-          onClick={handleAiEvaluate}
-          disabled={aiEvaluating || !title.trim()}
-          className="w-full bg-cyan-900/20 hover:bg-cyan-800/30 border border-cyan-700/40 rounded-lg py-2 text-sm text-cyan-300 transition-colors flex items-center justify-center gap-2 disabled:opacity-40"
-        >
-          {aiEvaluating ? <Loader2 size={14} className="animate-spin" /> : <Bot size={14} />}
-          {aiEvaluating ? 'SYSTEM evaluating...' : 'Ask SYSTEM to Evaluate Quest'}
-        </button>
-      )}
+      <button
+        onClick={handleAiEvaluate}
+        disabled={aiEvaluating || !title.trim()}
+        className="w-full bg-cyan-900/20 hover:bg-cyan-800/30 border border-cyan-700/40 rounded-lg py-2 text-sm text-cyan-300 transition-colors flex items-center justify-center gap-2 disabled:opacity-40"
+      >
+        {aiEvaluating ? <Loader2 size={14} className="animate-spin" /> : <Bot size={14} />}
+        {aiEvaluating ? 'SYSTEM evaluating...' : 'Ask SYSTEM to Evaluate Quest'}
+      </button>
 
       {/* Local Alignment Result */}
       {alignment && (

@@ -23,8 +23,8 @@
     -webkit-user-select: none;
     user-select: none;
     overflow-x: hidden;
-    min-height: 100dvh;
     min-height: 100vh;
+    min-height: 100dvh;
   }
   /* iOS WebKit requires cursor:pointer for fast taps */
   button, a, [role="button"], label, input, select, textarea, .cursor-pointer {

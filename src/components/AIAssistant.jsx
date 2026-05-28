@@ -1,16 +1,28 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, X, Send, Bot, User, Sparkles, AlertTriangle, Loader2 } from 'lucide-react';
-import { sendMessage, hasApiKey, getDailyMotivation, analyzeProgress } from '../services/aiAssistant';
+import { MessageSquare, X, Send, Bot, User, Sparkles, AlertTriangle, Loader2, CheckCircle2 } from 'lucide-react';
+import { sendMessage, getDailyMotivation, analyzeProgress } from '../services/aiAssistant';
+import { parseAdminCommands, stripCommandBlocks, executeAdminCommands } from '../logic/adminCommands';
 
-export default function AIAssistant({ state }) {
+export default function AIAssistant({ state, setState }) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState(() => {
-    const saved = localStorage.getItem('system_chat_history');
-    return saved ? JSON.parse(saved) : [
-      { role: 'assistant', content: 'The System is online. Ask about your quests, request motivation, or submit a custom quest for evaluation.', type: 'welcome' },
+    try {
+      const saved = localStorage.getItem('system_chat_history');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.every(m => typeof m.content === 'string' && ['user','assistant','system'].includes(m.role))) {
+          return parsed;
+        }
+      }
+    } catch {
+      // ignore corrupt history
+    }
+    return [
+      { role: 'assistant', content: 'The Forge is hot. I do not coddle. I do not comfort. I forge weak men into warriors. Speak only if you are ready to be hammered.', type: 'welcome' },
     ];
   });
+  const [pendingCommands, setPendingCommands] = useState(null);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -47,12 +59,17 @@ export default function AIAssistant({ state }) {
     setMessages(prev => [...prev, userMsg]);
 
     try {
-      if (!hasApiKey()) {
-        throw new Error('OpenRouter API key not configured. Go to Settings → AI Assistant to add your key.');
-      }
+      const rawReply = await sendMessage(text, messages, state);
+      const commands = parseAdminCommands(rawReply);
+      const cleanReply = stripCommandBlocks(rawReply);
 
-      const reply = await sendMessage(text, messages, state);
-      setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
+      if (commands.length > 0 && setState) {
+        // Show confirmation instead of auto-executing
+        setPendingCommands({ commands, cleanReply });
+        setMessages(prev => [...prev, { role: 'assistant', content: cleanReply || 'The System processed your request.', type: 'pending-commands' }]);
+      } else {
+        setMessages(prev => [...prev, { role: 'assistant', content: cleanReply || 'The System processed your request.' }]);
+      }
     } catch (err) {
       setError(err.message);
       setMessages(prev => [...prev, { role: 'assistant', content: `⚠️ ${err.message}`, type: 'error' }]);
@@ -61,25 +78,65 @@ export default function AIAssistant({ state }) {
     }
   };
 
+  const handleConfirmCommands = () => {
+    if (!pendingCommands || !setState) return;
+    let cmdReports = [];
+    setState(prevState => {
+      const result = executeAdminCommands(prevState, pendingCommands.commands);
+      cmdReports = result.reports;
+      return result.modified ? result.state : prevState;
+    });
+    if (cmdReports.length > 0) {
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: cmdReports.map(r => (r.type === 'success' ? `✓ ${r.message}` : `✗ ${r.message}`)).join('\n'),
+        type: 'system-report',
+      }]);
+    }
+    setPendingCommands(null);
+  };
+
+  const handleCancelCommands = () => {
+    setPendingCommands(null);
+    setMessages(prev => [...prev, { role: 'assistant', content: 'Command execution cancelled by user.', type: 'system-report' }]);
+  };
+
   const handleQuickAction = async (action) => {
     setQuickAction(action);
     setLoading(true);
     setError(null);
 
     try {
-      let reply;
+      let rawReply;
+      let userPrompt;
       if (action === 'motivation') {
-        reply = await getDailyMotivation(state);
+        rawReply = await getDailyMotivation(state);
+        userPrompt = 'Give me my orders for today';
       } else if (action === 'analyze') {
-        reply = await analyzeProgress(state);
+        rawReply = await analyzeProgress(state);
+        userPrompt = 'Audit my progress. Be merciless';
+      } else if (action === 'accountability') {
+        rawReply = await sendMessage('Hold me accountable. Scan my recent performance and call out every weakness. Do not hold back. I need to hear the truth.', messages, state);
+        userPrompt = 'Hold me accountable';
       }
-      setMessages(prev => [...prev,
-        { role: 'user', content: action === 'motivation' ? 'Give me motivation for today' : 'Analyze my progress' },
-        { role: 'assistant', content: reply },
-      ]);
+
+      const commands = parseAdminCommands(rawReply);
+      const cleanReply = stripCommandBlocks(rawReply);
+
+      const assistantMsgs = [
+        { role: 'user', content: userPrompt },
+        { role: 'assistant', content: cleanReply },
+      ];
+
+      if (commands.length > 0 && setState) {
+        setPendingCommands({ commands, cleanReply });
+        assistantMsgs[1].type = 'pending-commands';
+      }
+
+      setMessages(prev => [...prev, ...assistantMsgs]);
     } catch (err) {
       setMessages(prev => [...prev,
-        { role: 'user', content: action === 'motivation' ? 'Give me motivation' : 'Analyze progress' },
+        { role: 'user', content: action === 'motivation' ? 'Give me my orders' : action === 'analyze' ? 'Audit me' : 'Hold me accountable' },
         { role: 'assistant', content: `⚠️ ${err.message}`, type: 'error' },
       ]);
     } finally {
@@ -90,7 +147,7 @@ export default function AIAssistant({ state }) {
 
   const clearChat = () => {
     setMessages([
-      { role: 'assistant', content: 'Chat cleared. The System is ready.', type: 'welcome' },
+      { role: 'assistant', content: 'The Forge is hot. I do not coddle. I do not comfort. I forge weak men into warriors. Speak only if you are ready to be hammered.', type: 'welcome' },
     ]);
   };
 
@@ -104,7 +161,7 @@ export default function AIAssistant({ state }) {
         className={`fixed bottom-20 sm:bottom-24 right-4 sm:right-6 z-40 w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center shadow-lg border-2 transition-colors ${
           isOpen
             ? 'bg-red-900/80 border-red-500/50 text-red-400'
-            : 'bg-cyan-900/80 border-cyan-500/50 text-cyan-400'
+            : 'bg-red-950/80 border-red-600/50 text-red-400'
         }`}
         style={{ backdropFilter: 'blur(8px)' }}
       >
@@ -129,24 +186,24 @@ export default function AIAssistant({ state }) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="fixed bottom-20 sm:bottom-24 right-4 sm:right-6 z-30 w-[calc(100vw-2rem)] sm:w-[400px] max-h-[70vh] sm:max-h-[600px] flex flex-col rounded-xl border border-cyan-500/30 overflow-hidden"
+            className="fixed bottom-20 sm:bottom-24 right-4 sm:right-6 z-30 w-[calc(100vw-2rem)] sm:w-[400px] max-h-[70vh] sm:max-h-[600px] flex flex-col rounded-xl border border-red-500/30 overflow-hidden"
             style={{
               background: 'rgba(5, 5, 5, 0.98)',
-              boxShadow: '0 0 40px rgba(0, 212, 255, 0.15), 0 20px 60px rgba(0, 0, 0, 0.8)',
+              boxShadow: '0 0 40px rgba(220, 38, 38, 0.15), 0 20px 60px rgba(0, 0, 0, 0.8)',
             }}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-3 border-b border-cyan-900/50 bg-cyan-950/30">
+            <div className="flex items-center justify-between p-3 border-b border-red-900/50 bg-red-950/20">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-cyan-900/50 border border-cyan-500/30 flex items-center justify-center">
-                  <Bot size={16} className="text-cyan-400" />
+                <div className="w-8 h-8 rounded-full bg-red-900/50 border border-red-500/30 flex items-center justify-center">
+                  <Bot size={16} className="text-red-400" />
                 </div>
                 <div>
-                  <div className="text-sm font-semibold text-cyan-200">SYSTEM ASSISTANT</div>
-                  <div className="text-[10px] text-cyan-500/50">{hasApiKey() ? 'Online' : 'API key missing'}</div>
+                  <div className="text-sm font-semibold text-red-200 tracking-wider">FORGE-MASTER</div>
+                  <div className="text-[10px] text-red-500/50 uppercase tracking-widest">Zero Excuses Mode</div>
                 </div>
               </div>
-              <button onClick={clearChat} className="text-[10px] text-cyan-600 hover:text-cyan-400 uppercase tracking-wider">Clear</button>
+              <button onClick={clearChat} className="text-[10px] text-red-600 hover:text-red-400 uppercase tracking-wider">Clear</button>
             </div>
 
             {/* Messages */}
@@ -165,6 +222,8 @@ export default function AIAssistant({ state }) {
                         ? 'bg-red-950/30 text-red-300 border border-red-900/30'
                         : msg.type === 'welcome'
                           ? 'bg-cyan-950/20 text-cyan-400/80 italic'
+                          : msg.type === 'system-report'
+                          ? 'bg-green-950/20 text-green-300 border border-green-900/30 text-xs'
                           : 'bg-black/40 text-cyan-200 border border-cyan-900/20'
                   }`}>
                     {msg.content}
@@ -173,35 +232,71 @@ export default function AIAssistant({ state }) {
               ))}
               {loading && (
                 <div className="flex gap-2">
-                  <div className="w-6 h-6 rounded-full bg-cyan-900/40 flex items-center justify-center">
-                    <Loader2 size={12} className="text-cyan-400 animate-spin" />
+                  <div className="w-6 h-6 rounded-full bg-red-900/40 flex items-center justify-center">
+                    <Loader2 size={12} className="text-red-400 animate-spin" />
                   </div>
-                  <div className="text-xs text-cyan-500/50 italic">The System is processing...⬤⬤⬤</div>
+                  <div className="text-xs text-red-500/50 italic">The Forge is burning...⬤⬤⬤</div>
                 </div>
               )}
               <div ref={messagesEndRef} />
             </div>
 
+            {/* Command Confirmation */}
+            {pendingCommands && (
+              <div className="px-3 py-2 border-t border-yellow-700/40 bg-yellow-950/20">
+                <div className="text-[10px] text-yellow-400 mb-2 font-semibold tracking-wider">⚠️ PENDING SYSTEM COMMANDS</div>
+                <div className="text-xs text-yellow-300/80 mb-2 space-y-0.5">
+                  {pendingCommands.commands.map((cmd, i) => (
+                    <div key={i} className="flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-yellow-500"></span>
+                      <span>{cmd.type}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleConfirmCommands}
+                    className="flex-1 bg-yellow-800/30 hover:bg-yellow-700/40 border border-yellow-600/40 text-yellow-300 py-1.5 rounded text-xs font-semibold transition-colors"
+                  >
+                    Execute
+                  </button>
+                  <button
+                    onClick={handleCancelCommands}
+                    className="flex-1 bg-red-950/30 hover:bg-red-900/40 border border-red-800/40 text-red-400 py-1.5 rounded text-xs transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Quick Actions */}
-            <div className="flex gap-2 px-3 py-2 border-t border-cyan-900/30 overflow-x-auto">
+            <div className="flex gap-2 px-3 py-2 border-t border-red-900/30 overflow-x-auto">
               <button
                 onClick={() => handleQuickAction('motivation')}
-                disabled={loading}
-                className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-full bg-cyan-950/40 border border-cyan-800/30 text-cyan-400 hover:bg-cyan-900/30 whitespace-nowrap disabled:opacity-40"
+                disabled={loading || pendingCommands}
+                className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-full bg-red-950/40 border border-red-800/30 text-red-400 hover:bg-red-900/30 whitespace-nowrap disabled:opacity-40"
               >
-                <Sparkles size={10} /> Motivation
+                <Sparkles size={10} /> Orders
               </button>
               <button
                 onClick={() => handleQuickAction('analyze')}
-                disabled={loading}
-                className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-full bg-cyan-950/40 border border-cyan-800/30 text-cyan-400 hover:bg-cyan-900/30 whitespace-nowrap disabled:opacity-40"
+                disabled={loading || pendingCommands}
+                className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-full bg-red-950/40 border border-red-800/30 text-red-400 hover:bg-red-900/30 whitespace-nowrap disabled:opacity-40"
               >
-                <Bot size={10} /> Analyze Progress
+                <Bot size={10} /> Audit
+              </button>
+              <button
+                onClick={() => handleQuickAction('accountability')}
+                disabled={loading || pendingCommands}
+                className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-full bg-red-950/40 border border-red-800/30 text-red-400 hover:bg-red-900/30 whitespace-nowrap disabled:opacity-40"
+              >
+                <AlertTriangle size={10} /> Hold Me Accountable
               </button>
             </div>
 
             {/* Input */}
-            <div className="p-2 border-t border-cyan-900/30">
+            <div className="p-2 border-t border-red-900/30">
               <div className="flex gap-2">
                 <input
                   ref={inputRef}
@@ -209,14 +304,14 @@ export default function AIAssistant({ state }) {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                  placeholder={hasApiKey() ? 'Ask the System...' : 'Set API key in Settings first'}
-                  disabled={loading || !hasApiKey()}
-                  className="flex-1 bg-cyan-950/30 border border-cyan-800/40 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50 placeholder-cyan-700/50 disabled:opacity-30"
+                  placeholder="Report your actions. No excuses."
+                  disabled={loading || pendingCommands}
+                  className="flex-1 bg-red-950/20 border border-red-800/40 rounded-lg px-3 py-2 text-sm text-red-100 focus:outline-none focus:border-red-500/50 placeholder-red-800/50 disabled:opacity-30"
                 />
                 <button
                   onClick={() => handleSend()}
-                  disabled={loading || !input.trim() || !hasApiKey()}
-                  className="w-9 h-9 rounded-lg bg-cyan-800/30 hover:bg-cyan-700/30 border border-cyan-600/30 text-cyan-400 flex items-center justify-center disabled:opacity-30"
+                  disabled={loading || !input.trim() || pendingCommands}
+                  className="w-9 h-9 rounded-lg bg-red-800/30 hover:bg-red-700/30 border border-red-600/30 text-red-400 flex items-center justify-center disabled:opacity-30"
                 >
                   <Send size={16} />
                 </button>

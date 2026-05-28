@@ -8,7 +8,7 @@ export function usePenaltyCheck(state, setState) {
     if (hasChecked.current) return;
     hasChecked.current = true;
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toLocaleDateString('en-CA');
     if (state.lastActiveDate === today) return;
 
     const { penalties, redemptionQuests, updatedPillars } = checkAndApplyPenalties(state);

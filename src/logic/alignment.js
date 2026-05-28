@@ -18,7 +18,7 @@ export function validateQuestAlignment(title, description = '') {
   const max = Math.max(scores.deen, scores.body, scores.money);
 
   if (total === 0) {
-    return { status: 'rejected', reason: 'No alignment with Deen, Body, or Money objectives found', scores };
+    return { status: 'warning', reason: 'No strong keyword match — use AI evaluation for nuanced alignment confirmation, or proceed if you are confident.', scores };
   }
 
   if (max >= 2) {

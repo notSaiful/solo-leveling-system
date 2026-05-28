@@ -42,7 +42,7 @@ export default function QuestCard({ quest, onComplete, rank }) {
           {isLevelQuest && <span className="ml-2 text-[10px] text-yellow-400 uppercase tracking-wider">[Level {quest.requiredLevel}]</span>}
         </div>
         <div className="text-xs text-cyan-500/40 mt-0.5">
-          {quest.isPreset ? `+${quest.scaleFn(rank)} XP` : `+${quest.xp} XP`} · {quest.pillar.toUpperCase()}
+          {quest.isPreset && typeof quest.scaleFn === 'function' ? `+${quest.scaleFn(rank)} XP` : `+${quest.xp || 0} XP`} · {quest.pillar.toUpperCase()}
           {isRedemption && <span className="ml-2 text-red-400">· Clears debuff</span>}
         </div>
       </div>

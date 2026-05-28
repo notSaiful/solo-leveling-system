@@ -1,16 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
-import { getRankByLevel } from '../data/ranks';
+import { getRankByLevel } from '../data/questCatalog';
 
 export function useLevelUp(state) {
   const [notification, setNotification] = useState(null);
   const prevLevel = useRef(state.user.overallLevel);
   const prevRank = useRef(state.user.currentRank);
-  const prevMsgCount = useRef(state.systemMessages.length);
+  const prevMsgKey = useRef('');
 
   useEffect(() => {
     const currentRank = getRankByLevel(state.user.overallLevel);
 
-    // Check for level/rank up
     if (state.user.overallLevel > prevLevel.current) {
       if (currentRank.key !== prevRank.current) {
         setNotification({
@@ -29,24 +28,24 @@ export function useLevelUp(state) {
       }
     }
 
-    // Check for new penalty messages
-    if (state.systemMessages.length > prevMsgCount.current) {
-      const newMessages = state.systemMessages.slice(prevMsgCount.current);
-      const penaltyMsg = newMessages.find(m => m.type === 'penalty');
-      if (penaltyMsg) {
+    // Check for new system messages using a content hash instead of length
+    const lastMsg = state.systemMessages[state.systemMessages.length - 1];
+    const msgKey = lastMsg ? `${lastMsg.type}:${lastMsg.title}:${lastMsg.subtitle}` : '';
+    if (msgKey && msgKey !== prevMsgKey.current) {
+      prevMsgKey.current = msgKey;
+      if (lastMsg.type === 'penalty' || lastMsg.type === 'reward') {
         setNotification({
-          type: 'penalty',
-          title: penaltyMsg.title,
-          subtitle: penaltyMsg.subtitle,
-          message: penaltyMsg.message,
+          type: lastMsg.type,
+          title: lastMsg.title,
+          subtitle: lastMsg.subtitle,
+          message: lastMsg.message,
         });
       }
     }
 
     prevLevel.current = state.user.overallLevel;
     prevRank.current = currentRank.key;
-    prevMsgCount.current = state.systemMessages.length;
-  }, [state.user.overallLevel, state.systemMessages.length]);
+  }, [state.user.overallLevel, state.systemMessages]);
 
   const dismiss = () => setNotification(null);
 

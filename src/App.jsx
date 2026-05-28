@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, BarChart3, Swords, Settings, ShoppingBag, Sparkles, Coins, Zap, AlertTriangle } from 'lucide-react';
+import { LayoutDashboard, BarChart3, Swords, Settings, ShoppingBag, Sparkles, Coins, Zap, AlertTriangle, Cloud, CloudOff, Database } from 'lucide-react';
 import { useStore } from './hooks/useStore';
 import { useLevelUp } from './hooks/useLevelUp';
 import { usePenaltyCheck } from './hooks/usePenaltyCheck';
@@ -14,6 +14,8 @@ import { getCurrentWeekId } from './logic/dungeons';
 import { getRankByLevel, getWeeklyDungeonForRank } from './data/questCatalog';
 import { getFlowStateDisplay } from './logic/questEngine';
 import { getCharacterBuild } from './data/stats';
+import { initCloudSync, setCloudEnabled, isCloudEnabled, fullCloudReset, STORAGE_KEY } from './data/store';
+import { isSupabaseConfigured } from './services/supabaseClient';
 
 // Error Boundary to catch runtime crashes and show reset UI
 class ErrorBoundary extends React.Component {
@@ -36,7 +38,7 @@ class ErrorBoundary extends React.Component {
             </p>
             <button
               onClick={() => {
-                localStorage.removeItem('soloLevelingData');
+                localStorage.removeItem(STORAGE_KEY);
                 window.location.reload();
               }}
               className="w-full bg-red-900/30 hover:bg-red-900/50 border border-red-500/40 text-red-300 py-3 rounded-lg font-semibold transition-colors"
@@ -79,6 +81,14 @@ export default function App() {
   usePenaltyCheck(state, setState);
 
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [cloudStatus, setCloudStatus] = useState(null);
+
+  // Silent cloud init on mount if credentials exist
+  useEffect(() => {
+    if (isSupabaseConfigured()) {
+      initCloudSync().then(result => setCloudStatus(result));
+    }
+  }, []);
 
   // Initialize weekly dungeons if needed
   useEffect(() => {
@@ -92,6 +102,16 @@ export default function App() {
       }));
     }
   }, [state.weeklyDungeons.weekId, state.user.overallLevel]);
+
+  // Clear expired flow state
+  useEffect(() => {
+    if (state.flowState?.active && state.flowState.expiresAt < Date.now()) {
+      setState(prev => ({
+        ...prev,
+        flowState: { active: false, multiplier: 1, expiresAt: 0, questsInWindow: 0 },
+      }));
+    }
+  }, [state.flowState?.active, state.flowState?.expiresAt]);
 
   const flowDisplay = getFlowStateDisplay(state.flowState);
   const build = getCharacterBuild(state.stats || {});
@@ -174,35 +194,111 @@ export default function App() {
             </div>
 
             {/* AI Assistant Settings */}
-            <div className="glass-panel p-3 sm:p-4 space-y-3 border border-cyan-700/30">
+            <div className="glass-panel p-3 sm:p-4 space-y-3 border border-red-700/30">
               <div className="flex items-center gap-2 mb-2">
-                <Sparkles size={16} className="text-cyan-400" />
-                <span className="font-orbitron text-sm font-semibold text-cyan-300 tracking-wider">AI ASSISTANT</span>
+                <Sparkles size={16} className="text-red-400" />
+                <span className="font-orbitron text-sm font-semibold text-red-300 tracking-wider">FORGE-MASTER AI</span>
               </div>
-              <p className="text-xs text-cyan-500/50 mb-2">The SYSTEM Assistant uses OpenRouter (kimi-k2.6) to evaluate quests, provide motivation, and guide your journey.</p>
+              <p className="text-xs text-red-500/50 mb-2">Not a helper. A forge-master. Uses OpenRouter (kimi-k2.6) to hold you accountable, destroy your excuses, and forge you into a warrior. Zero softness. Zero tolerance for weakness.</p>
               <div>
-                <label className="text-sm text-cyan-500/60">OpenRouter API Key</label>
+                <label className="text-sm text-red-500/60">OpenRouter API Key</label>
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="flex-1 bg-system-dark border border-red-900/50 rounded-lg px-3 py-2 text-sm text-red-100">
+                    <span className="text-red-500/70">✓ Pre-integrated (kimi-k2.6)</span>
+                  </div>
+                </div>
+                <p className="text-[10px] text-red-600/40 mt-1">The Forge-Master is ready. You can optionally override with your own key above.</p>
                 <input
                   type="password"
                   defaultValue={localStorage.getItem('openrouter_api_key') || ''}
                   onChange={(e) => {
-                    setApiKey(e.target.value);
-                    // Visual feedback
-                    e.target.style.borderColor = 'rgba(34, 211, 238, 0.5)';
+                    localStorage.setItem('openrouter_api_key', e.target.value);
+                    e.target.style.borderColor = 'rgba(239, 68, 68, 0.5)';
                     setTimeout(() => { e.target.style.borderColor = ''; }, 500);
                   }}
-                  placeholder="sk-or-v1-..."
-                  className="w-full mt-1 bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-base text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+                  placeholder="Override with your own key (optional)..."
+                  className="w-full mt-2 bg-system-dark border border-red-900/50 rounded-lg px-3 py-2 text-base text-red-100 focus:outline-none focus:border-red-500/50"
                 />
-                <p className="text-[10px] text-cyan-600/40 mt-1">Stored locally in your browser. Never shared.</p>
               </div>
+            </div>
+
+            {/* Cloud Sync Status */}
+            <div className="glass-panel p-3 sm:p-4 space-y-3 border border-cyan-700/30">
+              <div className="flex items-center gap-2 mb-2">
+                <Database size={16} className="text-cyan-400" />
+                <span className="font-orbitron text-sm font-semibold text-cyan-300 tracking-wider">CLOUD SYNC</span>
+              </div>
+              <p className="text-xs text-cyan-500/50 mb-2">Your progress is backed up automatically. The System connects to Supabase on launch and syncs in the background.</p>
+
+              <div className="flex items-center gap-2 text-xs">
+                {cloudStatus?.success ? (
+                  <>
+                    <Cloud size={14} className="text-green-400" />
+                    <span className="text-green-400">Auto-sync active</span>
+                    {cloudStatus.userId && (
+                      <span className="text-cyan-600 ml-auto">ID: {cloudStatus.userId.slice(0, 8)}</span>
+                    )}
+                  </>
+                ) : cloudStatus ? (
+                  <>
+                    <CloudOff size={14} className="text-yellow-500" />
+                    <span className="text-yellow-500">Sync standby — {cloudStatus.reason}</span>
+                  </>
+                ) : (
+                  <>
+                    <Cloud size={14} className="text-cyan-600 animate-pulse" />
+                    <span className="text-cyan-600">Connecting...</span>
+                  </>
+                )}
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={async () => {
+                    const result = await initCloudSync();
+                    setCloudStatus(result);
+                    if (result.success) {
+                      alert('Cloud sync reconnected. Your progress is backed up.');
+                    } else {
+                      alert('Cloud sync failed: ' + result.reason);
+                    }
+                  }}
+                  className="flex-1 bg-cyan-900/30 hover:bg-cyan-900/50 border border-cyan-500/40 text-cyan-300 py-3 rounded-lg text-base transition-colors min-h-[44px]"
+                >
+                  Force Sync Now
+                </button>
+                <button
+                  onClick={() => {
+                    if (confirm('Disable cloud sync? Local progress will remain, but new changes will not be backed up.')) {
+                      setCloudEnabled(false);
+                      window.location.reload();
+                    }
+                  }}
+                  className="flex-1 bg-red-900/20 hover:bg-red-900/40 border border-red-700/50 text-red-400 py-3 rounded-lg text-base transition-colors min-h-[44px]"
+                >
+                  Disable
+                </button>
+              </div>
+
+              {cloudStatus?.success && (
+                <button
+                  onClick={() => {
+                    if (confirm('WARNING: This will delete ALL cloud data permanently. Local data will remain. Continue?')) {
+                      fullCloudReset();
+                    }
+                  }}
+                  className="w-full bg-red-950/30 hover:bg-red-950/50 border border-red-800/40 text-red-500 py-2 rounded-lg text-sm transition-colors min-h-[44px]"
+                >
+                  Reset Cloud Data
+                </button>
+              )}
             </div>
 
             <div className="glass-panel p-3 sm:p-4 space-y-3">
               <button
                 onClick={() => {
                   if (confirm('Reset all progress? This cannot be undone.')) {
-                    localStorage.removeItem('soloLevelingData');
+                    localStorage.removeItem(STORAGE_KEY);
                     localStorage.removeItem('system_chat_history');
                     window.location.reload();
                   }
@@ -217,7 +313,7 @@ export default function App() {
       </main>
 
       {/* AI Assistant Floating Widget */}
-      <AIAssistant state={state} />
+      <AIAssistant state={state} setState={setState} />
 
       {/* Bottom Nav */}
       <nav className="fixed bottom-0 left-0 right-0 z-20 bg-black/90 border-t border-cyan-900/50 pb-safe">

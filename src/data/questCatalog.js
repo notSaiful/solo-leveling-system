@@ -13,12 +13,12 @@
 
 // ─── RANK CONFIGURATION ───
 export const RANK_CONFIG = {
-  E: { minLevel: 0,  maxLevel: 10,  title: 'Hunter Candidate', color: 'text-gray-400',  statPointsPerLevel: 1, dailyQuestsPerPillar: 2, xpMultiplier: 1.0 },
-  D: { minLevel: 11, maxLevel: 25, title: 'Hunter',         color: 'text-cyan-400',  statPointsPerLevel: 2, dailyQuestsPerPillar: 3, xpMultiplier: 1.3 },
-  C: { minLevel: 26, maxLevel: 45, title: 'Elite Hunter',   color: 'text-blue-400',  statPointsPerLevel: 3, dailyQuestsPerPillar: 3, xpMultiplier: 1.6 },
-  B: { minLevel: 46, maxLevel: 70, title: 'Knight',         color: 'text-purple-400',statPointsPerLevel: 4, dailyQuestsPerPillar: 4, xpMultiplier: 2.0 },
-  A: { minLevel: 71, maxLevel: 99, title: 'General',        color: 'text-orange-400',statPointsPerLevel: 5, dailyQuestsPerPillar: 4, xpMultiplier: 2.5 },
-  S: { minLevel: 100,maxLevel: 999,title: 'Monarch',        color: 'text-yellow-400',statPointsPerLevel: 6, dailyQuestsPerPillar: 5, xpMultiplier: 3.0 },
+  E: { minLevel: 0,  maxLevel: 10,  title: 'Hunter Candidate', name: 'Al-Bahith', color: 'text-gray-400',  hexColor: '#9ca3af', statPointsPerLevel: 1, dailyQuestsPerPillar: 2, xpMultiplier: 1.0 },
+  D: { minLevel: 11, maxLevel: 25, title: 'Hunter',         name: 'Al-Mujahid', color: 'text-cyan-400',  hexColor: '#22d3ee', statPointsPerLevel: 2, dailyQuestsPerPillar: 3, xpMultiplier: 1.3 },
+  C: { minLevel: 26, maxLevel: 45, title: 'Elite Hunter',   name: 'Al-Murabit', color: 'text-blue-400',  hexColor: '#60a5fa', statPointsPerLevel: 3, dailyQuestsPerPillar: 3, xpMultiplier: 1.6 },
+  B: { minLevel: 46, maxLevel: 70, title: 'Knight',         name: 'Al-Alim', color: 'text-purple-400',hexColor: '#c084fc', statPointsPerLevel: 4, dailyQuestsPerPillar: 4, xpMultiplier: 2.0 },
+  A: { minLevel: 71, maxLevel: 99, title: 'General',        name: 'Al-Hadi', color: 'text-orange-400',hexColor: '#fb923c', statPointsPerLevel: 5, dailyQuestsPerPillar: 4, xpMultiplier: 2.5 },
+  S: { minLevel: 100,maxLevel: 999,title: 'Monarch',        name: 'Al-Khalifa', color: 'text-yellow-400',hexColor: '#facc15', statPointsPerLevel: 6, dailyQuestsPerPillar: 5, xpMultiplier: 3.0 },
 };
 
 export function getRankByLevel(level) {
@@ -782,8 +782,12 @@ export function getDailyQuestsForRank(rankKey, existingQuests = []) {
 
   ['deen', 'body', 'money'].forEach(pillar => {
     const pool = pools[pillar][rankKey] || pools[pillar].E;
-    // Shuffle and pick
-    const shuffled = [...pool].sort(() => Math.random() - 0.5);
+    // Fisher-Yates shuffle and pick
+    const shuffled = [...pool];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
     const picked = shuffled.slice(0, count);
     picked.forEach(q => {
       result.push({

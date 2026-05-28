@@ -10,17 +10,16 @@ import {
   getDailyQuestsForRank,
   getLevelQuestsForLevel,
   getWeeklyDungeonForRank,
-  getRedemptionQuest,
-  getJobChangeQuest,
   calculateGoldReward,
   RANK_CONFIG,
 } from '../data/questCatalog';
+import { applyStatModifiers } from '../data/stats';
 import { getCurrentWeekId } from './dungeons';
 
 // ─── STATE INITIALIZATION ───
 export function initializeDailyQuests(state) {
   const rank = getRankByLevel(state.user.overallLevel);
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toLocaleDateString('en-CA');
 
   // Only regenerate if date changed
   if (state.lastQuestDate === today) return state;
@@ -82,13 +81,16 @@ export function completeDailyQuest(state, questUniqueId) {
   if (!quest || quest.completed) return state;
 
   const rank = getRankByLevel(state.user.overallLevel);
-  const xp = quest.xp || getEffectiveXp(quest.baseXp, rank.key);
+  const baseXp = quest.xp || getEffectiveXp(quest.baseXp, rank.key);
   const gold = calculateGoldReward(quest, rank.key);
+
+  // Apply stat modifiers (Strength/Intelligence/Sense/Agility)
+  const statModifiedXp = applyStatModifiers(baseXp, state.stats || {}, quest.pillar);
 
   // Apply debuff if active
   const pillar = state.pillars[quest.pillar];
   const debuffMultiplier = pillar?.activeDebuff?.multiplier || 1;
-  const finalXp = Math.floor(xp * debuffMultiplier);
+  const finalXp = Math.floor(statModifiedXp * debuffMultiplier);
 
   // Update pillar
   const newPillars = { ...state.pillars };
@@ -99,12 +101,16 @@ export function completeDailyQuest(state, questUniqueId) {
   };
 
   // Check for pillar level up
+  let statPointsAwarded = 0;
   const pillarLevel = newPillars[quest.pillar].level;
   const pillarXp = newPillars[quest.pillar].xp;
   const needed = xpForNextLevel(pillarLevel);
   if (pillarXp >= needed) {
     newPillars[quest.pillar].level = pillarLevel + 1;
     newPillars[quest.pillar].xp = pillarXp - needed;
+    // Award stat points based on the PILLAR's rank, not overall rank
+    const pillarRank = getRankByLevel(newPillars[quest.pillar].level);
+    statPointsAwarded = pillarRank.statPointsPerLevel || 1;
   }
 
   // Mark quest complete
@@ -126,13 +132,28 @@ export function completeDailyQuest(state, questUniqueId) {
     completed: true,
   };
 
-  return {
+  const result = {
     ...state,
     pillars: newPillars,
     dailyQuests: newDailyQuests,
     gold: state.gold + gold,
+    statPoints: state.statPoints + statPointsAwarded,
     history: [...state.history, historyEntry],
   };
+
+  if (statPointsAwarded > 0) {
+    result.systemMessages = [
+      ...(result.systemMessages || []),
+      {
+        type: 'levelUp',
+        title: `${quest.pillar.toUpperCase()} LEVEL UP!`,
+        subtitle: `Level ${newPillars[quest.pillar].level} — ${statPointsAwarded} Stat Points awarded`,
+        message: 'Distribute them in the Build tab.',
+      },
+    ];
+  }
+
+  return result;
 }
 
 export function completeLevelQuest(state, levelQuestIndex, questIndex) {
@@ -196,9 +217,6 @@ export function completeLevelQuest(state, levelQuestIndex, questIndex) {
       gold: state.gold + (reward.gold || 0) + gold,
       statPoints: state.statPoints + (reward.statPoints || 0),
       systemMessages: [...state.systemMessages, ...messages],
-      user: reward.rankUp
-        ? { ...state.user, currentRank: reward.rankUp, overallLevel: state.user.overallLevel + 1 }
-        : { ...state.user, overallLevel: state.user.overallLevel + 1 },
       history: [
         ...state.history,
         {
@@ -367,24 +385,28 @@ export function completeWeeklyDungeon(state, pillar) {
 
   const rank = getRankByLevel(state.user.overallLevel);
   const baseXp = dungeon.xp || 200;
-  const scaledXp = Math.floor(baseXp * (rank.xpMultiplier || 1));
-  const scaledGold = Math.floor(scaledXp * 0.6);
+  const rankScaledXp = Math.floor(baseXp * (rank.xpMultiplier || 1));
+  const statModifiedXp = applyStatModifiers(rankScaledXp, state.stats || {}, pillar);
+  const scaledGold = Math.floor(rankScaledXp * 0.6);
 
   // Update pillar XP
   const newPillars = { ...state.pillars };
   newPillars[pillar] = {
     ...newPillars[pillar],
-    xp: newPillars[pillar].xp + scaledXp,
+    xp: newPillars[pillar].xp + statModifiedXp,
     streak: newPillars[pillar].streak + 1,
   };
 
   // Check pillar level up
+  let statPointsAwarded = 0;
   const pillarLevel = newPillars[pillar].level;
   const pillarXp = newPillars[pillar].xp;
   const needed = xpForNextLevel(pillarLevel);
   if (pillarXp >= needed) {
     newPillars[pillar].level = pillarLevel + 1;
     newPillars[pillar].xp = pillarXp - needed;
+    const pillarRank = getRankByLevel(newPillars[pillar].level);
+    statPointsAwarded = pillarRank.statPointsPerLevel || 1;
   }
 
   // Mark dungeon pillar as completed
@@ -398,7 +420,7 @@ export function completeWeeklyDungeon(state, pillar) {
     type: 'dungeon',
     pillar,
     title: dungeon.title,
-    xp: scaledXp,
+    xp: statModifiedXp,
     gold: scaledGold,
     date: new Date().toISOString(),
     completed: true,
@@ -408,9 +430,22 @@ export function completeWeeklyDungeon(state, pillar) {
     ...state,
     pillars: newPillars,
     gold: state.gold + scaledGold,
+    statPoints: state.statPoints + statPointsAwarded,
     weeklyDungeons: newWeeklyDungeons,
     history: [...state.history, historyEntry],
   };
+
+  if (statPointsAwarded > 0) {
+    nextState.systemMessages = [
+      ...(nextState.systemMessages || []),
+      {
+        type: 'levelUp',
+        title: `${pillar.toUpperCase()} LEVEL UP!`,
+        subtitle: `Level ${newPillars[pillar].level} — ${statPointsAwarded} Stat Points awarded`,
+        message: 'Distribute them in the Build tab.',
+      },
+    ];
+  }
 
   // Recalculate overall level
   nextState = recalculateOverallLevel(nextState);

@@ -11,14 +11,8 @@ export default {
         inter: ['Inter', 'sans-serif'],
       },
       colors: {
-        rank: {
-          e: '#6b7280',
-          d: '#22d3ee',
-          c: '#06b6d4',
-          b: '#3b82f6',
-          a: '#f59e0b',
-          s: '#fbbf24',
-        },
+        // Rank colors are defined manually in src/index.css as .text-rank-* utilities
+        // to ensure they override Tailwind generated classes consistently.
         pillar: {
           deen: '#22d3ee',
           body: '#f43f5e',

@@ -33,7 +33,7 @@ export default function WeeklyDungeon({ state, setState }) {
 
   const allComplete = ['deen', 'body', 'money'].every(p => dungeons?.[p]?.steps?.every(s => s.completed));
   const allClaimed = dungeons?.deenCompleted && dungeons?.bodyCompleted && dungeons?.moneyCompleted;
-  const bonusAvailable = allComplete && !dungeons?.bonusClaimed;
+  const bonusAvailable = allComplete && allClaimed && !dungeons?.bonusClaimed;
 
   const handleClaimBonus = () => {
     setState(prev => {
