@@ -116,33 +116,33 @@ export default function App() {
       <SystemMessage notification={notification} onDismiss={dismiss} />
 
       {/* Header */}
-      <header className="relative z-10 p-4 border-b border-cyan-900/50 bg-black/80 backdrop-blur-lg">
+      <header className="relative z-10 p-3 sm:p-4 border-b border-cyan-900/50 bg-black/80">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <div className="relative">
-              <h1 className="font-orbitron text-lg font-bold text-cyan-400 tracking-widest text-glow-cyan">
+              <h1 className="font-orbitron text-base sm:text-lg font-bold text-cyan-400 tracking-widest text-glow-cyan">
                 SYSTEM
               </h1>
               <div className="absolute -bottom-1 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent" />
             </div>
             {flowDisplay && (
-              <div className="flex items-center gap-1 bg-cyan-900/30 border border-cyan-500/30 px-2 py-0.5 rounded text-xs text-cyan-400 animate-pulse">
-                <Zap size={12} />
-                FLOW
+              <div className="flex items-center gap-1 bg-cyan-900/30 border border-cyan-500/30 px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs text-cyan-400 animate-pulse">
+                <Zap size={10} className="sm:w-3 sm:h-3" />
+                <span className="hidden sm:inline">FLOW</span>
               </div>
             )}
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1 text-xs text-cyan-500/60">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-1 text-[10px] sm:text-xs text-cyan-500/60 hidden sm:flex">
               <Sparkles size={12} />
               <span>{build.name}</span>
             </div>
-            <div className="flex items-center gap-1 bg-yellow-900/20 border border-yellow-600/30 px-2 py-0.5 rounded text-xs">
+            <div className="flex items-center gap-1 bg-yellow-900/20 border border-yellow-600/30 px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs">
               <Coins size={12} className="text-yellow-400" />
-              <span className="font-bold text-yellow-400">{state.gold}</span>
+              <span className="font-bold text-yellow-400">{state.gold.toLocaleString()}</span>
             </div>
-            <div className="text-xs text-cyan-500/40">
+            <div className="text-[10px] sm:text-xs text-cyan-500/40 hidden sm:block">
               {state.user.name}
             </div>
           </div>
@@ -150,23 +150,23 @@ export default function App() {
       </header>
 
       {/* Main Content */}
-      <main className="relative z-10 py-4">
+      <main className="relative z-10 py-4 px-2 sm:px-4">
         {activeTab === 'dashboard' && <Dashboard state={state} setState={setState} />}
         {activeTab === 'stats' && <StatsPanel state={state} />}
         {activeTab === 'dungeons' && <WeeklyDungeon state={state} setState={setState} />}
         {activeTab === 'store' && <RewardStore state={state} setState={setState} />}
         {activeTab === 'build' && <StatDistribution state={state} setState={setState} />}
         {activeTab === 'settings' && (
-          <div className="max-w-2xl mx-auto p-4 space-y-4">
+          <div className="max-w-2xl mx-auto p-2 sm:p-4 space-y-4">
             <h2 className="font-orbitron text-xl font-bold text-cyan-400 tracking-wider">System Settings</h2>
-            <div className="glass-panel p-4 space-y-3">
+            <div className="glass-panel p-3 sm:p-4 space-y-3">
               <div>
                 <label className="text-sm text-cyan-500/60">Player Name</label>
                 <input
                   type="text"
                   value={state.user.name}
                   onChange={(e) => setState(prev => ({ ...prev, user: { ...prev.user, name: e.target.value } }))}
-                  className="w-full mt-1 bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+                  className="w-full mt-1 bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-base text-cyan-100 focus:outline-none focus:border-cyan-500/50"
                 />
               </div>
               <button
@@ -176,7 +176,7 @@ export default function App() {
                     window.location.reload();
                   }
                 }}
-                className="w-full bg-red-900/20 hover:bg-red-900/40 border border-red-700/50 text-red-400 py-2 rounded-lg text-sm transition-colors"
+                className="w-full bg-red-900/20 hover:bg-red-900/40 border border-red-700/50 text-red-400 py-3 rounded-lg text-base transition-colors min-h-[44px]"
               >
                 Reset All Progress
               </button>
@@ -186,22 +186,22 @@ export default function App() {
       </main>
 
       {/* Bottom Nav */}
-      <nav className="fixed bottom-0 left-0 right-0 z-20 bg-black/90 backdrop-blur-lg border-t border-cyan-900/50">
-        <div className="max-w-2xl mx-auto flex justify-around p-2">
+      <nav className="fixed bottom-0 left-0 right-0 z-20 bg-black/90 border-t border-cyan-900/50 pb-safe">
+        <div className="max-w-2xl mx-auto flex justify-around items-center p-1 sm:p-2">
           {tabs.map(tab => {
             const Icon = tab.icon;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-all ${
+                className={`flex flex-col items-center justify-center gap-1 px-2 sm:px-3 py-2 sm:py-2.5 rounded-lg transition-all min-w-[44px] min-h-[44px] sm:min-w-[56px] ${
                   activeTab === tab.id
                     ? 'text-cyan-400 bg-cyan-900/30 border border-cyan-500/30'
                     : 'text-cyan-600/50 hover:text-cyan-400/70'
                 }`}
               >
-                <Icon size={20} />
-                <span className="text-[10px] tracking-wider uppercase">{tab.label}</span>
+                <Icon size={20} className="shrink-0" />
+                <span className="text-[10px] sm:text-xs tracking-wider uppercase hidden sm:inline">{tab.label}</span>
               </button>
             );
           })}

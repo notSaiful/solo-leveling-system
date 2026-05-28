@@ -7,7 +7,7 @@ export default function StatsPanel({ state }) {
   const currentStreak = Math.max(state.pillars.deen.streak, state.pillars.body.streak, state.pillars.money.streak);
 
   return (
-    <div className="max-w-2xl mx-auto p-4 space-y-4 relative z-10">
+    <div className="max-w-2xl md:max-w-3xl lg:max-w-4xl mx-auto p-2 sm:p-4 space-y-4 relative z-10">
       <div className="flex items-center justify-between mb-2">
         <h2 className="font-orbitron text-sm font-bold text-cyan-300 tracking-wider flex items-center gap-2">
           <BarChart3 size={16} /> STATISTICS

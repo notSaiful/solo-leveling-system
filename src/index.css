@@ -6,6 +6,9 @@
   html {
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    overflow-x: hidden;
   }
   body {
     @apply bg-system-bg text-gray-100 font-inter;
@@ -19,6 +22,9 @@
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     user-select: none;
+    overflow-x: hidden;
+    min-height: 100dvh;
+    min-height: 100vh;
   }
   /* iOS WebKit requires cursor:pointer for fast taps */
   button, a, [role="button"], label, input, select, textarea, .cursor-pointer {
@@ -29,6 +35,18 @@
   input, textarea, select {
     -webkit-user-select: auto;
     user-select: auto;
+  }
+  /* Prevent iOS zoom on input focus - minimum 16px */
+  input, textarea, select {
+    font-size: 16px;
+  }
+  /* Reduce motion for users who prefer it */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 
@@ -46,7 +64,8 @@
   }
 
   .quest-card {
-    @apply glass-panel p-4 transition-all cursor-pointer;
+    @apply glass-panel p-3 sm:p-4 transition-all cursor-pointer;
+    min-height: 56px;
   }
 
   .quest-card:hover {
@@ -68,6 +87,7 @@
     @apply fixed inset-0 z-50 flex items-center justify-center;
     background: rgba(0, 0, 0, 0.95);
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
   }
 
   .system-header {
@@ -119,7 +139,7 @@
   }
 
   .stat-box {
-    @apply glass-panel p-3 text-center relative overflow-hidden;
+    @apply glass-panel p-2 sm:p-3 text-center relative overflow-hidden;
   }
 
   .stat-box::after {
@@ -188,6 +208,14 @@
   .text-rank-b { color: #c084fc; }
   .text-rank-a { color: #fb923c; }
   .text-rank-s { color: #facc15; }
+
+  /* Safe area utilities */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
 }
 
 @keyframes float {
@@ -198,4 +226,12 @@
 @keyframes scan {
   0% { transform: translateY(-100%); }
   100% { transform: translateY(100%); }
+}
+
+/* Landscape orientation improvements */
+@media (orientation: landscape) and (max-height: 500px) {
+  .landscape-compact {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
 }
