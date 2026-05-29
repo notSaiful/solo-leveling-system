@@ -10,8 +10,8 @@ import { getAdminCommandDocs } from '../logic/adminCommands';
 import { buildAccountabilityContext, analyzeMessage, getConversationSummary } from '../logic/behaviorAnalyzer';
 
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const PRIMARY_MODEL = 'moonshotai/kimi-k2.6:free';
-const FALLBACK_MODEL = 'openai/gpt-4o-mini';
+const PRIMARY_MODEL = 'openai/gpt-4o-mini';
+const FALLBACK_MODEL = 'moonshotai/kimi-k2.6:free';
 
 const DEFAULT_API_KEY_B64 = 'c2stb3ItdjEtYzJjZTQ1YzFjM2ZiM2E1ZjNkMzhiODRiNmI2ODQxNDc3NjMzMWFiZTBiNmQ3Y2MyZjI1ZjI1YjdmNzBkYzk0Nw==';
 
@@ -244,32 +244,41 @@ async function tryModel(model, messages, state, chatHistory) {
 
 async function callOpenRouter(messages, state, chatHistory = []) {
   let lastError = null;
+  console.log('[Forge-Master] Sending request. Key valid?', hasApiKey(), 'Messages:', messages.length);
 
   // Try primary model first
   try {
-    return await tryModel(PRIMARY_MODEL, messages, state, chatHistory);
+    const result = await tryModel(PRIMARY_MODEL, messages, state, chatHistory);
+    console.log('[Forge-Master] Primary model succeeded');
+    return result;
   } catch (err) {
     lastError = err;
-    console.warn('Primary model failed:', err.status, err.message);
+    console.warn('[Forge-Master] Primary model failed:', err.status || 'no-status', err.message || err);
   }
 
-  // If primary failed with 429 (rate limit) or 400 (bad request), try fallback
-  if (lastError && (lastError.status === 429 || lastError.status === 400 || lastError.status === 503)) {
+  // Try fallback on ANY failure (network, rate limit, bad request, server error)
+  if (lastError) {
+    console.log('[Forge-Master] Trying fallback model...');
     try {
-      return await tryModel(FALLBACK_MODEL, messages, state, chatHistory);
+      const result = await tryModel(FALLBACK_MODEL, messages, state, chatHistory);
+      console.log('[Forge-Master] Fallback model succeeded');
+      return result;
     } catch (err2) {
       lastError = err2;
-      console.warn('Fallback model also failed:', err2.status, err2.message);
+      console.warn('[Forge-Master] Fallback model also failed:', err2.status || 'no-status', err2.message || err2);
     }
   }
 
-  const friendly = lastError?.status === 429
-    ? 'Rate limit exceeded. The free model is overloaded. Retrying with backup...'
-    : lastError?.status === 401
+  const status = lastError?.status;
+  const friendly = status === 429
+    ? 'Rate limit exceeded. Both models are overloaded. Try again in a few minutes.'
+    : status === 401
     ? 'API key rejected. The Forge-Master cannot reach the server.'
-    : lastError?.status === 402
+    : status === 402
     ? 'API credits exhausted. Add your own OpenRouter key in settings.'
-    : `OpenRouter error (${lastError?.status || 'unknown'}): ${lastError?.message || 'Unknown failure'}`;
+    : status === 503
+    ? 'AI service temporarily unavailable. The Forge is cooling. Retry shortly.'
+    : `Forge-Master connection failed (${status || 'network'}): ${lastError?.message || 'Unknown failure'}. Check console for details.`;
 
   throw new Error(friendly);
 }
