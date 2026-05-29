@@ -10,7 +10,8 @@ import { getAdminCommandDocs } from '../logic/adminCommands';
 import { buildAccountabilityContext, analyzeMessage, getConversationSummary } from '../logic/behaviorAnalyzer';
 
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const DEFAULT_MODEL = 'moonshotai/kimi-k2.6:free';
+const PRIMARY_MODEL = 'moonshotai/kimi-k2.6:free';
+const FALLBACK_MODEL = 'openai/gpt-4o-mini';
 
 const DEFAULT_API_KEY_B64 = 'c2stb3ItdjEtYzJjZTQ1YzFjM2ZiM2E1ZjNkMzhiODRiNmI2ODQxNDc3NjMzMWFiZTBiNmQ3Y2MyZjI1ZjI1YjdmNzBkYzk0Nw==';
 
@@ -18,8 +19,17 @@ function getDefaultApiKey() {
   try { return atob(DEFAULT_API_KEY_B64); } catch { return ''; }
 }
 
+function looksLikeOpenRouterKey(k) {
+  return typeof k === 'string' && k.length > 20 && k.startsWith('sk-');
+}
+
 function getApiKey() {
-  return localStorage.getItem('openrouter_api_key') || getDefaultApiKey();
+  const custom = localStorage.getItem('openrouter_api_key');
+  // Only use custom key if it looks valid; otherwise always use default
+  if (looksLikeOpenRouterKey(custom) && custom !== getDefaultApiKey()) {
+    return custom;
+  }
+  return getDefaultApiKey();
 }
 
 export function setApiKey(key) {
@@ -27,7 +37,7 @@ export function setApiKey(key) {
 }
 
 export function hasApiKey() {
-  return !!getApiKey() && getApiKey().startsWith('sk-');
+  return looksLikeOpenRouterKey(getApiKey());
 }
 
 // ─── THE FORGE-MASTER PERSONALITY CORE ───
@@ -55,7 +65,6 @@ function buildForgeMasterPrompt(state, chatHistory) {
     .map(p => `${p}: ${sanitize(state.pillars[p].activeDebuff.name)}`)
     .join('\n') || 'None';
 
-  // Get accountability analysis
   const acc = buildAccountabilityContext(state, chatHistory);
   const convoSummary = getConversationSummary(chatHistory, 8);
 
@@ -190,10 +199,10 @@ Respond with the fire of the Forge-Master. No softness. No hesitation. The user 
 
 // ─── CORE API ───
 
-async function callOpenRouter(messages, state, chatHistory = []) {
+async function tryModel(model, messages, state, chatHistory) {
   const apiKey = getApiKey();
   if (!apiKey) {
-    throw new Error('OpenRouter API key not set.');
+    throw new Error('OpenRouter API key not configured.');
   }
 
   const systemPrompt = buildForgeMasterPrompt(state, chatHistory);
@@ -207,7 +216,7 @@ async function callOpenRouter(messages, state, chatHistory = []) {
       'X-Title': 'Solo Leveling System',
     },
     body: JSON.stringify({
-      model: DEFAULT_MODEL,
+      model,
       messages: [
         { role: 'system', content: systemPrompt },
         ...messages,
@@ -218,13 +227,51 @@ async function callOpenRouter(messages, state, chatHistory = []) {
   });
 
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`OpenRouter error (${response.status}): ${error}`);
+    let errorBody = '';
+    try {
+      const errJson = await response.json();
+      errorBody = errJson?.error?.message || errJson?.message || JSON.stringify(errJson);
+    } catch {
+      errorBody = await response.text();
+    }
+    throw { status: response.status, message: errorBody };
   }
 
   const data = await response.json();
   if (!data || !data.choices) throw new Error('Invalid API response');
   return data.choices?.[0]?.message?.content || 'The Forge is silent. The silence is your answer. Move.';
+}
+
+async function callOpenRouter(messages, state, chatHistory = []) {
+  let lastError = null;
+
+  // Try primary model first
+  try {
+    return await tryModel(PRIMARY_MODEL, messages, state, chatHistory);
+  } catch (err) {
+    lastError = err;
+    console.warn('Primary model failed:', err.status, err.message);
+  }
+
+  // If primary failed with 429 (rate limit) or 400 (bad request), try fallback
+  if (lastError && (lastError.status === 429 || lastError.status === 400 || lastError.status === 503)) {
+    try {
+      return await tryModel(FALLBACK_MODEL, messages, state, chatHistory);
+    } catch (err2) {
+      lastError = err2;
+      console.warn('Fallback model also failed:', err2.status, err2.message);
+    }
+  }
+
+  const friendly = lastError?.status === 429
+    ? 'Rate limit exceeded. The free model is overloaded. Retrying with backup...'
+    : lastError?.status === 401
+    ? 'API key rejected. The Forge-Master cannot reach the server.'
+    : lastError?.status === 402
+    ? 'API credits exhausted. Add your own OpenRouter key in settings.'
+    : `OpenRouter error (${lastError?.status || 'unknown'}): ${lastError?.message || 'Unknown failure'}`;
+
+  throw new Error(friendly);
 }
 
 // ─── PUBLIC API ───
