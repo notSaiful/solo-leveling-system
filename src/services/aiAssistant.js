@@ -205,6 +205,8 @@ async function tryModel(model, messages, state, chatHistory) {
     throw new Error('OpenRouter API key not configured.');
   }
 
+  console.log('[Forge-Master] tryModel:', model, 'keyPrefix:', apiKey.slice(0, 10), 'origin:', window.location.origin);
+
   const systemPrompt = buildForgeMasterPrompt(state, chatHistory);
 
   const response = await fetch(OPENROUTER_API_URL, {

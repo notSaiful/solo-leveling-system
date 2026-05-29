@@ -268,6 +268,17 @@ export default function App() {
             <div className="glass-panel p-3 sm:p-4 space-y-3">
               <button
                 onClick={() => {
+                  if (confirm('Clear browser cache and reload? This fixes stale code and stuck API keys.')) {
+                    localStorage.removeItem('openrouter_api_key');
+                    window.location.href = window.location.href + '?nocache=' + Date.now();
+                  }
+                }}
+                className="w-full bg-yellow-900/20 hover:bg-yellow-900/40 border border-yellow-700/50 text-yellow-400 py-3 rounded-lg text-base transition-colors min-h-[44px] mb-2"
+              >
+                Clear Cache & Reload
+              </button>
+              <button
+                onClick={() => {
                   if (confirm('Reset all progress? This cannot be undone.')) {
                     localStorage.removeItem(STORAGE_KEY);
                     localStorage.removeItem('system_chat_history');
