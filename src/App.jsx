@@ -16,6 +16,7 @@ import { getFlowStateDisplay } from './logic/questEngine';
 import { getCharacterBuild } from './data/stats';
 import { initCloudSync, STORAGE_KEY } from './data/store';
 import { isSupabaseConfigured } from './services/supabaseClient';
+import { hasApiKey, getApiKey } from './services/aiAssistant';
 
 // Error Boundary to catch runtime crashes and show reset UI
 class ErrorBoundary extends React.Component {
@@ -51,6 +52,64 @@ class ErrorBoundary extends React.Component {
     }
     return this.props.children;
   }
+}
+
+// Diagnostic panel for troubleshooting
+function DiagnosticPanel() {
+  const [testResult, setTestResult] = useState(null);
+  const [testing, setTesting] = useState(false);
+
+  const runTest = async () => {
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getApiKey()}`,
+          'HTTP-Referer': window.location.origin,
+          'X-Title': 'Solo Leveling System',
+        },
+        body: JSON.stringify({
+          model: 'openai/gpt-4o-mini',
+          messages: [{ role: 'user', content: 'ping' }],
+          temperature: 0.85,
+          max_tokens: 20,
+        }),
+      });
+      const data = await response.json();
+      if (response.ok && data.choices) {
+        setTestResult({ ok: true, msg: `OK - ${data.model} responded` });
+      } else {
+        setTestResult({ ok: false, msg: `Error ${response.status}: ${data.error?.message || JSON.stringify(data)}` });
+      }
+    } catch (err) {
+      setTestResult({ ok: false, msg: `Network error: ${err.message}` });
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  return (
+    <div className="mt-2 pt-2 border-t border-cyan-900/20 space-y-2">
+      <button
+        onClick={runTest}
+        disabled={testing}
+        className="w-full bg-cyan-900/20 hover:bg-cyan-900/40 border border-cyan-700/40 text-cyan-300 py-2 rounded text-xs transition-colors"
+      >
+        {testing ? 'Testing connection...' : 'Test AI Connection'}
+      </button>
+      {testResult && (
+        <div className={`text-[10px] px-2 py-1 rounded ${testResult.ok ? 'bg-green-950/30 text-green-400' : 'bg-red-950/30 text-red-400'}`}>
+          {testResult.msg}
+        </div>
+      )}
+      <div className="text-[10px] text-cyan-600/50">
+        Key status: {hasApiKey() ? '✓ Valid' : '✗ Invalid'}
+      </div>
+    </div>
+  );
 }
 
 // Floating particle component
@@ -199,10 +258,11 @@ export default function App() {
                 <span className="font-orbitron text-sm font-semibold text-cyan-300 tracking-wider">SYSTEM STATUS</span>
               </div>
               <div className="text-xs text-cyan-500/50 space-y-1">
-                <p>Forge-Master AI: <span className="text-green-400">Connected (kimi-k2.6)</span></p>
+                <p>Forge-Master AI: <span className="text-green-400">Connected (gpt-4o-mini)</span></p>
                 <p>Cloud Sync: <span className="text-green-400">Auto-sync active</span></p>
                 <p>Storage: <span className="text-green-400">localStorage + Supabase</span></p>
               </div>
+              <DiagnosticPanel />
             </div>
 
             <div className="glass-panel p-3 sm:p-4 space-y-3">

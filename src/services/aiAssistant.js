@@ -23,7 +23,7 @@ function looksLikeOpenRouterKey(k) {
   return typeof k === 'string' && k.length > 20 && k.startsWith('sk-');
 }
 
-function getApiKey() {
+export function getApiKey() {
   const custom = localStorage.getItem('openrouter_api_key');
   // Only use custom key if it looks valid; otherwise always use default
   if (looksLikeOpenRouterKey(custom) && custom !== getDefaultApiKey()) {
