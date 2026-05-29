@@ -161,12 +161,24 @@ export async function fullCloudReset() {
 
   const userId = user.id;
 
-  // Delete all user data
+  // Delete all user data (order matters for FK constraints)
+  await supabase.from('level_quest_steps').delete().eq('user_id', userId);
+  await supabase.from('level_quests').delete().eq('user_id', userId);
+  await supabase.from('weekly_dungeon_steps').delete().eq('user_id', userId);
+  await supabase.from('weekly_dungeons').delete().eq('user_id', userId);
+  await supabase.from('job_change_steps').delete().eq('user_id', userId);
+  await supabase.from('job_changes').delete().eq('user_id', userId);
+  await supabase.from('ai_dungeons').delete().eq('user_id', userId);
+  await supabase.from('system_messages').delete().eq('user_id', userId);
+  await supabase.from('history').delete().eq('user_id', userId);
+  await supabase.from('redemption_quests').delete().eq('user_id', userId);
+  await supabase.from('custom_quests').delete().eq('user_id', userId);
   await supabase.from('daily_quests').delete().eq('user_id', userId);
-  await supabase.from('pillars').delete().eq('user_id', userId);
-  await supabase.from('stats').delete().eq('user_id', userId);
   await supabase.from('shadows').delete().eq('user_id', userId);
   await supabase.from('purchased_rewards').delete().eq('user_id', userId);
+  await supabase.from('pillars').delete().eq('user_id', userId);
+  await supabase.from('stats').delete().eq('user_id', userId);
+  await supabase.from('state_snapshots').delete().eq('user_id', userId);
   await supabase.from('profiles').delete().eq('id', userId);
 
   localStorage.removeItem(STORAGE_KEY);

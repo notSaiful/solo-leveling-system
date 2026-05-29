@@ -367,3 +367,69 @@ create trigger if not exists handle_job_changes_updated_at
 create trigger if not exists handle_custom_quests_updated_at
   before update on public.custom_quests
   for each row execute procedure public.handle_updated_at();
+
+-- ============================================================
+-- MIGRATION 2026-05-29: Full-state sync + missing tables
+-- Run this section if your project was created before today
+-- ============================================================
+
+-- Add missing columns to profiles
+alter table public.profiles
+  add column if not exists flow_state jsonb default null,
+  add column if not exists last_quest_date date default null,
+  add column if not exists last_active_date date default null;
+
+-- State snapshots (guaranteed full-state backup, no data loss)
+create table if not exists public.state_snapshots (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  snapshot jsonb not null,
+  updated_at timestamptz default now(),
+  unique(user_id)
+);
+
+create policy "Users can manage own state snapshots"
+  on public.state_snapshots for all
+  using (auth.uid() = user_id);
+
+create trigger if not exists handle_state_snapshots_updated_at
+  before update on public.state_snapshots
+  for each row execute procedure public.handle_updated_at();
+
+-- AI Dungeons
+create table if not exists public.ai_dungeons (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  dungeon_id text not null,
+  title text not null,
+  description text,
+  pillar text check (pillar in ('deen','body','money')) not null,
+  difficulty text,
+  steps jsonb default '[]',
+  completed boolean default false,
+  completed_at timestamptz,
+  reward_gold integer default 0,
+  reward_xp integer default 0,
+  reward_shadow_id text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  unique(user_id, dungeon_id)
+);
+
+create policy "Users can manage own ai dungeons"
+  on public.ai_dungeons for all
+  using (auth.uid() = user_id);
+
+create trigger if not exists handle_ai_dungeons_updated_at
+  before update on public.ai_dungeons
+  for each row execute procedure public.handle_updated_at();
+
+-- Add unique constraints for reliable upserts
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'unique_redemption_quest'
+  ) then
+    alter table public.redemption_quests add constraint unique_redemption_quest unique (user_id, quest_template_id);
+  end if;
+end $$;
