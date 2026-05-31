@@ -148,6 +148,32 @@ function createSystemMessage(type, title, subtitle, message) {
   return { type, title, subtitle: subtitle || '', message: message || '' };
 }
 
+function createAuditEntry(cmd, report) {
+  const now = new Date().toISOString();
+  return {
+    type: 'aiCommand',
+    eventId: `ai-audit-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    commandType: cmd.type,
+    title: `AI Command: ${cmd.type}`,
+    reason: cmd.data?.reason || '',
+    report,
+    commandData: cmd.data || {},
+    date: now,
+    completed: false,
+    audited: true,
+  };
+}
+
+function appendAudit(state, cmd, report) {
+  return {
+    ...state,
+    history: [
+      ...(state.history || []),
+      createAuditEntry(cmd, report),
+    ],
+  };
+}
+
 function getQuestKey(quest) {
   return quest?.uniqueId || quest?.id || '';
 }
@@ -299,8 +325,9 @@ function execForceCompleteQuest(state, data) {
   }
   newState.gold += gold;
   newState.history = [...(newState.history || []), {
+    eventId: `force-complete-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     type: isCustom ? 'custom' : 'daily', questId: questKey, title: quest.title, pillar, xp, gold,
-    date: completedAt, completed: true,
+    date: completedAt, localDate: today, completed: true,
   }];
 
   applyOverallFromPillars(newState);
@@ -519,7 +546,7 @@ export function executeAdminCommands(state, commands) {
     if (result.error) {
       reports.push({ type: 'error', message: result.error });
     } else {
-      currentState = result.state;
+      currentState = appendAudit(result.state, cmd, result.report);
       reports.push({ type: 'success', message: result.report });
       modified = true;
     }

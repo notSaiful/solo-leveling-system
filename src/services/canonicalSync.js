@@ -52,6 +52,7 @@ export async function syncStateToCanonicalStore(state) {
     return {
       success: true,
       accepted: result.data?.accepted !== false,
+      conflictMerged: !!result.data?.conflictMerged,
       state: result.data?.state || state,
     };
   } catch (error) {

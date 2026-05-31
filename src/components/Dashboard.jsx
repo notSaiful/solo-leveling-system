@@ -199,7 +199,18 @@ export default function Dashboard({ state, setState, ready = true }) {
         customQuests: prev.customQuests.map(q => q.uniqueId === questUniqueId ? { ...q, id: q.id || q.uniqueId, lastCompleted: today, completedAt: new Date().toISOString() } : q),
         pillars: newPillars,
         gold: prev.gold + gold,
-        history: [...prev.history, { type: 'custom', questId: questKey, title: quest.title, pillar, xp: baseXp, gold, date: new Date().toISOString(), completed: true }],
+        history: [...prev.history, {
+          eventId: `custom-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          type: 'custom',
+          questId: questKey,
+          title: quest.title,
+          pillar,
+          xp: baseXp,
+          gold,
+          date: new Date().toISOString(),
+          localDate: today,
+          completed: true,
+        }],
       };
       // Check pillar level-up
       const needed = xpForNextLevel(newPillars[pillar].level);

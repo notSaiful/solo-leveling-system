@@ -163,11 +163,9 @@ export default function App() {
   useEffect(() => {
     if (isCanonicalSyncConfigured()) {
       initCloudSync().then((result) => {
-        if (result?.success && result?.source === 'cloud') {
+        if (result?.success) {
           const fresh = loadState();
-          // Only overwrite React state if the freshly loaded cloud data is newer
-          // than what we currently hold in memory (handles cross-device sync)
-          if (fresh.lastUpdated > (stateRef.current.lastUpdated || 0)) {
+          if ((fresh.syncRevision || 0) > (stateRef.current.syncRevision || 0) || fresh.lastUpdated > (stateRef.current.lastUpdated || 0)) {
             setState({ ...fresh, __preserveLastUpdated: true });
           }
         }
@@ -372,6 +370,7 @@ export default function App() {
                       ...DEFAULT_STATE,
                       lastActiveDate: getLocalDateString(),
                       lastUpdated: Date.now(),
+                      syncRevision: 1,
                     }).catch(() => {});
                     localStorage.removeItem(STORAGE_KEY);
                     localStorage.removeItem('system_chat_history');

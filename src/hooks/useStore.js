@@ -43,6 +43,9 @@ export function useStore() {
         }
       }
       merged.lastUpdated = preserveLastUpdated ? (next.lastUpdated || prev.lastUpdated || 0) : Date.now();
+      merged.syncRevision = preserveLastUpdated
+        ? (next.syncRevision ?? prev.syncRevision ?? 0)
+        : ((prev.syncRevision || 0) + 1);
       return merged;
     });
   }, []);

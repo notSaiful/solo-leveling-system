@@ -19,6 +19,10 @@ import { getLocalDateString } from '../utils/dateUtils';
 import { getScaledFlowConfig } from '../data/rankDifficulty';
 import { isDebuffActive } from './penalties';
 
+function createEventId(prefix) {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
 // ─── STATE INITIALIZATION ───
 export function initializeDailyQuests(state) {
   const rank = getRankByLevel(state.user.overallLevel);
@@ -130,6 +134,7 @@ export function completeDailyQuest(state, questUniqueId) {
 
   // Add to history
   const historyEntry = {
+    eventId: createEventId('daily'),
     type: 'daily',
     questId: quest.id,
     title: quest.title,
@@ -137,6 +142,7 @@ export function completeDailyQuest(state, questUniqueId) {
     xp: finalXp,
     gold,
     date: new Date().toISOString(),
+    localDate: today,
     completed: true,
   };
 
@@ -228,11 +234,13 @@ export function completeLevelQuest(state, levelQuestIndex, questIndex) {
       history: [
         ...state.history,
         {
+          eventId: createEventId('level-quest'),
           type: 'levelQuest',
           title: levelQuest.title,
           xp: quest.xp,
           gold: (reward.gold || 0) + gold,
           date: new Date().toISOString(),
+          localDate: getLocalDateString(),
           completed: true,
         },
       ],
@@ -268,11 +276,13 @@ export function completeLevelQuest(state, levelQuestIndex, questIndex) {
     history: [
       ...state.history,
       {
+        eventId: createEventId('level-partial'),
         type: 'levelQuestPartial',
         title: quest.title,
         xp: quest.xp,
         gold,
         date: new Date().toISOString(),
+        localDate: getLocalDateString(),
         completed: true,
       },
     ],
@@ -336,6 +346,7 @@ export function completeRedemptionQuest(state, redemptionQuestId) {
     history: [
       ...(state.history || []),
       {
+        eventId: createEventId('redemption'),
         type: 'redemption',
         questId: quest.id,
         title: quest.title,
@@ -343,6 +354,7 @@ export function completeRedemptionQuest(state, redemptionQuestId) {
         xp: redemptionXp,
         gold: reward.gold || 0,
         date: new Date().toISOString(),
+        localDate: getLocalDateString(),
         completed: true,
       },
     ],
@@ -576,12 +588,14 @@ export function completeWeeklyDungeon(state, pillar) {
 
   // Add history
   const historyEntry = {
+    eventId: createEventId('dungeon'),
     type: 'dungeon',
     pillar,
     title: dungeon.title,
     xp: statModifiedXp,
     gold: scaledGold,
     date: new Date().toISOString(),
+    localDate: getLocalDateString(),
     completed: true,
   };
 

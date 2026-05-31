@@ -1,6 +1,7 @@
 import { loadStateFromCloud, syncStateToCloud, queueCloudSync, clearQueuedCloudSync } from '../services/cloudSync';
 import { isCanonicalSyncConfigured } from '../services/canonicalSync';
 import { getLocalDateString } from '../utils/dateUtils';
+import { mergeStatesForSync } from '../logic/stateMerge';
 
 export const STORAGE_KEY = 'soloLevelingData';
 const SCHEMA_VERSION = 2;
@@ -34,6 +35,7 @@ export const DEFAULT_STATE = {
   lastActiveDate: getLocalDateString(),
   lastPenaltyCheckDate: null,
   lastUpdated: 0,
+  syncRevision: 0,
 };
 
 function normalizeStateShape(state) {
@@ -49,6 +51,7 @@ function normalizeStateShape(state) {
   normalized.stats = { ...DEFAULT_STATE.stats, ...(state.stats || {}) };
   normalized.flowState = { ...DEFAULT_STATE.flowState, ...(state.flowState || {}) };
   normalized.weeklyDungeons = { ...DEFAULT_STATE.weeklyDungeons, ...(state.weeklyDungeons || {}) };
+  normalized.syncRevision = state.syncRevision || 0;
   normalized.customQuests = (state.customQuests || []).map(q => {
     const stableId = q.id || q.uniqueId || `custom-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     return {
@@ -126,49 +129,13 @@ export async function initCloudSync() {
   const cloudState = await loadStateFromCloud();
 
   if (cloudState) {
-    // Timestamp-aware merge. Newest state wins, so an older browser cannot
-    // overwrite progress made on another device during startup.
     const cloudTime = cloudState.lastUpdated || 0;
     const localTime = localState.lastUpdated || 0;
-
-    let winner = cloudState;
-    let source = 'cloud';
-
-    // If local is strictly newer (e.g. device was offline, then came back online
-    // and local progress happened after the last successful sync), keep local
-    // and push it again to overwrite stale cloud data.
-    if (localTime > cloudTime) {
-      winner = localState;
-      source = 'local';
-      await syncStateToCloud(localState);
-    }
-
-    // Daily quests are a special case: they rotate every day. Keep whichever
-    // matches the more recent quest date, regardless of overall timestamp.
-    const cloudQuestDate = cloudState.lastQuestDate;
-    const localQuestDate = localState.lastQuestDate;
-    let finalDailyQuests = winner.dailyQuests || [];
-    if (localQuestDate && cloudQuestDate) {
-      const localDateNum = parseInt(localQuestDate.replace(/-/g, ''), 10);
-      const cloudDateNum = parseInt(cloudQuestDate.replace(/-/g, ''), 10);
-      if (localDateNum > cloudDateNum) {
-        finalDailyQuests = localState.dailyQuests || [];
-      } else if (cloudDateNum > localDateNum) {
-        finalDailyQuests = cloudState.dailyQuests || [];
-      }
-    } else if (localQuestDate && !cloudQuestDate) {
-      finalDailyQuests = localState.dailyQuests || [];
-    } else if (cloudQuestDate && !localQuestDate) {
-      finalDailyQuests = cloudState.dailyQuests || [];
-    }
-
-    const merged = {
-      ...normalizeStateShape(winner),
-      dailyQuests: finalDailyQuests,
-      lastUpdated: Math.max(localTime, cloudTime),
-    };
+    const merged = normalizeStateShape(mergeStatesForSync(cloudState, localState));
+    const source = localTime > cloudTime ? 'merged-local' : 'merged-cloud';
 
     saveState(merged);
+    await syncStateToCloud(merged);
     setCloudEnabled(true);
     return { success: true, source };
   }
@@ -193,19 +160,9 @@ export async function reinitCloudSyncAfterLogin() {
   const cloudTime = cloudState.lastUpdated || 0;
   const localTime = localState.lastUpdated || 0;
 
-  const winner = localTime > cloudTime ? localState : cloudState;
-  const source = localTime > cloudTime ? 'local' : 'cloud';
-
-  // If local is newer, push it to cloud before accepting
-  if (localTime > cloudTime) {
-    await syncStateToCloud(localState);
-  }
-
-  const merged = {
-    ...normalizeStateShape(winner),
-    version: SCHEMA_VERSION,
-    lastUpdated: Math.max(localTime, cloudTime),
-  };
+  const merged = normalizeStateShape(mergeStatesForSync(cloudState, localState));
+  const source = localTime > cloudTime ? 'merged-local' : 'merged-cloud';
+  await syncStateToCloud(merged);
   saveState(merged);
   setCloudEnabled(true);
   return { success: true, source };
@@ -216,6 +173,7 @@ export async function fullCloudReset() {
     ...DEFAULT_STATE,
     lastActiveDate: getLocalDateString(),
     lastUpdated: Date.now(),
+    syncRevision: 1,
   });
   localStorage.removeItem(STORAGE_KEY);
   localStorage.removeItem(CLOUD_ENABLED_KEY);

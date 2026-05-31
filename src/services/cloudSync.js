@@ -4,7 +4,7 @@
  *  One sync path only:
  *  1. localStorage = instant offline cache
  *  2. /api/sync-state = canonical cross-device snapshot
- *  3. Newer lastUpdated wins
+ *  3. Conflicts are merged by /api/sync-state
  *  ============================================================ */
 
 import { isCanonicalSyncConfigured, loadStateFromCanonicalStore, syncStateToCanonicalStore } from './canonicalSync';
@@ -32,6 +32,7 @@ export async function syncStateToCloud(state) {
     success: true,
     storage: 'canonical_api',
     accepted: result.accepted,
+    conflictMerged: result.conflictMerged,
     state: normalizeCloudState(result.state),
   };
 }

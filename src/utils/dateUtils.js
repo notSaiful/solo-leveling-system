@@ -1,29 +1,37 @@
 /** ============================================================
  *  DATE UTILITIES — Timezone-safe date handling
  *  ============================================================
- *  Core principle: All calendar-day logic uses the user's LOCAL
- *  timezone, but computed directly from Date components to avoid
- *  locale-string parsing edge cases (DST, midnight transitions,
- *  locale formatting inconsistencies).
+ *  Core principle: All calendar-day logic uses the System timezone
+ *  (Asia/Kolkata), so browser/device timezone changes do not create
+ *  unfair quest resets or penalties.
  *  ============================================================ */
 
+export const SYSTEM_TIME_ZONE = 'Asia/Kolkata';
+
 /**
- * Returns a YYYY-MM-DD string for the given Date in LOCAL timezone.
- * More reliable than toLocaleDateString('en-CA').
+ * Returns a YYYY-MM-DD string for the given Date in System timezone.
  */
 export function getLocalDateString(date = new Date()) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: SYSTEM_TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
+  const byType = Object.fromEntries(parts.map(part => [part.type, part.value]));
+  const year = byType.year;
+  const month = byType.month;
+  const day = byType.day;
   return `${year}-${month}-${day}`;
 }
 
 /**
- * Parse a YYYY-MM-DD string into a Date at midnight LOCAL time.
+ * Parse a YYYY-MM-DD string into a stable Date anchor.
+ * Noon UTC avoids accidental previous/next day movement while iterating.
  */
 export function parseLocalDate(dateStr) {
   const [year, month, day] = dateStr.split('-').map(Number);
-  return new Date(year, month - 1, day);
+  return new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
 }
 
 /**
@@ -37,14 +45,14 @@ export function getDaysBetween(startStr, endStr) {
 
   const current = new Date(start);
   while (current < end) {
-    days.push(getLocalDateString(current));
-    current.setDate(current.getDate() + 1);
+    days.push(current.toISOString().slice(0, 10));
+    current.setUTCDate(current.getUTCDate() + 1);
   }
   return days;
 }
 
 /**
- * Count calendar days between two local date strings (exclusive of end).
+ * Count calendar days between two System date strings (exclusive of end).
  */
 export function getDayDiff(startStr, endStr) {
   const start = parseLocalDate(startStr);
@@ -54,7 +62,7 @@ export function getDayDiff(startStr, endStr) {
 }
 
 /**
- * Convert an ISO string or Date to a local YYYY-MM-DD string.
+ * Convert an ISO string or Date to a System timezone YYYY-MM-DD string.
  */
 export function toLocalDateString(input) {
   const date = typeof input === 'string' ? new Date(input) : input;

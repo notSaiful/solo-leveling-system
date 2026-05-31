@@ -1,3 +1,5 @@
+import { mergeStatesForSync } from '../src/logic/stateMerge.js';
+
 const GITHUB_API = 'https://api.github.com';
 const DEFAULT_FILENAME = 'solo-leveling-system-state.json';
 
@@ -96,15 +98,20 @@ export default async function handler(req, res) {
     }
 
     const currentState = await readStoredState();
-    const incomingTime = incomingState.lastUpdated || 0;
-    const currentTime = currentState?.lastUpdated || 0;
+    const mergedState = currentState
+      ? mergeStatesForSync(currentState, incomingState)
+      : {
+          ...incomingState,
+          syncRevision: Math.max(1, incomingState.syncRevision || 0),
+          lastUpdated: incomingState.lastUpdated || Date.now(),
+        };
 
-    if (currentState && incomingTime < currentTime) {
-      return sendJson(res, 200, { accepted: false, state: currentState });
-    }
-
-    await writeStoredState(incomingState);
-    return sendJson(res, 200, { accepted: true, state: incomingState });
+    await writeStoredState(mergedState);
+    return sendJson(res, 200, {
+      accepted: true,
+      conflictMerged: !!currentState,
+      state: mergedState,
+    });
   } catch (error) {
     return sendJson(res, 500, { error: error.message || 'Sync failed' });
   }
