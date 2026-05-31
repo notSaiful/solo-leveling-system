@@ -1,3 +1,5 @@
+import { pruneExpiredCustomQuests } from './customQuests';
+
 const PILLARS = ['deen', 'body', 'money'];
 
 function xpForNextLevel(level) {
@@ -160,7 +162,7 @@ export function mergeStatesForSync(currentState, incomingState) {
     stats: { ...(other.stats || {}), ...(base.stats || {}) },
     gold: base.gold || 0,
     dailyQuests: mergeDailyQuests(base, other),
-    customQuests: mergeUniqueBy(base.customQuests, other.customQuests),
+    customQuests: pruneExpiredCustomQuests(mergeUniqueBy(base.customQuests, other.customQuests)),
     levelQuests: mergeUniqueBy(base.levelQuests, other.levelQuests),
     redemptionQuests: mergeUniqueBy(base.redemptionQuests, other.redemptionQuests),
     purchasedRewards: mergeUniqueBy(base.purchasedRewards, other.purchasedRewards, item => item.purchaseId || item.id || `${item.name}|${item.purchasedAt}`),

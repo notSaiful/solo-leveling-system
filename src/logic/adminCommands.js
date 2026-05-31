@@ -229,6 +229,8 @@ function execCreateQuest(state, data) {
     completed: false,
     tags: ['ai-generated'],
     estimatedMinutes: 0,
+    createdAt: new Date().toISOString(),
+    createdLocalDate: getLocalDateString(),
   };
 
   const newState = clone(state);

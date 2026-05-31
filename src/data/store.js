@@ -2,6 +2,7 @@ import { loadStateFromCloud, syncStateToCloud, queueCloudSync, clearQueuedCloudS
 import { isCanonicalSyncConfigured } from '../services/canonicalSync';
 import { getLocalDateString } from '../utils/dateUtils';
 import { mergeStatesForSync } from '../logic/stateMerge';
+import { pruneExpiredCustomQuests } from '../logic/customQuests';
 
 export const STORAGE_KEY = 'soloLevelingData';
 const SCHEMA_VERSION = 2;
@@ -52,14 +53,7 @@ function normalizeStateShape(state) {
   normalized.flowState = { ...DEFAULT_STATE.flowState, ...(state.flowState || {}) };
   normalized.weeklyDungeons = { ...DEFAULT_STATE.weeklyDungeons, ...(state.weeklyDungeons || {}) };
   normalized.syncRevision = state.syncRevision || 0;
-  normalized.customQuests = (state.customQuests || []).map(q => {
-    const stableId = q.id || q.uniqueId || `custom-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    return {
-      ...q,
-      id: stableId,
-      uniqueId: q.uniqueId || stableId,
-    };
-  });
+  normalized.customQuests = pruneExpiredCustomQuests(state.customQuests || []);
   return normalized;
 }
 

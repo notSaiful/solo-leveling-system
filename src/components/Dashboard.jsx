@@ -168,9 +168,17 @@ export default function Dashboard({ state, setState, ready = true }) {
 
   const addCustomQuest = (quest) => {
     const uniqueId = `custom-${quest.id || Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    const createdAt = quest.createdAt || new Date().toISOString();
     setState(prev => ({
       ...prev,
-      customQuests: [...prev.customQuests, { ...quest, id: quest.id || uniqueId, uniqueId, lastCompleted: null }],
+      customQuests: [...prev.customQuests, {
+        ...quest,
+        id: quest.id || uniqueId,
+        uniqueId,
+        lastCompleted: null,
+        createdAt,
+        createdLocalDate: today,
+      }],
     }));
   };
 

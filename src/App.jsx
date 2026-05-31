@@ -19,6 +19,7 @@ import { isCanonicalSyncConfigured } from './services/canonicalSync';
 import { hasApiKey, getApiKey } from './services/aiAssistant';
 import { getLocalDateString } from './utils/dateUtils';
 import { getScaledPenalty } from './data/rankDifficulty';
+import { pruneExpiredCustomQuests } from './logic/customQuests';
 
 // Error Boundary to catch runtime crashes and show reset UI
 class ErrorBoundary extends React.Component {
@@ -230,13 +231,22 @@ export default function App() {
   useEffect(() => {
     if (!cloudReady) return;
 
+    const prunedCustomQuests = pruneExpiredCustomQuests(state.customQuests || []);
+    if (prunedCustomQuests.length !== (state.customQuests || []).length) {
+      setState(prev => ({
+        ...prev,
+        customQuests: pruneExpiredCustomQuests(prev.customQuests || []),
+      }));
+      return;
+    }
+
     if (state.flowState?.active && state.flowState.expiresAt < Date.now()) {
       setState(prev => ({
         ...prev,
         flowState: { active: false, multiplier: 1, expiresAt: 0, questsInWindow: 0 },
       }));
     }
-  }, [cloudReady, state.flowState?.active, state.flowState?.expiresAt]);
+  }, [cloudReady, state.customQuests, state.flowState?.active, state.flowState?.expiresAt]);
 
   // Force cloud sync before app goes to background / closes
   useEffect(() => {

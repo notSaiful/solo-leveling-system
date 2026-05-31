@@ -4,6 +4,7 @@ import { mergeStatesForSync } from './stateMerge';
 import { completeRedemptionQuest, getRedemptionProgress } from './questEngine';
 import { isDebuffActive } from './penalties';
 import { executeAdminCommands } from './adminCommands';
+import { pruneExpiredCustomQuests } from './customQuests';
 
 function baseState(overrides = {}) {
   return {
@@ -90,6 +91,29 @@ describe('sync conflict merge', () => {
     expect(merged.pillars.deen.xp).toBe(30);
     expect(merged.gold).toBe(13);
     expect(merged.syncRevision).toBe(3);
+  });
+});
+
+describe('custom quest expiry', () => {
+  it('removes custom quests after their creation day', () => {
+    const quests = [
+      {
+        id: 'old',
+        uniqueId: 'old',
+        title: 'Old Quest',
+        createdAt: '2026-05-31T05:00:00.000Z',
+        createdLocalDate: '2026-05-31',
+      },
+      {
+        id: 'today',
+        uniqueId: 'today',
+        title: 'Today Quest',
+        createdAt: '2026-06-01T05:00:00.000Z',
+        createdLocalDate: '2026-06-01',
+      },
+    ];
+
+    expect(pruneExpiredCustomQuests(quests, '2026-06-01').map(q => q.id)).toEqual(['today']);
   });
 });
 
