@@ -424,32 +424,39 @@ export async function forgeCustomQuest(rawIdea, state, preferredPillar = null) {
     .join(', ') || 'NONE';
 
   const pillarInstruction = preferredPillar
-    ? `The user has EXPLICITLY chosen the Pillar: ${preferredPillar.toUpperCase()}. You MUST forge this quest within that pillar. If the raw idea seems unrelated, reframe it creatively so it serves ${preferredPillar.toUpperCase()}.`
-    : `Map the idea to the CLOSEST pillar — even if the user wrote something vague, assign it to deen, body, or money and make it epic.`;
+    ? `The user has EXPLICITLY chosen the Pillar: ${preferredPillar.toUpperCase()}. You MUST assign this quest to that pillar. If the raw idea does not obviously fit, assign it anyway — the user chose the pillar, not you.`
+    : `Map the idea to the CLOSEST pillar. If ambiguous, default to the weakest pillar: ${weakest[0].toUpperCase()}.`;
 
-  const prompt = `You are the Forge-Master. The user submitted a raw quest idea. SMELT it into steel.
+  const prompt = `You are the Forge-Master. The user submitted a raw quest idea.
+
+═══════════════════════════════════════════
+SACRED USER DIRECTIVE — ABSOLUTE, NON-NEGOTIABLE
+═══════════════════════════════════════════
+The user's RAW IDEA is sacred. You are forbidden from changing it.
+- The TITLE must DIRECTLY incorporate the user's exact words or concept.
+- If the user says "wudu 24/7", the title MUST reference wudu. It CANNOT become dhikr.
+- If the user says "50 pushups", the title MUST reference pushups. It CANNOT become squats.
+- You may add epic framing (e.g., "The Wudu Discipline — 24/7 Ritual Purity"), but the CORE ACTION must remain exactly what the user said.
+- ONLY the description, pillar assignment, and XP are yours to craft. The action itself belongs to the user.
+- ANTI-REPETITION DOES NOT APPLY to custom quests. The user explicitly asked for THIS action. You will NOT substitute it.
 
 NEVER reject. Status is ALWAYS approved.
 
 USER CONTEXT:
 - Rank: ${rank} | Level: ${level}
-- Weakest pillar: ${weakest[0].toUpperCase()} (Level ${weakest[1]}) — TARGET THIS.
+- Weakest pillar: ${weakest[0].toUpperCase()} (Level ${weakest[1]}) — DEFAULT PILLAR IF AMBIGUOUS.
 - Recent quests: ${recentTitles}
-- Sacred objectives: Deen = prophetic character (PBUH). Body = warrior-athletic-combat physique. Money = AI orchestration and product shipping, NO coding.
+- Sacred objectives: Deen = prophetic character (PBUH). Body = warrior-athletic-combat physique. Money = general Islamic wealth-building (investing, halal business, frugality, zakat, sadaqah). NO coding.
 
 PILLAR RULES:
 ${pillarInstruction}
-- Deen: seerah, akhlaq, sunnah, tahajjud, dhikr, dawah, charity, fasting. Must reflect the Prophet's discipline.
+- Deen: seerah, akhlaq, sunnah, tahajjud, dhikr, dawah, charity, fasting, wudu, salah, quran. Must reflect the Prophet's discipline.
 - Body: strength, hypertrophy, power, explosive cardio, combat drills, mobility. Warrior physique. NOT generic fitness.
-- Money: AI agents, orchestration, product shipping, business strategy, prompt engineering. NO programming languages. The user studies AI.
+- Money: halal investing, business strategy, frugality, zakat calculation, sadaqah planning, wealth-building for the Ummah. NO programming languages.
 
-ANTI-REPETITION — MANDATORY:
-The user did these recently: ${recentTitles}.
-You MUST forge a quest with a DIFFERENT action type.
-- If pushups or chest work appeared recently → forge pull-ups, squats, sprints, burpees, shadow boxing, or mobility.
-- If seerah or reading appeared recently → forge dhikr, tahajjud, charity, dawah, or akhlaq practice.
-- If AI study or research appeared recently → forge building an agent, shipping a product, writing a business model, or teaching AI.
-- The title MUST be completely different from any recent title.
+ANTI-REPETITION — DOES NOT APPLY HERE:
+The user submitted a CUSTOM quest. Their explicit request OVERRIDES anti-repetition. You will forge the quest they asked for, not a different one.
+You may note in the Reason field if it resembles a recent quest, but you will NOT change the action.
 
 XP SCALE:
 E-Rank: 5-25 small / 25-60 hard
@@ -463,25 +470,28 @@ RAW IDEA: ${rawIdea}
 
 OUTPUT — wrap in [[FORGED_QUEST]] markers:
 [[FORGED_QUEST]]
-Title: forged epic title
+Title: forged epic title that DIRECTLY reflects the raw idea
 Description: forged motivating description
 Pillar: deen OR body OR money
 XP: number 5-200
 Status: approved
-Reason: why this pillar, why this XP, and why it is DIFFERENT from recent quests
+Reason: why this pillar, why this XP, and confirmation that the core action matches the user's request
 [[/FORGED_QUEST]]
 
 CRITICAL: No angle brackets. No markdown. Plain text only.
 
-Example:
-[[FORGED_QUEST]]
-Title: The Night Watch — Tahajjud Steel
-Description: The Prophet (SAW) stood until his feet swelled. You will stand for 8 rakahs of Tahajjud tonight. Not because you feel like it. Because grateful servants do not sleep through their Lord's call. Wake at 3 AM. No alarm snooze. No negotiation.
-Pillar: deen
-XP: 45
-Status: approved
-Reason: Builds the prophetic habit of night worship. High difficulty for E-Rank. DIFFERENT from recent seerah reading — this is ACTION, not consumption.
-[[/FORGED_QUEST]]`;
+Good examples (title preserves user intent):
+- User: "wudu 24/7" → Title: The Wudu Discipline — 24/7 Ritual Purity
+- User: "50 pushups" → Title: The Fifty Pushup Forge
+- User: "study seerah" → Title: Seerah Deep Dive — Prophetic Biography
+- User: "zakat budget" → Title: The Zakat Ledger — Ummah Wealth Audit
+
+Bad examples (title BETRAYS user intent — NEVER do this):
+- User: "wudu 24/7" → Title: Dhikr of the Tongue (WRONG — changed the action)
+- User: "50 pushups" → Title: Squat Inferno (WRONG — changed the action)
+- User: "study seerah" → Title: Tahajjud Night Watch (WRONG — changed the action)
+
+Forged quest:`;
 
   function looksValid(reply) {
     if (!reply || typeof reply !== 'string') return false;
