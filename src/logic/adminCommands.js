@@ -157,6 +157,20 @@ function questMatches(q, questId) {
   return q.uniqueId === questId || q.id === questId;
 }
 
+function getCurrentRankKey(state) {
+  return getRankByLevel(state?.user?.overallLevel || 0).key;
+}
+
+function getRankXpCap(rankKey) {
+  return { E: 60, D: 80, C: 100, B: 140, A: 170, S: 200 }[rankKey] || 60;
+}
+
+function clampNumber(value, min, max, fallback) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.max(min, Math.min(max, n));
+}
+
 function applyOverallFromPillars(newState) {
   const overall = Math.floor(
     (newState.pillars.deen.level * 0.5) +
@@ -175,6 +189,8 @@ function execCreateQuest(state, data) {
   if (!data.title || !data.pillar) return { error: 'Missing title or pillar' };
   const pillar = data.pillar.toLowerCase();
   if (!['deen', 'body', 'money'].includes(pillar)) return { error: `Invalid pillar: ${pillar}` };
+  const xpCap = getRankXpCap(getCurrentRankKey(state));
+  const xp = clampNumber(data.xp, 5, xpCap, 20);
 
   const quest = {
     id: `ai-${Date.now()}`,
@@ -182,8 +198,8 @@ function execCreateQuest(state, data) {
     title: data.title,
     description: data.description || 'Created by SYSTEM Assistant.',
     pillar,
-    xp: data.xp || 20,
-    baseXp: data.xp || 20,
+    xp,
+    baseXp: xp,
     completed: false,
     tags: ['ai-generated'],
     estimatedMinutes: 0,
@@ -195,7 +211,8 @@ function execCreateQuest(state, data) {
   } else {
     newState.customQuests = [...(newState.customQuests || []), { ...quest, lastCompleted: null }];
   }
-  return { state: newState, report: `Created quest "${quest.title}" (${pillar})` };
+  const clamped = typeof data.xp === 'number' && data.xp !== xp ? `, XP clamped to ${xp}` : '';
+  return { state: newState, report: `Created quest "${quest.title}" (${pillar}${clamped})` };
 }
 
 function execModifyQuest(state, data) {
@@ -215,8 +232,9 @@ function execModifyQuest(state, data) {
     if (data.description) updated.description = data.description;
     if (typeof data.xp === 'number') {
       if (!isValidPositiveNumber(data.xp)) return q; // skip invalid XP, preserve original
-      updated.xp = data.xp;
-      updated.baseXp = data.xp;
+      const xp = clampNumber(data.xp, 5, getRankXpCap(getCurrentRankKey(state)), updated.xp || 20);
+      updated.xp = xp;
+      updated.baseXp = xp;
     }
     return updated;
   };
@@ -297,15 +315,18 @@ function isValidPositiveNumber(n) {
 function execAwardGold(state, data) {
   if (!isValidPositiveNumber(data.amount)) return { error: 'Invalid amount' };
   const newState = clone(state);
-  newState.gold += data.amount;
-  return { state: newState, report: `Awarded ${data.amount} Gold` };
+  const maxGold = getRankXpCap(getCurrentRankKey(state)) * 10;
+  const amount = clampNumber(data.amount, 1, maxGold, 1);
+  newState.gold += amount;
+  return { state: newState, report: `Awarded ${amount} Gold${amount !== data.amount ? ' (clamped)' : ''}` };
 }
 
 function execDeductGold(state, data) {
   if (!isValidPositiveNumber(data.amount)) return { error: 'Invalid amount' };
   const newState = clone(state);
-  newState.gold = Math.max(0, newState.gold - data.amount);
-  return { state: newState, report: `Deducted ${data.amount} Gold` };
+  const amount = clampNumber(data.amount, 1, Math.max(1, newState.gold || 1), 1);
+  newState.gold = Math.max(0, newState.gold - amount);
+  return { state: newState, report: `Deducted ${amount} Gold${amount !== data.amount ? ' (clamped)' : ''}` };
 }
 
 function execAwardXp(state, data) {
@@ -314,11 +335,12 @@ function execAwardXp(state, data) {
 
   const newState = clone(state);
   const p = data.pillar;
+  const amount = clampNumber(data.amount, 1, getRankXpCap(getCurrentRankKey(state)), 1);
   if (!newState.pillars[p]) return { error: `Pillar ${p} not found` };
   newState.pillars = { ...newState.pillars };
   newState.pillars[p] = {
     ...newState.pillars[p],
-    xp: newState.pillars[p].xp + data.amount,
+    xp: newState.pillars[p].xp + amount,
   };
 
   // Level-up check
@@ -332,14 +354,15 @@ function execAwardXp(state, data) {
 
   applyOverallFromPillars(newState);
 
-  return { state: newState, report: `Awarded ${data.amount} XP to ${p}` };
+  return { state: newState, report: `Awarded ${amount} XP to ${p}${amount !== data.amount ? ' (clamped)' : ''}` };
 }
 
 function execAwardStatPoints(state, data) {
   if (!isValidPositiveNumber(data.amount)) return { error: 'Invalid amount' };
   const newState = clone(state);
-  newState.statPoints = (newState.statPoints || 0) + data.amount;
-  return { state: newState, report: `Awarded ${data.amount} Stat Points` };
+  const amount = clampNumber(data.amount, 1, 3, 1);
+  newState.statPoints = (newState.statPoints || 0) + amount;
+  return { state: newState, report: `Awarded ${amount} Stat Points${amount !== data.amount ? ' (clamped)' : ''}` };
 }
 
 function execUnlockShadow(state, data) {
@@ -377,14 +400,19 @@ function execRemoveDebuff(state, data) {
 function execApplyDebuff(state, data) {
   if (!data.pillar || !['deen', 'body', 'money'].includes(data.pillar)) return { error: 'Invalid pillar' };
   const newState = clone(state);
+  const days = clampNumber(data.days, 1, 14, 1);
+  const multiplier = clampNumber(data.multiplier, 0.25, 0.95, 0.5);
   newState.pillars = { ...newState.pillars };
   newState.pillars[data.pillar] = {
     ...newState.pillars[data.pillar],
     activeDebuff: {
       name: data.name || 'Unknown Penalty',
-      multiplier: (typeof data.multiplier === 'number' && Number.isFinite(data.multiplier) && data.multiplier > 0 && data.multiplier <= 1) ? data.multiplier : 0.5,
-      days: data.days || 1,
-      appliedAt: new Date().toISOString(),
+      type: 'aiApplied',
+      message: data.name || 'The Forge-Master applied discipline.',
+      multiplier,
+      duration: days * 24 * 60 * 60 * 1000,
+      days,
+      appliedAt: Date.now(),
     },
   };
   return { state: newState, report: `Applied debuff "${data.name}" to ${data.pillar}` };
@@ -394,9 +422,10 @@ function execSetStreak(state, data) {
   if (!data.pillar || !['deen', 'body', 'money'].includes(data.pillar)) return { error: 'Invalid pillar' };
   if (typeof data.value !== 'number' || !Number.isFinite(data.value) || data.value < 0) return { error: 'Invalid value' };
   const newState = clone(state);
+  const value = clampNumber(data.value, 0, 365, 0);
   newState.pillars = { ...newState.pillars };
-  newState.pillars[data.pillar] = { ...newState.pillars[data.pillar], streak: Math.max(0, data.value) };
-  return { state: newState, report: `Set ${data.pillar} streak to ${data.value}` };
+  newState.pillars[data.pillar] = { ...newState.pillars[data.pillar], streak: value };
+  return { state: newState, report: `Set ${data.pillar} streak to ${value}${value !== data.value ? ' (clamped)' : ''}` };
 }
 
 const VALID_MESSAGE_TYPES = ['rankUp', 'levelUp', 'penalty', 'reward', 'custom'];
@@ -434,8 +463,8 @@ function execCustomDungeon(state, data) {
     title: data.title,
     description: data.description || 'A custom challenge created by the SYSTEM.',
     pillar: p,
-    xp: data.xp || 100,
-    gold: data.gold || 50,
+    xp: clampNumber(data.xp, 25, getRankXpCap(getCurrentRankKey(state)) * 3, 100),
+    gold: clampNumber(data.gold, 10, getRankXpCap(getCurrentRankKey(state)) * 2, 50),
     steps: (data.steps || ['Complete the challenge']).map((text, i) => ({
       id: `step-${i}`,
       text,
@@ -497,6 +526,33 @@ export function executeAdminCommands(state, commands) {
   }
 
   return { state: currentState, modified, reports };
+}
+
+export function describeAdminCommands(commands = []) {
+  const highRisk = new Set(['AWARD_XP', 'AWARD_GOLD', 'AWARD_STAT_POINTS', 'REMOVE_DEBUFF', 'SET_STREAK', 'REWARD_ITEM']);
+  const mediumRisk = new Set(['APPLY_DEBUFF', 'FORCE_COMPLETE_QUEST', 'CUSTOM_DUNGEON', 'DELETE_QUEST', 'MODIFY_QUEST']);
+  return commands.map((cmd) => {
+    const data = cmd.data || {};
+    const risk = highRisk.has(cmd.type) ? 'high' : mediumRisk.has(cmd.type) ? 'medium' : 'low';
+    const description = {
+      CREATE_QUEST: `Create ${data.pillar || 'unknown'} quest: ${data.title || 'Untitled'}`,
+      MODIFY_QUEST: `Modify quest: ${data.questId || 'unknown'}`,
+      DELETE_QUEST: `Delete quest: ${data.questId || 'unknown'}`,
+      FORCE_COMPLETE_QUEST: `Force-complete quest: ${data.questId || 'unknown'}`,
+      AWARD_GOLD: `Award up to ${data.amount || 0} gold`,
+      DEDUCT_GOLD: `Deduct up to ${data.amount || 0} gold`,
+      AWARD_XP: `Award up to ${data.amount || 0} XP to ${data.pillar || 'unknown'}`,
+      AWARD_STAT_POINTS: `Award up to ${data.amount || 0} stat points`,
+      UNLOCK_SHADOW: `Unlock shadow: ${data.shadowId || 'unknown'}`,
+      REMOVE_DEBUFF: `Remove debuff from ${data.pillar || 'all pillars'}`,
+      APPLY_DEBUFF: `Apply debuff to ${data.pillar || 'unknown'} for ${data.days || 1} day(s)`,
+      SET_STREAK: `Set ${data.pillar || 'unknown'} streak to ${data.value ?? 'unknown'}`,
+      TRIGGER_MESSAGE: `Show system message: ${data.title || 'Untitled'}`,
+      REWARD_ITEM: `Grant store item: ${data.itemId || 'unknown'}`,
+      CUSTOM_DUNGEON: `Create custom dungeon: ${data.title || 'Untitled'}`,
+    }[cmd.type] || `Unknown command: ${cmd.type}`;
+    return { type: cmd.type, risk, description };
+  });
 }
 
 // ─── PARSER ───

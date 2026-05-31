@@ -65,13 +65,16 @@ function DiagnosticPanel() {
     setTesting(true);
     setTestResult(null);
     try {
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      const useDirectKey = hasApiKey();
+      const response = await fetch(useDirectKey ? 'https://openrouter.ai/api/v1/chat/completions' : '/api/forge-master', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${getApiKey()}`,
-          'HTTP-Referer': window.location.origin,
-          'X-Title': 'Solo Leveling System',
+          ...(useDirectKey ? {
+            'Authorization': `Bearer ${getApiKey()}`,
+            'HTTP-Referer': window.location.origin,
+            'X-Title': 'Solo Leveling System',
+          } : {}),
         },
         body: JSON.stringify({
           model: 'openrouter/free',
@@ -108,7 +111,7 @@ function DiagnosticPanel() {
         </div>
       )}
       <div className="text-[10px] text-cyan-600/50">
-        Key status: {hasApiKey() ? '✓ Valid' : '✗ Invalid'}
+        AI route: {hasApiKey() ? 'Custom browser key' : 'Private server proxy'}
       </div>
     </div>
   );
@@ -343,7 +346,7 @@ export default function App() {
                 <span className="font-orbitron text-sm font-semibold text-cyan-300 tracking-wider">SYSTEM STATUS</span>
               </div>
               <div className="text-xs text-cyan-500/50 space-y-1">
-                <p>Forge-Master AI: <span className="text-green-400">Connected (openrouter/free)</span></p>
+                <p>Forge-Master AI: <span className="text-green-400">Server proxy + fallback model</span></p>
                 <p>Cloud Sync: <span className="text-green-400">Auto-sync active</span></p>
                 <p>Storage: <span className="text-green-400">localStorage + cloud snapshot</span></p>
               </div>

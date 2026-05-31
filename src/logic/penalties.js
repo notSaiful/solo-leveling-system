@@ -1,7 +1,7 @@
 import { getLocalDateString, getDaysBetween, toLocalDateString } from '../utils/dateUtils';
 import { getHealthDebuffReduction, getManaDebuffReduction } from '../data/stats';
 import { getScaledPenalty, getScaledRedemptionQuest } from '../data/rankDifficulty';
-import { getRankByLevel } from '../data/questCatalog';
+import { getRankByLevel, RANK_CONFIG } from '../data/questCatalog';
 
 /** ============================================================
  *  PENALTY SYSTEM — Brutal Accountability
@@ -101,7 +101,12 @@ export function applyPenalty(pillarState, penaltyType, stats = {}, rankKey = 'E'
 
 export function isDebuffActive(debuff) {
   if (!debuff) return false;
-  return (Date.now() - debuff.appliedAt) < debuff.duration;
+  const appliedAt = typeof debuff.appliedAt === 'number'
+    ? debuff.appliedAt
+    : new Date(debuff.appliedAt || 0).getTime();
+  const duration = debuff.duration || ((debuff.days || 0) * 24 * 60 * 60 * 1000);
+  if (!Number.isFinite(appliedAt) || !Number.isFinite(duration) || duration <= 0) return false;
+  return (Date.now() - appliedAt) < duration;
 }
 
 export function getEffectiveXp(baseXp, pillarState) {
@@ -111,6 +116,20 @@ export function getEffectiveXp(baseXp, pillarState) {
 
 export function getRedemptionQuest(pillar, rankKey = 'E') {
   return getScaledRedemptionQuest(rankKey, pillar);
+}
+
+function getRequiredDailyCompletions(rankKey) {
+  const dailyTotal = RANK_CONFIG[rankKey]?.dailyQuestsPerPillar || 2;
+  const ratios = { E: 0.5, D: 0.6, C: 0.67, B: 0.75, A: 0.75, S: 0.8 };
+  return Math.max(1, Math.min(dailyTotal, Math.ceil(dailyTotal * (ratios[rankKey] || 0.67))));
+}
+
+function getDailyCompletionCount(history, pillar, day) {
+  return (history || []).filter(h => {
+    if (h.pillar !== pillar || !h.completed || h.type !== 'daily') return false;
+    const hDate = h.date ? toLocalDateString(h.date) : '';
+    return hDate === day;
+  }).length;
 }
 
 /** Check if the previous week's dungeon was missed before it reset */
@@ -165,6 +184,7 @@ export function checkAndApplyPenalties(state) {
   // Determine current rank for scaled penalties
   const currentRank = getRankByLevel(state.user?.overallLevel || 0);
   const rankKey = currentRank.key;
+  const requiredDailyCompletions = getRequiredDailyCompletions(rankKey);
 
   for (const pillar of ['deen', 'body', 'money']) {
     // Reconstruct last completion date from history if not tracked
@@ -191,13 +211,8 @@ export function checkAndApplyPenalties(state) {
       // Don't penalize days before account creation
       if (day < joinedDate) continue;
 
-      const hadCompletion = (state.history || []).some(h => {
-        if (h.pillar !== pillar || !h.completed || h.type !== 'daily') return false;
-        const hDate = toLocalDateString(h.date);
-        return hDate === day;
-      });
-
-      if (!hadCompletion) {
+      const completionCount = getDailyCompletionCount(state.history, pillar, day);
+      if (completionCount < requiredDailyCompletions) {
         missedCount++;
       }
     }

@@ -61,7 +61,9 @@ export default function WeeklyDungeon({ state, setState }) {
       const newDungeons = { ...prev.weeklyDungeons };
       const pillarDungeon = { ...newDungeons[pillar] };
       pillarDungeon.steps = pillarDungeon.steps.map(s =>
-        s.id === stepId ? { ...s, completed: !s.completed } : s
+        s.id === stepId
+          ? { ...s, completed: !s.completed, completedAt: !s.completed ? new Date().toISOString() : null }
+          : s
       );
       newDungeons[pillar] = pillarDungeon;
       return { ...prev, weeklyDungeons: newDungeons };

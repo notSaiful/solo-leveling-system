@@ -1,7 +1,7 @@
 /** ============================================================
  *  RANK DIFFICULTY SCALING
  *  Higher rank = higher stakes. The System demands more from those
- *  who have proven themselves. Failure at high rank is catastrophic.
+ *  who have proven themselves, without making recovery feel impossible.
  *  ============================================================ */
 
 import { RANK_CONFIG, getRankByLevel } from './questCatalog';
@@ -19,9 +19,9 @@ export function getScaledPenalty(rankKey, penaltyType) {
   const tier = idx + 1; // E=1, D=2, ..., S=6
 
   const base = {
-    missedDaily:      { xpLossPercent: 0.05, multiplier: 0.95, durationHours: 24 },
-    missedThreeDays:  { xpLossPercent: 0.20, multiplier: 0.80, durationHours: 72 },
-    missedDungeon:    { xpLossPercent: 0.10, multiplier: 0.90, durationHours: 168 },
+    missedDaily:      { xpLossPercent: 0.03, multiplier: 0.95, durationHours: 24, maxLoss: 0.10 },
+    missedThreeDays:  { xpLossPercent: 0.12, multiplier: 0.82, durationHours: 72, maxLoss: 0.35 },
+    missedDungeon:    { xpLossPercent: 0.08, multiplier: 0.90, durationHours: 168, maxLoss: 0.25 },
   }[penaltyType];
 
   if (!base) return null;
@@ -30,8 +30,8 @@ export function getScaledPenalty(rankKey, penaltyType) {
   // E: 1.0x | D: 1.5x | C: 2.0x | B: 3.0x | A: 4.0x | S: 5.0x
   const scaleMult = [1.0, 1.5, 2.0, 3.0, 4.0, 5.0][idx] || 1.0;
 
-  const scaledXpLoss = Math.min(0.90, base.xpLossPercent * scaleMult);
-  const scaledMultiplier = Math.max(0.30, base.multiplier - (scaleMult - 1) * 0.08);
+  const scaledXpLoss = Math.min(base.maxLoss, base.xpLossPercent * scaleMult);
+  const scaledMultiplier = Math.max(0.50, base.multiplier - (scaleMult - 1) * 0.06);
   const scaledDuration = base.durationHours * (1 + (scaleMult - 1) * 0.25);
 
   return {
@@ -78,6 +78,7 @@ function getPenaltyMessage(rankKey, penaltyType) {
 export function getScaledRedemptionQuest(rankKey, pillar) {
   const idx = getRankIndex(rankKey);
   const tier = idx + 1;
+  const dailyRequired = extraDailyCompletionsRequired(rankKey, tier);
 
   // E: 1 quest | D: 2 quests | C: all + 1 extra | B: all + 2 extra | A: all + 3 extra + 1 dungeon step | S: all + 4 extra + full dungeon
   const extraQuests = Math.max(0, tier - 2); // E=0, D=0, C=1, B=2, A=3, S=4
@@ -99,11 +100,19 @@ export function getScaledRedemptionQuest(rankKey, pillar) {
     title: `Redemption: ${pillar.charAt(0).toUpperCase() + pillar.slice(1)} Recovery (${rankKey}-Rank)`,
     xp: scaledXp,
     isRedemption: true,
+    createdAt: new Date().toISOString(),
+    rankKey,
     description,
+    dailyCompletionsRequired: dailyRequired,
     extraQuestsRequired: extraQuests,
     requiresDungeonStep,
     requiresFullDungeon,
   };
+}
+
+function extraDailyCompletionsRequired(rankKey, tier) {
+  if (tier <= 2) return tier; // E=1, D=2
+  return (RANK_CONFIG[rankKey]?.dailyQuestsPerPillar || 2) + Math.max(0, tier - 2);
 }
 
 // ─── FLOW STATE SCALING ───

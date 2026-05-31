@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageSquare, X, Send, Bot, User, Sparkles, AlertTriangle, Loader2, CheckCircle2, Swords } from 'lucide-react';
 import { sendMessage, getDailyMotivation, analyzeProgress, generateExtraQuests } from '../services/aiAssistant';
-import { parseAdminCommands, stripCommandBlocks, executeAdminCommands } from '../logic/adminCommands';
+import { parseAdminCommands, stripCommandBlocks, executeAdminCommands, describeAdminCommands } from '../logic/adminCommands';
 
 export default function AIAssistant({ state, setState }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -65,7 +65,7 @@ export default function AIAssistant({ state, setState }) {
 
       if (commands.length > 0 && setState) {
         // Show confirmation instead of auto-executing
-        setPendingCommands({ commands, cleanReply });
+        setPendingCommands({ commands, previews: describeAdminCommands(commands), cleanReply });
         setMessages(prev => [...prev, { role: 'assistant', content: cleanReply || 'The System processed your request.', type: 'pending-commands' }]);
       } else {
         setMessages(prev => [...prev, { role: 'assistant', content: cleanReply || 'The System processed your request.' }]);
@@ -132,7 +132,7 @@ export default function AIAssistant({ state, setState }) {
       ];
 
       if (commands.length > 0 && setState) {
-        setPendingCommands({ commands, cleanReply });
+        setPendingCommands({ commands, previews: describeAdminCommands(commands), cleanReply });
         assistantMsgs[1].type = 'pending-commands';
       }
 
@@ -247,12 +247,18 @@ export default function AIAssistant({ state, setState }) {
             {/* Command Confirmation */}
             {pendingCommands && (
               <div className="px-3 py-2 border-t border-yellow-700/40 bg-yellow-950/20">
-                <div className="text-[10px] text-yellow-400 mb-2 font-semibold tracking-wider">⚠️ PENDING SYSTEM COMMANDS</div>
+                <div className="text-[10px] text-yellow-400 mb-2 font-semibold tracking-wider">PENDING SYSTEM COMMANDS</div>
                 <div className="text-xs text-yellow-300/80 mb-2 space-y-0.5">
-                  {pendingCommands.commands.map((cmd, i) => (
-                    <div key={i} className="flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-yellow-500"></span>
-                      <span>{cmd.type}</span>
+                  {(pendingCommands.previews || describeAdminCommands(pendingCommands.commands)).map((preview, i) => (
+                    <div key={i} className="flex items-start gap-2">
+                      <span className={`mt-1 w-1.5 h-1.5 rounded-full ${
+                        preview.risk === 'high' ? 'bg-red-500' : preview.risk === 'medium' ? 'bg-yellow-500' : 'bg-green-500'
+                      }`}></span>
+                      <span>
+                        <span className="font-semibold">{preview.type}</span>
+                        <span className="ml-1 text-yellow-500/60 uppercase">[{preview.risk}]</span>
+                        <span className="block text-yellow-200/70">{preview.description}</span>
+                      </span>
                     </div>
                   ))}
                 </div>

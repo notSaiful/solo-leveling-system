@@ -17,6 +17,7 @@ import { applyStatModifiers, autoAssignStatPoints } from '../data/stats';
 import { getCurrentWeekId } from './dungeons';
 import { getLocalDateString } from '../utils/dateUtils';
 import { getScaledFlowConfig } from '../data/rankDifficulty';
+import { isDebuffActive } from './penalties';
 
 // ─── STATE INITIALIZATION ───
 export function initializeDailyQuests(state) {
@@ -91,7 +92,7 @@ export function completeDailyQuest(state, questUniqueId) {
 
   // Apply debuff if active
   const pillar = state.pillars[quest.pillar];
-  const debuffMultiplier = pillar?.activeDebuff?.multiplier || 1;
+  const debuffMultiplier = isDebuffActive(pillar?.activeDebuff) ? (pillar.activeDebuff.multiplier || 1) : 1;
   const finalXp = Math.floor(statModifiedXp * debuffMultiplier);
 
   // Update pillar
@@ -285,6 +286,22 @@ export function completeRedemptionQuest(state, redemptionQuestId) {
   const pillar = quest.pillar;
   if (!pillar || !state.pillars[pillar]) return state;
 
+  const progress = getRedemptionProgress(state, quest);
+  if (!progress.ready) {
+    return {
+      ...state,
+      systemMessages: [
+        ...(state.systemMessages || []),
+        {
+          type: 'penalty',
+          title: 'REDEMPTION LOCKED',
+          subtitle: quest.title,
+          message: progress.missing.join(' '),
+        },
+      ],
+    };
+  }
+
   // Mark complete
   const newRedemptionQuests = state.redemptionQuests.map(rq =>
     rq.id === redemptionQuestId ? { ...rq, completed: true, completedAt: new Date().toISOString() } : rq
@@ -292,7 +309,22 @@ export function completeRedemptionQuest(state, redemptionQuestId) {
 
   // Clear debuff ONLY for the matching pillar
   const newPillars = { ...state.pillars };
-  newPillars[pillar] = { ...newPillars[pillar], activeDebuff: null };
+  const redemptionXp = quest.xp || 0;
+  newPillars[pillar] = {
+    ...newPillars[pillar],
+    xp: (newPillars[pillar].xp || 0) + redemptionXp,
+    activeDebuff: null,
+  };
+
+  let autoStatResult = null;
+  const pillarLevel = newPillars[pillar].level || 0;
+  const needed = xpForNextLevel(pillarLevel);
+  if (newPillars[pillar].xp >= needed) {
+    newPillars[pillar].level = pillarLevel + 1;
+    newPillars[pillar].xp -= needed;
+    const pillarRank = getRankByLevel(newPillars[pillar].level);
+    autoStatResult = autoAssignStatPoints(state.stats || {}, pillar, pillarRank.statPointsPerLevel || 1);
+  }
 
   const reward = quest.reward || {};
 
@@ -301,8 +333,21 @@ export function completeRedemptionQuest(state, redemptionQuestId) {
     redemptionQuests: newRedemptionQuests,
     pillars: newPillars,
     gold: state.gold + (reward.gold || 0),
+    history: [
+      ...(state.history || []),
+      {
+        type: 'redemption',
+        questId: quest.id,
+        title: quest.title,
+        pillar,
+        xp: redemptionXp,
+        gold: reward.gold || 0,
+        date: new Date().toISOString(),
+        completed: true,
+      },
+    ],
     systemMessages: [
-      ...state.systemMessages,
+      ...(state.systemMessages || []),
       {
         type: 'reward',
         title: 'REDEMPTION COMPLETE',
@@ -312,13 +357,27 @@ export function completeRedemptionQuest(state, redemptionQuestId) {
     ],
   };
 
+  if (autoStatResult) {
+    nextState.stats = autoStatResult.stats;
+    const assignStr = autoStatResult.assignments.map(a => `${a.stat.toUpperCase()} +${a.points}`).join(', ');
+    nextState.systemMessages = [
+      ...nextState.systemMessages,
+      {
+        type: 'levelUp',
+        title: `${pillar.toUpperCase()} LEVEL UP!`,
+        subtitle: `Level ${newPillars[pillar].level}`,
+        message: `SYSTEM auto-assigned: ${assignStr}.`,
+      },
+    ];
+  }
+
   // Auto-assign any reward stat points directly
   const rewardSp = reward.statPoints || 0;
   if (rewardSp > 0) {
-    const autoStatResult = autoAssignStatPoints(state.stats || {}, pillar, rewardSp);
-    if (autoStatResult) {
-      nextState.stats = autoStatResult.stats;
-      const assignStr = autoStatResult.assignments.map(a => `${a.stat.toUpperCase()} +${a.points}`).join(', ');
+    const rewardStatResult = autoAssignStatPoints(nextState.stats || state.stats || {}, pillar, rewardSp);
+    if (rewardStatResult) {
+      nextState.stats = rewardStatResult.stats;
+      const assignStr = rewardStatResult.assignments.map(a => `${a.stat.toUpperCase()} +${a.points}`).join(', ');
       nextState.systemMessages = [
         ...nextState.systemMessages,
         {
@@ -332,6 +391,55 @@ export function completeRedemptionQuest(state, redemptionQuestId) {
   }
 
   return nextState;
+}
+
+export function getRedemptionProgress(state, quest) {
+  const pillar = quest?.pillar;
+  if (!pillar) {
+    return { ready: false, questCompletions: 0, questRequired: 1, dungeonStepReady: true, fullDungeonReady: true, missing: ['Invalid redemption quest.'] };
+  }
+
+  const createdAt = new Date(quest.createdAt || 0).getTime();
+  const afterCreated = (date) => {
+    const time = new Date(date || 0).getTime();
+    return Number.isFinite(time) && time >= createdAt;
+  };
+
+  const questRequired = Math.max(1, quest.dailyCompletionsRequired || (quest.extraQuestsRequired > 0 ? quest.extraQuestsRequired + 1 : 1));
+  const questCompletions = (state.history || []).filter(h =>
+    h.completed &&
+    h.pillar === pillar &&
+    ['daily', 'custom'].includes(h.type) &&
+    afterCreated(h.date)
+  ).length;
+
+  const dungeon = state.weeklyDungeons?.[pillar];
+  const dungeonStepReady = !quest.requiresDungeonStep || !!dungeon?.steps?.some(step =>
+    step.completed && step.completedAt && afterCreated(step.completedAt)
+  );
+
+  const fullDungeonReady = !quest.requiresFullDungeon || (state.history || []).some(h =>
+    h.completed &&
+    h.pillar === pillar &&
+    h.type === 'dungeon' &&
+    afterCreated(h.date)
+  );
+
+  const missing = [];
+  if (questCompletions < questRequired) {
+    missing.push(`Complete ${questRequired - questCompletions} more ${pillar} quest${questRequired - questCompletions === 1 ? '' : 's'}.`);
+  }
+  if (!dungeonStepReady) missing.push(`Complete one new ${pillar} dungeon step.`);
+  if (!fullDungeonReady) missing.push(`Conquer the full ${pillar} weekly dungeon.`);
+
+  return {
+    ready: missing.length === 0,
+    questCompletions,
+    questRequired,
+    dungeonStepReady,
+    fullDungeonReady,
+    missing,
+  };
 }
 
 // ─── OVERALL LEVEL CALCULATION ───

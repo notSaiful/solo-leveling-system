@@ -11,15 +11,9 @@ import { buildAccountabilityContext, analyzeMessage, getConversationSummary } fr
 import { getCharacterBuild } from '../data/stats';
 
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
-// Free router: OpenRouter picks the best available free model automatically
+const AI_PROXY_URL = '/api/forge-master';
 const PRIMARY_MODEL = 'openrouter/free';
-const FALLBACK_MODEL = 'openrouter/free';
-
-const DEFAULT_API_KEY_B64 = 'c2stb3ItdjEtYzJjZTQ1YzFjM2ZiM2E1ZjNkMzhiODRiNmI2ODQxNDc3NjMzMWFiZTBiNmQ3Y2MyZjI1ZjI1YjdmNzBkYzk0Nw==';
-
-function getDefaultApiKey() {
-  try { return atob(DEFAULT_API_KEY_B64); } catch { return ''; }
-}
+const FALLBACK_MODEL = 'openai/gpt-4o-mini';
 
 function looksLikeOpenRouterKey(k) {
   return typeof k === 'string' && k.length > 20 && k.startsWith('sk-');
@@ -27,10 +21,7 @@ function looksLikeOpenRouterKey(k) {
 
 export function getApiKey() {
   const custom = localStorage.getItem('openrouter_api_key');
-  if (looksLikeOpenRouterKey(custom) && custom !== getDefaultApiKey()) {
-    return custom;
-  }
-  return getDefaultApiKey();
+  return looksLikeOpenRouterKey(custom) ? custom : '';
 }
 
 export function setApiKey(key) {
@@ -63,13 +54,13 @@ function buildUserProfile(state) {
   const recentHistory = (state.history || [])
     .filter(h => h.completed)
     .slice(-10)
-    .map((h, i) => `${i + 1}. [${h.pillar.toUpperCase()}] ${h.title} (${h.xp} XP)`)
+    .map((h, i) => `${i + 1}. [${sanitize(h.pillar).toUpperCase()}] ${sanitize(h.title)} (${Number(h.xp) || 0} XP)`)
     .join('\n') || 'NO RECENT HISTORY — NEW USER OR NO ACTION.';
 
   // Active debuffs
   const debuffs = ['deen', 'body', 'money']
     .filter(p => state.pillars[p]?.activeDebuff)
-    .map(p => `${p.toUpperCase()}: ${state.pillars[p].activeDebuff.type} (${Math.round((1 - state.pillars[p].activeDebuff.multiplier) * 100)}% XP loss)`)
+    .map(p => `${p.toUpperCase()}: ${sanitize(state.pillars[p].activeDebuff.type || state.pillars[p].activeDebuff.name || 'debuff')} (${Math.round((1 - state.pillars[p].activeDebuff.multiplier) * 100)}% XP loss)`)
     .join('\n') || 'NONE';
 
   // Streak analysis
@@ -82,7 +73,7 @@ function buildUserProfile(state) {
   // Custom quests pool
   const customTitles = (state.customQuests || [])
     .slice(-5)
-    .map(q => q.title)
+    .map(q => sanitize(q.title))
     .join(', ') || 'NONE';
 
   return `
@@ -126,6 +117,34 @@ ${customTitles}
 function sanitize(str) {
   if (typeof str !== 'string') return '';
   return str.replace(/\[\[CMD\]\]/gi, '[CMD]').replace(/\[\[\/CMD\]\]/gi, '[/CMD]');
+}
+
+function containsCrisisSignal(str) {
+  if (typeof str !== 'string') return false;
+  const text = str.toLowerCase();
+  return [
+    'kill myself',
+    'suicide',
+    'suicidal',
+    'want to die',
+    'end my life',
+    'harm myself',
+    'self harm',
+    'worthless',
+    'no reason to live',
+  ].some(signal => text.includes(signal));
+}
+
+function getCrisisResponse() {
+  return [
+    'Stop. This is not a discipline problem now. This is safety.',
+    '',
+    'Put distance between yourself and anything you could use to harm yourself. Contact a trusted person immediately and tell them directly: "I am not safe alone right now."',
+    '',
+    'If you are in immediate danger, call your local emergency number now. In India, call 112. If you are elsewhere, call the emergency number for your location.',
+    '',
+    'After you are with a real person, return and report: "I am safe." No delay.',
+  ].join('\n');
 }
 
 function buildForgeMasterPrompt(state, chatHistory) {
@@ -248,6 +267,9 @@ YOUR TEACHING DOCTRINE
     - Use short, punchy sentences. Like commands. No paragraphs of philosophy.
     - Call them "Seeker" or by their rank. Not their name. They are not a person right now. They are a PROJECT.
 
+11. CRISIS GUARDRAIL
+    If the user mentions self-harm, suicide, wanting to die, being unsafe, or severe despair, stop the punishment tone immediately. Become firm and protective. Command them to contact a trusted person or emergency service before any quest, rank, shame, or discipline talk. Safety overrides the Forge.
+
 ═══════════════════════════════════════════
 QUEST GENERATION PROTOCOL — MANDATORY
 ═══════════════════════════════════════════
@@ -284,6 +306,8 @@ NEVER give copy-paste quests with different wording. If you cannot think of some
 ADMIN COMMAND POWERS
 ═══════════════════════════════════════════
 You have FULL ADMIN POWERS to modify the user's game state. When they report action, EXECUTE commands. When they need punishment, EXECUTE commands. When they need a challenge, EXECUTE commands.
+These powers are audited. Use direct XP, gold, stat points, debuff removal, and streak changes only when the user clearly earned or requested them. Prefer CREATE_QUEST for future work over AWARD_XP for vague claims.
+All rewards must stay inside the rank XP scale. The app will clamp excessive values.
 
 Embed JSON inside [[CMD]] markers:
 [[CMD]]
@@ -309,32 +333,31 @@ Respond with the fire of the Forge-Master. No softness. No hesitation. The user 
 
 async function tryModel(model, messages, state, chatHistory, maxTokens = 1500) {
   const apiKey = getApiKey();
-  if (!apiKey) {
-    throw new Error('OpenRouter API key not configured.');
-  }
 
-  console.log('[Forge-Master] tryModel:', model, 'maxTokens:', maxTokens, 'keyPrefix:', apiKey.slice(0, 10), 'origin:', window.location.origin);
+  console.log('[Forge-Master] tryModel:', model, 'maxTokens:', maxTokens, 'mode:', apiKey ? 'direct' : 'server-proxy', 'origin:', window.location.origin);
 
   const systemPrompt = buildForgeMasterPrompt(state, chatHistory);
-
-  const response = await fetch(OPENROUTER_API_URL, {
+  const payload = {
+    model,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      ...messages,
+    ],
+    temperature: 0.85,
+    max_tokens: maxTokens,
+    include_reasoning: false,
+  };
+  const response = await fetch(apiKey ? OPENROUTER_API_URL : AI_PROXY_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
-      'HTTP-Referer': window.location.origin,
-      'X-Title': 'Solo Leveling System',
+      ...(apiKey ? {
+        'Authorization': `Bearer ${apiKey}`,
+        'HTTP-Referer': window.location.origin,
+        'X-Title': 'Solo Leveling System',
+      } : {}),
     },
-    body: JSON.stringify({
-      model,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        ...messages,
-      ],
-      temperature: 0.85,
-      max_tokens: maxTokens,
-      include_reasoning: false,
-    }),
+    body: JSON.stringify(payload),
   });
 
   if (!response.ok) {
@@ -397,11 +420,15 @@ async function callOpenRouter(messages, state, chatHistory = [], maxTokens = 150
 // ─── PUBLIC API ───
 
 export async function sendMessage(userMessage, chatHistory, state) {
+  if (containsCrisisSignal(userMessage)) {
+    return getCrisisResponse();
+  }
+
   const messages = chatHistory.map(m => ({
     role: m.role,
-    content: m.content,
+    content: sanitize(m.content),
   }));
-  messages.push({ role: 'user', content: userMessage });
+  messages.push({ role: 'user', content: sanitize(userMessage) });
 
   const reply = await callOpenRouter(messages, state, chatHistory);
   return reply;
@@ -420,7 +447,7 @@ export async function forgeCustomQuest(rawIdea, state, preferredPillar = null) {
   const recentTitles = (state?.history || [])
     .filter(h => h.completed)
     .slice(-7)
-    .map(h => h.title)
+    .map(h => sanitize(h.title))
     .join(', ') || 'NONE';
 
   const pillarInstruction = preferredPillar
@@ -466,7 +493,7 @@ B-Rank: 20-60 small / 60-140 hard
 A-Rank: 25-70 small / 70-170 hard
 S-Rank: 30-80 small / 80-200 hard
 
-RAW IDEA: ${rawIdea}
+RAW IDEA: ${sanitize(rawIdea)}
 
 OUTPUT — wrap in [[FORGED_QUEST]] markers:
 [[FORGED_QUEST]]
@@ -513,9 +540,10 @@ Forged quest:`;
 
     return reply;
   } catch (err) {
-    // If AI fails, return a parseable fallback so the UI doesn't crash
-    const fallbackPillar = preferredPillar || 'deen';
-    return `[[FORGED_QUEST]]\nTitle: SYSTEM ERROR\nDescription: The Forge-Master is silent. Retry shortly.\nPillar: ${fallbackPillar}\nXP: 0\nStatus: approved\nReason: ${err.message || 'Forge connection failed'}\n[[/FORGED_QUEST]]`;
+    const fallbackPillar = preferredPillar || weakest[0] || 'deen';
+    const safeIdea = sanitize(rawIdea).slice(0, 80) || 'Recovery Quest';
+    const fallbackXp = { E: 15, D: 25, C: 35, B: 45, A: 55, S: 70 }[rank] || 15;
+    return `[[FORGED_QUEST]]\nTitle: Fallback Forge — ${safeIdea}\nDescription: Complete the exact action you wrote. The AI forge is unreachable, but the System still records discipline.\nPillar: ${fallbackPillar}\nXP: ${fallbackXp}\nStatus: approved\nReason: Local fallback used because the Forge-Master connection failed. Core action preserved: ${safeIdea}\n[[/FORGED_QUEST]]`;
   }
 }
 
@@ -531,7 +559,7 @@ export async function generateExtraQuests(state, preferredPillar = null) {
   const recentTitles = (state?.history || [])
     .filter(h => h.completed)
     .slice(-10)
-    .map(h => h.title)
+    .map(h => sanitize(h.title))
     .join(', ') || 'NONE';
 
   const pillarFocus = preferredPillar

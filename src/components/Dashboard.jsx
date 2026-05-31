@@ -15,6 +15,7 @@ import {
   checkFlowState,
   getStreakBonus,
   getLevelProgress,
+  getRedemptionProgress,
 } from '../logic/questEngine';
 import { getRankByLevel, xpForNextLevel } from '../data/questCatalog';
 import { isDebuffActive } from '../logic/penalties';
@@ -355,18 +356,26 @@ export default function Dashboard({ state, setState, ready = true }) {
           <h2 className="font-orbitron text-sm font-bold text-red-400 tracking-wider flex items-center gap-2">
             <Zap size={16} /> REDEMPTION QUESTS
           </h2>
-          {state.redemptionQuests.map(quest => (
-            <QuestCard
-              key={quest.id}
-              quest={{
-                ...quest,
-                completedToday: quest.completed,
-                isRedemption: true,
-              }}
-              onComplete={() => handleCompleteRedemption(quest.id)}
-              rank={rank.key}
-            />
-          ))}
+          {state.redemptionQuests.map(quest => {
+            const progress = getRedemptionProgress(state, quest);
+            return (
+              <QuestCard
+                key={quest.id}
+                quest={{
+                  ...quest,
+                  description: progress.ready
+                    ? quest.description
+                    : `${quest.description} Progress: ${progress.questCompletions}/${progress.questRequired}${quest.requiresDungeonStep ? ` | Dungeon step: ${progress.dungeonStepReady ? 'done' : 'required'}` : ''}${quest.requiresFullDungeon ? ` | Full dungeon: ${progress.fullDungeonReady ? 'done' : 'required'}` : ''}`,
+                  completedToday: quest.completed,
+                  isRedemption: true,
+                }}
+                disabled={!progress.ready}
+                disabledReason={progress.missing.join(' ')}
+                onComplete={() => handleCompleteRedemption(quest.id)}
+                rank={rank.key}
+              />
+            );
+          })}
         </div>
       )}
 
