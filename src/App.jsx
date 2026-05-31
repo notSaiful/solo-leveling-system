@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { LayoutDashboard, BarChart3, Swords, Settings, ShoppingBag, Sparkles, Coins, Zap, AlertTriangle } from 'lucide-react';
 import { useStore } from './hooks/useStore';
 import { useLevelUp } from './hooks/useLevelUp';
@@ -14,8 +14,8 @@ import { getCurrentWeekId } from './logic/dungeons';
 import { getRankByLevel, getWeeklyDungeonForRank } from './data/questCatalog';
 import { getFlowStateDisplay } from './logic/questEngine';
 import { getCharacterBuild } from './data/stats';
-import { initCloudSync, syncNow, loadState, STORAGE_KEY } from './data/store';
-import { isSupabaseConfigured } from './services/supabaseClient';
+import { DEFAULT_STATE, initCloudSync, syncNow, loadState, STORAGE_KEY } from './data/store';
+import { isCanonicalSyncConfigured } from './services/canonicalSync';
 import { hasApiKey, getApiKey } from './services/aiAssistant';
 import { getLocalDateString } from './utils/dateUtils';
 import { getScaledPenalty } from './data/rankDifficulty';
@@ -116,17 +116,27 @@ function DiagnosticPanel() {
 
 // Floating particle component
 function FloatingParticles() {
+  const particles = useMemo(() => (
+    [...Array(20)].map((_, i) => ({
+      id: i,
+      left: `${Math.random() * 100}%`,
+      top: `${Math.random() * 100}%`,
+      animationDelay: `${Math.random() * 6}s`,
+      animationDuration: `${6 + Math.random() * 4}s`,
+    }))
+  ), []);
+
   return (
     <div className="floating-particles">
-      {[...Array(20)].map((_, i) => (
+      {particles.map(particle => (
         <div
-          key={i}
+          key={particle.id}
           className="absolute w-1 h-1 bg-cyan-400/20 rounded-full animate-float"
           style={{
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-            animationDelay: `${Math.random() * 6}s`,
-            animationDuration: `${6 + Math.random() * 4}s`,
+            left: particle.left,
+            top: particle.top,
+            animationDelay: particle.animationDelay,
+            animationDuration: particle.animationDuration,
           }}
         />
       ))}
@@ -137,9 +147,10 @@ function FloatingParticles() {
 export default function App() {
   const { state, setState } = useStore();
   const { notification, dismiss } = useLevelUp(state);
+  const [cloudReady, setCloudReady] = useState(() => !isCanonicalSyncConfigured());
 
   // Check penalties on mount
-  usePenaltyCheck(state, setState);
+  usePenaltyCheck(state, setState, cloudReady);
 
   const [activeTab, setActiveTab] = useState('dashboard');
   const stateRef = useRef(state);
@@ -147,23 +158,25 @@ export default function App() {
 
   // Silent cloud init on mount if credentials exist
   useEffect(() => {
-    if (isSupabaseConfigured()) {
+    if (isCanonicalSyncConfigured()) {
       initCloudSync().then((result) => {
         if (result?.success && result?.source === 'cloud') {
           const fresh = loadState();
           // Only overwrite React state if the freshly loaded cloud data is newer
           // than what we currently hold in memory (handles cross-device sync)
           if (fresh.lastUpdated > (stateRef.current.lastUpdated || 0)) {
-            setState(fresh);
+            setState({ ...fresh, __preserveLastUpdated: true });
           }
         }
-      }).catch(() => {});
+      }).catch(() => {}).finally(() => setCloudReady(true));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Initialize weekly dungeons if needed
   useEffect(() => {
+    if (!cloudReady) return;
+
     if (state.weeklyDungeons.weekId !== getCurrentWeekId()) {
       const rank = getRankByLevel(state.user.overallLevel);
       const newDungeons = getWeeklyDungeonForRank(rank.key);
@@ -210,22 +223,24 @@ export default function App() {
         systemMessages: messages.length > 0 ? [...prev.systemMessages, ...messages] : prev.systemMessages,
       }));
     }
-  }, [state.weeklyDungeons.weekId, state.user.overallLevel]);
+  }, [cloudReady, state.weeklyDungeons.weekId, state.user.overallLevel]);
 
   // Clear expired flow state
   useEffect(() => {
+    if (!cloudReady) return;
+
     if (state.flowState?.active && state.flowState.expiresAt < Date.now()) {
       setState(prev => ({
         ...prev,
         flowState: { active: false, multiplier: 1, expiresAt: 0, questsInWindow: 0 },
       }));
     }
-  }, [state.flowState?.active, state.flowState?.expiresAt]);
+  }, [cloudReady, state.flowState?.active, state.flowState?.expiresAt]);
 
   // Force cloud sync before app goes to background / closes
   useEffect(() => {
     const forceSync = () => {
-      if (isSupabaseConfigured()) {
+      if (cloudReady && isCanonicalSyncConfigured()) {
         syncNow(state).catch(() => {});
       }
     };
@@ -239,7 +254,7 @@ export default function App() {
       document.removeEventListener('visibilitychange', handleVisibility);
       window.removeEventListener('beforeunload', handleUnload);
     };
-  }, [state]);
+  }, [cloudReady, state]);
 
   const flowDisplay = getFlowStateDisplay(state.flowState);
   const build = getCharacterBuild(state.stats || {});
@@ -300,7 +315,7 @@ export default function App() {
 
       {/* Main Content */}
       <main className="relative z-10 py-4 px-2 sm:px-4">
-        {activeTab === 'dashboard' && <Dashboard state={state} setState={setState} />}
+        {activeTab === 'dashboard' && <Dashboard state={state} setState={setState} ready={cloudReady} />}
         {activeTab === 'stats' && <StatsPanel state={state} />}
         {activeTab === 'dungeons' && <WeeklyDungeon state={state} setState={setState} />}
         {activeTab === 'store' && <RewardStore state={state} setState={setState} />}
@@ -330,7 +345,7 @@ export default function App() {
               <div className="text-xs text-cyan-500/50 space-y-1">
                 <p>Forge-Master AI: <span className="text-green-400">Connected (openrouter/free)</span></p>
                 <p>Cloud Sync: <span className="text-green-400">Auto-sync active</span></p>
-                <p>Storage: <span className="text-green-400">localStorage + Supabase</span></p>
+                <p>Storage: <span className="text-green-400">localStorage + cloud snapshot</span></p>
               </div>
               <DiagnosticPanel />
             </div>
@@ -348,8 +363,13 @@ export default function App() {
                 Clear Cache & Reload
               </button>
               <button
-                onClick={() => {
+                onClick={async () => {
                   if (confirm('Reset all progress? This cannot be undone.')) {
+                    await syncNow({
+                      ...DEFAULT_STATE,
+                      lastActiveDate: getLocalDateString(),
+                      lastUpdated: Date.now(),
+                    }).catch(() => {});
                     localStorage.removeItem(STORAGE_KEY);
                     localStorage.removeItem('system_chat_history');
                     window.location.reload();

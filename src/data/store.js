@@ -1,5 +1,5 @@
-import { isSupabaseConfigured, getSupabase } from '../services/supabaseClient';
-import { signInAnonymously, loadStateFromCloud, syncStateToCloud, queueCloudSync, getAuthStatus, getCurrentUser } from '../services/supabaseSync';
+import { loadStateFromCloud, syncStateToCloud, queueCloudSync, clearQueuedCloudSync } from '../services/cloudSync';
+import { isCanonicalSyncConfigured } from '../services/canonicalSync';
 import { getLocalDateString } from '../utils/dateUtils';
 
 export const STORAGE_KEY = 'soloLevelingData';
@@ -36,6 +36,30 @@ export const DEFAULT_STATE = {
   lastUpdated: 0,
 };
 
+function normalizeStateShape(state) {
+  const normalized = {
+    ...DEFAULT_STATE,
+    ...state,
+  };
+  normalized.pillars = {
+    deen: { ...DEFAULT_STATE.pillars.deen, ...(state.pillars?.deen || {}) },
+    body: { ...DEFAULT_STATE.pillars.body, ...(state.pillars?.body || {}) },
+    money: { ...DEFAULT_STATE.pillars.money, ...(state.pillars?.money || {}) },
+  };
+  normalized.stats = { ...DEFAULT_STATE.stats, ...(state.stats || {}) };
+  normalized.flowState = { ...DEFAULT_STATE.flowState, ...(state.flowState || {}) };
+  normalized.weeklyDungeons = { ...DEFAULT_STATE.weeklyDungeons, ...(state.weeklyDungeons || {}) };
+  normalized.customQuests = (state.customQuests || []).map(q => {
+    const stableId = q.id || q.uniqueId || `custom-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    return {
+      ...q,
+      id: stableId,
+      uniqueId: q.uniqueId || stableId,
+    };
+  });
+  return normalized;
+}
+
 // ─── localStorage helpers ───
 
 export function loadState() {
@@ -47,16 +71,7 @@ export function loadState() {
       localStorage.removeItem(STORAGE_KEY);
       return DEFAULT_STATE;
     }
-    const merged = { ...DEFAULT_STATE, ...parsed };
-    merged.pillars = {
-      deen: { ...DEFAULT_STATE.pillars.deen, ...(parsed.pillars?.deen || {}) },
-      body: { ...DEFAULT_STATE.pillars.body, ...(parsed.pillars?.body || {}) },
-      money: { ...DEFAULT_STATE.pillars.money, ...(parsed.pillars?.money || {}) },
-    };
-    merged.stats = { ...DEFAULT_STATE.stats, ...(parsed.stats || {}) };
-    merged.flowState = { ...DEFAULT_STATE.flowState, ...(parsed.flowState || {}) };
-    merged.weeklyDungeons = { ...DEFAULT_STATE.weeklyDungeons, ...(parsed.weeklyDungeons || {}) };
-    return merged;
+    return normalizeStateShape(parsed);
   } catch {
     return DEFAULT_STATE;
   }
@@ -78,15 +93,7 @@ export function importData(json) {
   try {
     const parsed = JSON.parse(json);
     if (!parsed || typeof parsed !== 'object') throw new Error('Invalid data');
-    const merged = { ...DEFAULT_STATE, ...parsed };
-    merged.pillars = {
-      deen: { ...DEFAULT_STATE.pillars.deen, ...(parsed.pillars?.deen || {}) },
-      body: { ...DEFAULT_STATE.pillars.body, ...(parsed.pillars?.body || {}) },
-      money: { ...DEFAULT_STATE.pillars.money, ...(parsed.pillars?.money || {}) },
-    };
-    merged.stats = { ...DEFAULT_STATE.stats, ...(parsed.stats || {}) };
-    merged.flowState = { ...DEFAULT_STATE.flowState, ...(parsed.flowState || {}) };
-    merged.weeklyDungeons = { ...DEFAULT_STATE.weeklyDungeons, ...(parsed.weeklyDungeons || {}) };
+    const merged = normalizeStateShape(parsed);
     saveState(merged);
     return merged;
   } catch (e) {
@@ -103,7 +110,7 @@ export function resetData() {
 // ─── Cloud helpers ───
 
 export function isCloudEnabled() {
-  return localStorage.getItem(CLOUD_ENABLED_KEY) === 'true' && isSupabaseConfigured();
+  return localStorage.getItem(CLOUD_ENABLED_KEY) === 'true' && isCanonicalSyncConfigured();
 }
 
 export function setCloudEnabled(enabled) {
@@ -111,24 +118,16 @@ export function setCloudEnabled(enabled) {
 }
 
 export async function initCloudSync() {
-  if (!isSupabaseConfigured()) return { success: false, reason: 'not_configured' };
-
-  const user = await signInAnonymously();
-  if (!user) return { success: false, reason: 'auth_failed' };
-
-  const localState = loadState();
-
-  // Step 1: Push local progress to cloud FIRST so this device's latest state
-  // is recorded before we potentially load older cloud data.
-  if (localState.lastUpdated > 0) {
-    await syncStateToCloud(localState);
+  if (!isCanonicalSyncConfigured()) {
+    return { success: false, reason: 'not_configured' };
   }
 
-  // Step 2: Load cloud state (now guaranteed to be at least as fresh as local)
+  const localState = loadState();
   const cloudState = await loadStateFromCloud();
 
   if (cloudState) {
-    // Step 3: Timestamp-aware merge. Newest state wins.
+    // Timestamp-aware merge. Newest state wins, so an older browser cannot
+    // overwrite progress made on another device during startup.
     const cloudTime = cloudState.lastUpdated || 0;
     const localTime = localState.lastUpdated || 0;
 
@@ -164,29 +163,28 @@ export async function initCloudSync() {
     }
 
     const merged = {
-      ...DEFAULT_STATE,
-      ...winner,
+      ...normalizeStateShape(winner),
       dailyQuests: finalDailyQuests,
       lastUpdated: Math.max(localTime, cloudTime),
     };
 
     saveState(merged);
     setCloudEnabled(true);
-    return { success: true, source, userId: user.id };
+    return { success: true, source };
   }
 
   // No cloud data — migrate local up
   const result = await syncStateToCloud(localState);
   if (result.success) {
     setCloudEnabled(true);
-    return { success: true, source: 'migrated', userId: user.id };
+    return { success: true, source: 'migrated' };
   }
 
   return { success: false, reason: 'sync_failed' };
 }
 
 export async function reinitCloudSyncAfterLogin() {
-  if (!isSupabaseConfigured()) return { success: false, reason: 'not_configured' };
+  if (!isCanonicalSyncConfigured()) return { success: false, reason: 'not_configured' };
 
   const cloudState = await loadStateFromCloud();
   if (!cloudState) return { success: false, reason: 'no_cloud_data' };
@@ -204,57 +202,29 @@ export async function reinitCloudSyncAfterLogin() {
   }
 
   const merged = {
-    ...DEFAULT_STATE,
-    ...winner,
+    ...normalizeStateShape(winner),
     version: SCHEMA_VERSION,
     lastUpdated: Math.max(localTime, cloudTime),
   };
   saveState(merged);
   setCloudEnabled(true);
-  return { success: true, source, userId: (await getCurrentUser())?.id };
+  return { success: true, source };
 }
 
 export async function fullCloudReset() {
-  const supabase = getSupabase();
-  if (!supabase) return;
-
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return;
-
-  const userId = user.id;
-
-  // Delete all user data (order matters for FK constraints)
-  await supabase.from('level_quest_steps').delete().eq('user_id', userId);
-  await supabase.from('level_quests').delete().eq('user_id', userId);
-  await supabase.from('weekly_dungeon_steps').delete().eq('user_id', userId);
-  await supabase.from('weekly_dungeons').delete().eq('user_id', userId);
-  await supabase.from('job_change_steps').delete().eq('user_id', userId);
-  await supabase.from('job_changes').delete().eq('user_id', userId);
-  await supabase.from('ai_dungeons').delete().eq('user_id', userId);
-  await supabase.from('system_messages').delete().eq('user_id', userId);
-  await supabase.from('history').delete().eq('user_id', userId);
-  await supabase.from('redemption_quests').delete().eq('user_id', userId);
-  await supabase.from('custom_quests').delete().eq('user_id', userId);
-  await supabase.from('daily_quests').delete().eq('user_id', userId);
-  await supabase.from('shadows').delete().eq('user_id', userId);
-  await supabase.from('purchased_rewards').delete().eq('user_id', userId);
-  await supabase.from('pillars').delete().eq('user_id', userId);
-  await supabase.from('stats').delete().eq('user_id', userId);
-  await supabase.from('state_snapshots').delete().eq('user_id', userId);
-  await supabase.from('profiles').delete().eq('id', userId);
-
+  await syncStateToCloud({
+    ...DEFAULT_STATE,
+    lastActiveDate: getLocalDateString(),
+    lastUpdated: Date.now(),
+  });
   localStorage.removeItem(STORAGE_KEY);
   localStorage.removeItem(CLOUD_ENABLED_KEY);
   window.location.reload();
 }
 
 export async function syncNow(state) {
-  if (!isSupabaseConfigured()) return { success: false, reason: 'not_configured' };
-  // Clear any pending debounced sync so we don't double-fire
-  if (syncTimeout) {
-    clearTimeout(syncTimeout);
-    syncTimeout = null;
-  }
+  if (!isCanonicalSyncConfigured()) return { success: false, reason: 'not_configured' };
+  clearQueuedCloudSync();
   const result = await syncStateToCloud(state);
   return result;
 }

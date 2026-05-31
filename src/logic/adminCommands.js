@@ -6,9 +6,10 @@
  *  is validated, executed, and reported back to the user.
  *  ============================================================ */
 
-import { xpForNextLevel } from '../data/questCatalog';
+import { getRankByLevel, xpForNextLevel } from '../data/questCatalog';
 import { REWARD_ITEMS } from '../data/rewards';
 import { SHADOW_TEMPLATES } from '../data/shadows';
+import { getLocalDateString } from '../utils/dateUtils';
 
 // ─── COMMAND DEFINITIONS (for AI prompt + validation) ───
 
@@ -147,6 +148,29 @@ function createSystemMessage(type, title, subtitle, message) {
   return { type, title, subtitle: subtitle || '', message: message || '' };
 }
 
+function getQuestKey(quest) {
+  return quest?.uniqueId || quest?.id || '';
+}
+
+function questMatches(q, questId) {
+  if (!q || !questId) return false;
+  return q.uniqueId === questId || q.id === questId;
+}
+
+function applyOverallFromPillars(newState) {
+  const overall = Math.floor(
+    (newState.pillars.deen.level * 0.5) +
+    (newState.pillars.body.level * 0.3) +
+    (newState.pillars.money.level * 0.2)
+  );
+  const rank = getRankByLevel(overall);
+  newState.user = {
+    ...newState.user,
+    overallLevel: overall,
+    currentRank: rank.key,
+  };
+}
+
 function execCreateQuest(state, data) {
   if (!data.title || !data.pillar) return { error: 'Missing title or pillar' };
   const pillar = data.pillar.toLowerCase();
@@ -169,7 +193,7 @@ function execCreateQuest(state, data) {
   if (data.type === 'daily') {
     newState.dailyQuests = [...newState.dailyQuests, quest];
   } else {
-    newState.customQuests = [...(newState.customQuests || []), quest];
+    newState.customQuests = [...(newState.customQuests || []), { ...quest, lastCompleted: null }];
   }
   return { state: newState, report: `Created quest "${quest.title}" (${pillar})` };
 }
@@ -180,19 +204,20 @@ function execModifyQuest(state, data) {
     ...(newState.dailyQuests || []),
     ...(newState.customQuests || []),
   ];
-  const target = allQuests.find(q => q.uniqueId === data.questId || q.id === data.questId);
+  const target = allQuests.find(q => questMatches(q, data.questId));
   if (!target) return { error: `Quest not found: ${data.questId}` };
+  const targetKey = getQuestKey(target);
 
   const update = (q) => {
-    if (q.uniqueId !== target.uniqueId && q.id !== target.id) return q;
+    if (getQuestKey(q) !== targetKey) return q;
     const updated = { ...q };
     if (data.title) updated.title = data.title;
     if (data.description) updated.description = data.description;
     if (typeof data.xp === 'number') {
-    if (!isValidPositiveNumber(data.xp)) return q; // skip invalid XP, preserve original
-    updated.xp = data.xp;
-    updated.baseXp = data.xp;
-  }
+      if (!isValidPositiveNumber(data.xp)) return q; // skip invalid XP, preserve original
+      updated.xp = data.xp;
+      updated.baseXp = data.xp;
+    }
     return updated;
   };
 
@@ -204,8 +229,8 @@ function execModifyQuest(state, data) {
 function execDeleteQuest(state, data) {
   const newState = clone(state);
   const before = (newState.dailyQuests || []).length + (newState.customQuests || []).length;
-  newState.dailyQuests = (newState.dailyQuests || []).filter(q => q.uniqueId !== data.questId && q.id !== data.questId);
-  newState.customQuests = (newState.customQuests || []).filter(q => q.uniqueId !== data.questId && q.id !== data.questId);
+  newState.dailyQuests = (newState.dailyQuests || []).filter(q => !questMatches(q, data.questId));
+  newState.customQuests = (newState.customQuests || []).filter(q => !questMatches(q, data.questId));
   const after = newState.dailyQuests.length + newState.customQuests.length;
   if (before === after) return { error: `Quest not found: ${data.questId}` };
   return { state: newState, report: `Deleted quest` };
@@ -213,10 +238,13 @@ function execDeleteQuest(state, data) {
 
 function execForceCompleteQuest(state, data) {
   const newState = clone(state);
-  const allQuests = [...(newState.dailyQuests || []), ...(newState.customQuests || [])];
-  const quest = allQuests.find(q => q.uniqueId === data.questId || q.id === data.questId);
+  const dailyQuest = (newState.dailyQuests || []).find(q => questMatches(q, data.questId));
+  const customQuest = (newState.customQuests || []).find(q => questMatches(q, data.questId));
+  const quest = dailyQuest || customQuest;
   if (!quest) return { error: `Quest not found: ${data.questId}` };
-  if (quest.completed) return { error: 'Quest already completed' };
+  const isCustom = !!customQuest;
+  const today = getLocalDateString();
+  if (quest.completed || (isCustom && quest.lastCompleted === today)) return { error: 'Quest already completed' };
 
   const pillar = quest.pillar;
   const xp = quest.xp || quest.baseXp || 10;
@@ -238,23 +266,26 @@ function execForceCompleteQuest(state, data) {
     newState.pillars[pillar].xp = px - needed;
   }
 
-  quest.completed = true;
-  quest.completedAt = new Date().toISOString();
+  const completedAt = new Date().toISOString();
+  const questKey = getQuestKey(quest);
+  if (isCustom) {
+    newState.customQuests = (newState.customQuests || []).map(q =>
+      getQuestKey(q) === questKey
+        ? { ...q, id: q.id || q.uniqueId, completedAt, lastCompleted: today }
+        : q
+    );
+  } else {
+    newState.dailyQuests = (newState.dailyQuests || []).map(q =>
+      getQuestKey(q) === questKey ? { ...q, completed: true, completedAt } : q
+    );
+  }
   newState.gold += gold;
   newState.history = [...(newState.history || []), {
-    type: 'daily', questId: quest.id, title: quest.title, pillar, xp, gold,
-    date: new Date().toISOString(), completed: true,
+    type: isCustom ? 'custom' : 'daily', questId: questKey, title: quest.title, pillar, xp, gold,
+    date: completedAt, completed: true,
   }];
 
-  // Recalculate overall level
-  const overall = Math.floor(
-    (newState.pillars.deen.level * 0.5) +
-    (newState.pillars.body.level * 0.3) +
-    (newState.pillars.money.level * 0.2)
-  );
-  if (overall > newState.user.overallLevel) {
-    newState.user = { ...newState.user, overallLevel: overall };
-  }
+  applyOverallFromPillars(newState);
 
   return { state: newState, report: `Force-completed "${quest.title}" (+${xp} XP, +${gold} Gold)` };
 }
@@ -299,15 +330,7 @@ function execAwardXp(state, data) {
     newState.pillars[p].xp = px - needed;
   }
 
-  // Recalculate overall
-  const overall = Math.floor(
-    (newState.pillars.deen.level * 0.5) +
-    (newState.pillars.body.level * 0.3) +
-    (newState.pillars.money.level * 0.2)
-  );
-  if (overall > newState.user.overallLevel) {
-    newState.user = { ...newState.user, overallLevel: overall };
-  }
+  applyOverallFromPillars(newState);
 
   return { state: newState, report: `Awarded ${data.amount} XP to ${p}` };
 }

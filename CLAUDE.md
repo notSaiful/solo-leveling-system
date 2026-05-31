@@ -57,17 +57,16 @@ The app gamifies Islamic self-development through three pillars — **Deen**, **
 ```
 Frontend:     React 18 + Vite + Tailwind CSS + Framer Motion + Lucide React
 State:        Custom hooks (useStore, useLevelUp, usePenaltyCheck)
-Storage:      localStorage (primary) + Supabase (cloud backup)
+Storage:      localStorage (offline cache) + Vercel API canonical snapshot
 AI:           OpenRouter API (Forge-Master persona)
 Mobile:       Capacitor iOS (IPA builds automated)
 ```
 
 ### Data Flow
 ```
-User Action → useStore (localStorage) → Auto Cloud Sync (Supabase)
+User Action → useStore (localStorage) → Auto Cloud Sync (/api/sync-state)
                                              ↓
-                                         state_snapshots (full JSON backup)
-                                         + granular tables (profiles, quests, etc.)
+                                         Private GitHub Gist JSON snapshot
 ```
 
 ### Key Files
@@ -75,10 +74,11 @@ User Action → useStore (localStorage) → Auto Cloud Sync (Supabase)
 |------|---------------|
 | `src/App.jsx` | Main app shell, tabs, error boundary, diagnostic panel |
 | `src/hooks/useStore.js` | Central state management, localStorage persistence, deep-merge updates |
-| `src/data/store.js` | Initial state, schema migration, fullCloudReset |
+| `src/data/store.js` | Initial state, local persistence, canonical cloud init/reset |
 | `src/services/aiAssistant.js` | Forge-Master API calls, OpenRouter integration, model fallback |
-| `src/services/supabaseClient.js` | Supabase client with base64-embedded fallback credentials |
-| `src/services/supabaseSync.js` | Full auto-sync engine (all data types + snapshots) |
+| `src/services/canonicalSync.js` | Client calls to the canonical sync API |
+| `src/services/cloudSync.js` | Debounced sync wrapper and load/save bridge |
+| `api/sync-state.js` | Vercel serverless sync endpoint backed by private GitHub Gist |
 | `src/logic/questEngine.js` | Daily quest generation, completion, XP calculation |
 | `src/logic/dungeons.js` | Weekly dungeon system |
 | `src/logic/adminCommands.js` | AI-powered admin commands (`[[CMD]]` JSON blocks) |
@@ -167,39 +167,32 @@ FALLBACK_MODEL  = 'moonshotai/kimi-k2.6:free' // Often 503 from Crucible
 
 ---
 
-## 6. Cloud Sync (Supabase)
+## 6. Cloud Sync (Canonical Snapshot)
 
 **Status:** Auto-sync active. No manual toggle needed.
 
-**Embedded Credentials:**
+**Runtime Configuration:**
 ```javascript
-// Default Supabase URL and Key are base64-embedded in supabaseClient.js
-// Project: https://gxchdeuuudplqkvpwijh.supabase.co
+// Client build-time secret
+VITE_SLS_SYNC_SECRET
+
+// Server runtime secrets
+SLS_SYNC_SECRET
+GITHUB_TOKEN
+SLS_GIST_ID
 ```
 
-**Synced Tables (ALL data types):**
-- `profiles` (with flow_state, last_quest_date, last_active_date)
-- `pillars`, `stats`
-- `daily_quests`, `custom_quests`, `redemption_quests`
-- `shadows`, `purchased_rewards`
-- `history`, `system_messages`, `job_changes`
-- `ai_dungeons`
-- `level_quests` + steps
-- `weekly_dungeons` + steps
-- `state_snapshots` (full JSON backup on every sync)
+**Synced Data:**
+- One full JSON state snapshot containing all progress, quests, stats, rewards, history, dungeons, messages, and AI-generated state
+- localStorage remains the instant offline cache
+- The Vercel API is the only cross-device source of truth
 
 **Sync Strategy:**
-- `syncStateToCloud`: Uploads granular data + full snapshot
-- `loadStateFromCloud`: Tries snapshot first, falls back to granular reconstruction
-- Triggered automatically on every state change when Supabase is configured
-
-**Schema Migration Required:**
-- User MUST run migration in Supabase SQL Editor
-- File: `supabase/schema.sql` (lines 371-433)
-- Adds `flow_state`, `last_quest_date`, `last_active_date` to profiles
-- Creates `state_snapshots` table
-- Creates `ai_dungeons` table
-- Adds unique constraint on `redemption_quests(user_id, quest_template_id)`
+- `initCloudSync`: loads the canonical snapshot before penalties, quest rotation, and dungeon initialization
+- Newer `lastUpdated` wins so an old browser cannot overwrite newer progress
+- Daily quests keep the most recent `lastQuestDate` during merge
+- `syncStateToCloud`: uploads the full normalized snapshot through `/api/sync-state`
+- Old custom quests missing `id` are normalized to stable `uniqueId`/`id` keys
 
 ---
 
@@ -245,7 +238,7 @@ bash build-ios-ipa.sh
 | 11 | Rank System E→S with Quest Catalog | ✅ |
 | 12 | OpenRouter Model Fix (switched to gpt-4o-mini primary) | ✅ |
 | 13 | Critical/High Audit Fixes | ✅ |
-| 14 | Supabase Auto-Preconnect (removed manual toggle) | ✅ |
+| 14 | Cloud Auto-Preconnect (removed manual toggle) | ✅ |
 | 15 | Custom Quest Completion Tracking Fix | ✅ |
 | 16 | Custom Quest Reset Logic | ✅ |
 | 17 | Bonus XP Level-Up Stat Points Fix | ✅ |
@@ -255,28 +248,31 @@ bash build-ios-ipa.sh
 | 21 | UI & Input Validation Fixes | ✅ |
 | 22 | Settings Cleanup (removed Cloud Sync & AI manual inputs) | ✅ |
 | 23 | Cache-Busting Meta Tags + Clear Cache Button | ✅ |
-| 24 | Supabase Full Sync Coverage (all data types + snapshots) | ✅ |
+| 24 | Full Snapshot Sync Coverage (all data types) | ✅ |
 | 25 | Automated IPA Builder Script | ✅ |
 | 26 | GitHub Actions Cloud Build Workflow | ✅ |
+| 27 | Canonical Vercel/Gist Sync + Legacy Backend Removal | ✅ |
 
 ---
 
 ## 9. Known Issues & Pending Tasks
 
 ### Pending Tasks (from task tracker)
-- [ ] **#31: Fix timezone bug in date comparisons** — Date logic uses `toLocaleDateString('en-CA')` but edge cases may exist around midnight transitions
-- [ ] **#32: Fix Supabase sync gaps** — Verify all edge cases in sync logic (deep nested objects, array merging)
+- [x] **#31: Fix timezone bug in date comparisons** — Date logic now uses `getLocalDateString()` from direct local Date components
+- [x] **#32: Fix legacy sync gaps** — Old split sync path removed; canonical full snapshot is now the single sync path
+- [ ] **#33: Harden canonical sync security** — Add real owner auth or deployment protection if the app ever stops being private/solo-use
 
 ### Known Limitations
 - **Chunk size warning:** Vite build produces JS chunk >500KB. Consider code-splitting with dynamic imports if performance becomes an issue
 - **Free model fallback:** `moonshotai/kimi-k2.6:free` is often 503 from Crucible. Primary model (`gpt-4o-mini`) is reliable
 - **Unsigned IPA:** Must be re-signed every 7 days via AltStore/Sideloadly
 - **Browser cache:** Users with old JS bundles may need "Clear Cache & Reload" from Settings
+- **Client-visible sync secret:** Current design is acceptable only for a solo private app. A public multi-user version needs real authentication.
 
 ### Required User Actions
-1. **Run Supabase migration** in SQL Editor (`supabase/schema.sql` lines 371-433)
-2. **Push to GitHub** to activate cloud IPA builds (optional)
-3. **Install IPA** via AltStore/Sideloadly for iPhone 17 testing
+1. **Use the Vercel URL as the canonical app entrypoint** so every browser/device hits the same sync API
+2. **Push to GitHub** to activate cloud IPA builds
+3. **Install IPA** via AltStore/Sideloadly for iPhone testing
 
 ---
 
@@ -309,7 +305,7 @@ bash build-ios-ipa.sh
 - `src/data/` — Static data, initial state, catalogs
 - `src/services/` — External API integrations
 - `ios/App/` — Capacitor iOS native project
-- `supabase/` — Database schema
+- `api/` — Vercel serverless endpoints
 - `.github/workflows/` — CI/CD automation
 
 ---

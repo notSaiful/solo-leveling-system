@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { checkAndApplyPenalties } from '../logic/penalties';
 import { getLocalDateString } from '../utils/dateUtils';
 
-export function usePenaltyCheck(state, setState) {
+export function usePenaltyCheck(state, setState, enabled = true) {
   const hasChecked = useRef(false);
   const stateRef = useRef(state);
 
@@ -10,6 +10,8 @@ export function usePenaltyCheck(state, setState) {
   stateRef.current = state;
 
   useEffect(() => {
+    if (!enabled) return;
+
     const runPenaltyCheck = () => {
       const currentState = stateRef.current;
       const today = getLocalDateString();
@@ -141,5 +143,5 @@ export function usePenaltyCheck(state, setState) {
       document.removeEventListener('visibilitychange', handleVisibility);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [enabled]);
 }

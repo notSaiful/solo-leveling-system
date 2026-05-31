@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { loadState, saveState, queueCloudSync } from '../data/store';
-import { isSupabaseConfigured } from '../services/supabaseClient';
+import { isCanonicalSyncConfigured } from '../services/canonicalSync';
 
 export function useStore() {
   const [state, setState] = useState(() => loadState());
@@ -11,7 +11,7 @@ export function useStore() {
     } catch (e) {
       console.warn('useStore save failed:', e);
     }
-    if (isSupabaseConfigured()) {
+    if (isCanonicalSyncConfigured() && (state.lastUpdated || 0) > 0) {
       try {
         queueCloudSync(state);
       } catch (e) {
@@ -25,9 +25,11 @@ export function useStore() {
       const next = typeof updater === 'function' ? updater(prev) : updater;
       if (next === prev) return prev;
       if (!next || typeof next !== 'object') return prev;
+      const preserveLastUpdated = next.__preserveLastUpdated === true;
       // Deep-merge top-level nested objects to avoid wiping sibling keys
       const merged = { ...prev };
       for (const key of Object.keys(next)) {
+        if (key === '__preserveLastUpdated') continue;
         if (
           next[key] !== null &&
           typeof next[key] === 'object' &&
@@ -40,7 +42,7 @@ export function useStore() {
           merged[key] = next[key];
         }
       }
-      merged.lastUpdated = Date.now();
+      merged.lastUpdated = preserveLastUpdated ? (next.lastUpdated || prev.lastUpdated || 0) : Date.now();
       return merged;
     });
   }, []);

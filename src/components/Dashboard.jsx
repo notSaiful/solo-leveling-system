@@ -32,12 +32,14 @@ const rankColorMap = {
   'text-yellow-400': '#facc15',
 };
 
-export default function Dashboard({ state, setState }) {
+export default function Dashboard({ state, setState, ready = true }) {
   const rank = getRankByLevel(state.user.overallLevel);
   const today = getLocalDateString();
 
   // Initialize quests after render (not during render to avoid reversion loops)
   useEffect(() => {
+    if (!ready) return;
+
     setState(prev => {
       let s = prev;
       s = initializeDailyQuests(s);
@@ -46,7 +48,7 @@ export default function Dashboard({ state, setState }) {
       return s;
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.user.overallLevel, state.lastQuestDate, state.weeklyDungeons.weekId]);
+  }, [ready, state.user.overallLevel, state.lastQuestDate, state.weeklyDungeons.weekId]);
 
   // Shadow bonuses
   const shadowBonuses = useMemo(() => getShadowBonuses(state), [state.shadows]);
@@ -167,7 +169,7 @@ export default function Dashboard({ state, setState }) {
     const uniqueId = `custom-${quest.id || Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     setState(prev => ({
       ...prev,
-      customQuests: [...prev.customQuests, { ...quest, uniqueId, lastCompleted: null }],
+      customQuests: [...prev.customQuests, { ...quest, id: quest.id || uniqueId, uniqueId, lastCompleted: null }],
     }));
   };
 
@@ -175,9 +177,10 @@ export default function Dashboard({ state, setState }) {
     setState(prev => {
       const quest = prev.customQuests.find(q => q.uniqueId === questUniqueId);
       if (!quest || quest.lastCompleted === today) return prev;
+      const questKey = quest.uniqueId || quest.id;
       const alreadyDone = prev.history.some(h => {
         const hDate = h.date ? toLocalDateString(h.date) : '';
-        return hDate === today && h.questId === quest.id;
+        return hDate === today && h.type === 'custom' && h.questId === questKey;
       });
       if (alreadyDone) return prev;
 
@@ -192,10 +195,10 @@ export default function Dashboard({ state, setState }) {
       };
       let next = {
         ...prev,
-        customQuests: prev.customQuests.map(q => q.uniqueId === questUniqueId ? { ...q, lastCompleted: today, completedAt: new Date().toISOString() } : q),
+        customQuests: prev.customQuests.map(q => q.uniqueId === questUniqueId ? { ...q, id: q.id || q.uniqueId, lastCompleted: today, completedAt: new Date().toISOString() } : q),
         pillars: newPillars,
         gold: prev.gold + gold,
-        history: [...prev.history, { type: 'custom', questId: quest.id, title: quest.title, pillar, xp: baseXp, gold, date: new Date().toISOString(), completed: true }],
+        history: [...prev.history, { type: 'custom', questId: questKey, title: quest.title, pillar, xp: baseXp, gold, date: new Date().toISOString(), completed: true }],
       };
       // Check pillar level-up
       const needed = xpForNextLevel(newPillars[pillar].level);
