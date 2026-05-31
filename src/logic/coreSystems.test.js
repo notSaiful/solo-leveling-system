@@ -5,6 +5,9 @@ import { completeRedemptionQuest, getRedemptionProgress } from './questEngine';
 import { isDebuffActive } from './penalties';
 import { executeAdminCommands } from './adminCommands';
 import { pruneExpiredCustomQuests } from './customQuests';
+import { MISSION_DOCTRINE, getMissionDoctrinePrompt } from '../data/missionDoctrine';
+import { getMissionMetrics } from './missionMetrics';
+import { getForgeMasterSystemPromptForTest } from '../services/aiAssistant';
 
 function baseState(overrides = {}) {
   return {
@@ -114,6 +117,70 @@ describe('custom quest expiry', () => {
     ];
 
     expect(pruneExpiredCustomQuests(quests, '2026-06-01').map(q => q.id)).toEqual(['today']);
+  });
+});
+
+describe('mission doctrine and metrics', () => {
+  it('defines servant leadership and forbidden deviations', () => {
+    const prompt = getMissionDoctrinePrompt();
+    expect(MISSION_DOCTRINE.title).toBe('Khalifa Mission');
+    expect(prompt).toContain('servant-leader');
+    expect(MISSION_DOCTRINE.forbiddenDeviations).toContain('vigilantism');
+    expect(MISSION_DOCTRINE.forbiddenDeviations).toContain('unlawful violence');
+    expect(MISSION_DOCTRINE.forbiddenDeviations).toContain('arrogance');
+  });
+
+  it('derives mission metrics from completed history', () => {
+    const metrics = getMissionMetrics([
+      {
+        type: 'daily',
+        title: 'Study seerah and tawheed',
+        pillar: 'deen',
+        tags: ['seerah', 'tauheed'],
+        completed: true,
+        localDate: '2026-06-01',
+      },
+      {
+        type: 'custom',
+        title: 'Build halal income for sadaqah',
+        pillar: 'money',
+        tags: ['halal', 'income', 'sadaqah'],
+        completed: true,
+        localDate: '2026-06-01',
+      },
+      {
+        type: 'custom',
+        title: 'Mentor a Muslim student',
+        pillar: 'deen',
+        tags: ['mentor', 'education'],
+        completed: true,
+        localDate: '2026-06-01',
+      },
+    ], '2026-06-01');
+
+    expect(metrics.todayActions).toBe(3);
+    expect(metrics.duties.find(d => d.id === 'tauheed').total).toBeGreaterThan(0);
+    expect(metrics.duties.find(d => d.id === 'wealth').total).toBeGreaterThan(0);
+    expect(metrics.duties.find(d => d.id === 'service').total).toBeGreaterThan(0);
+  });
+
+  it('injects mission doctrine and guardrails into the Forge-Master prompt', () => {
+    const prompt = getForgeMasterSystemPromptForTest(baseState({
+      history: [{
+        type: 'daily',
+        title: 'Study tawheed',
+        pillar: 'deen',
+        completed: true,
+        localDate: '2026-06-01',
+        date: '2026-06-01T01:00:00.000Z',
+      }],
+    }));
+
+    expect(prompt).toContain('KHALIFA MISSION DOCTRINE');
+    expect(prompt).toContain('Mission score');
+    expect(prompt).toContain('NEVER encourage vigilantism');
+    expect(prompt).toContain('unlawful violence');
+    expect(prompt).toContain('servant-leadership');
   });
 });
 
