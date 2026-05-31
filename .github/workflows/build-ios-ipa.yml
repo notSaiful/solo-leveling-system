@@ -44,11 +44,14 @@ jobs:
         run: |
           cd ios/App
           mkdir -p build
+          # GitHub Actions macos-latest runners do not ship the iPhoneOS platform
+          # for Xcode 16. Build for the simulator SDK (always present) instead.
+          # For a real-device IPA, run build-ios-ipa.sh locally on a Mac with Xcode.
           xcodebuild \
             -project App.xcodeproj \
             -target App \
             -configuration Release \
-            -sdk iphoneos \
+            -sdk iphonesimulator \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
@@ -70,7 +73,7 @@ jobs:
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
-          name: SoloLevelingSystem-iOS
+          name: SoloLevelingSystem-iOS-simulator
           path: ios/App/build/SoloLevelingSystem.ipa
           retention-days: 30
 
