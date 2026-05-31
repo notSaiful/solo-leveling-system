@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ShoppingBag, Coins, Check, Lock, Sparkles, ChevronRight, Star } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { REWARD_ITEMS, REWARD_RARITY, purchaseReward, getStoreItemsForRank, getFeaturedItems, getNextUnlockPreview, isItemUnlocked } from '../data/rewards';
@@ -18,7 +18,9 @@ export default function RewardStore({ state, setState }) {
       ? allItems.filter(i => !i.unlocked)
       : allItems.filter(i => i.category === activeFilter);
 
-  const categories = ['all', 'food', 'education', 'fitness', 'tech', 'travel', 'charity', 'wealth', 'luxury', 'wellness', 'entertainment', 'locked'];
+  const categories = useMemo(() => (
+    ['all', ...Array.from(new Set(REWARD_ITEMS.map(item => item.category))).sort(), 'locked']
+  ), []);
 
   const handlePurchase = (itemId) => {
     const result = purchaseReward(state.gold, itemId, state.purchasedRewards);
