@@ -45,8 +45,11 @@ jobs:
       - name: Install iOS simulator platform
         run: |
           set -euo pipefail
+          xcodebuild -version
           xcodebuild -showsdks
-          if xcodebuild -showsdks | grep -q iphonesimulator; then
+          xcrun simctl list runtimes || true
+
+          if xcrun simctl list runtimes | grep -q "iOS .*Available"; then
             exit 0
           fi
 
@@ -58,7 +61,7 @@ jobs:
             sleep $((attempt * 20))
           done
 
-          xcodebuild -showsdks | grep -q iphonesimulator
+          xcrun simctl list runtimes | grep -q "iOS .*Available"
 
       - name: Build unsigned IPA
         run: |
