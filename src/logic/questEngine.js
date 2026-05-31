@@ -13,13 +13,15 @@ import {
   calculateGoldReward,
   RANK_CONFIG,
 } from '../data/questCatalog';
-import { applyStatModifiers } from '../data/stats';
+import { applyStatModifiers, autoAssignStatPoints } from '../data/stats';
 import { getCurrentWeekId } from './dungeons';
+import { getLocalDateString } from '../utils/dateUtils';
+import { getScaledFlowConfig } from '../data/rankDifficulty';
 
 // ─── STATE INITIALIZATION ───
 export function initializeDailyQuests(state) {
   const rank = getRankByLevel(state.user.overallLevel);
-  const today = new Date().toLocaleDateString('en-CA');
+  const today = getLocalDateString();
 
   // Only regenerate if date changed
   if (state.lastQuestDate === today) return state;
@@ -94,10 +96,12 @@ export function completeDailyQuest(state, questUniqueId) {
 
   // Update pillar
   const newPillars = { ...state.pillars };
+  const today = getLocalDateString();
   newPillars[quest.pillar] = {
     ...newPillars[quest.pillar],
     xp: newPillars[quest.pillar].xp + finalXp,
     streak: newPillars[quest.pillar].streak + 1,
+    lastDailyQuestCompletionDate: today,
   };
 
   // Check for pillar level up
@@ -105,12 +109,15 @@ export function completeDailyQuest(state, questUniqueId) {
   const pillarLevel = newPillars[quest.pillar].level;
   const pillarXp = newPillars[quest.pillar].xp;
   const needed = xpForNextLevel(pillarLevel);
+  let autoStatResult = null;
   if (pillarXp >= needed) {
     newPillars[quest.pillar].level = pillarLevel + 1;
     newPillars[quest.pillar].xp = pillarXp - needed;
     // Award stat points based on the PILLAR's rank, not overall rank
     const pillarRank = getRankByLevel(newPillars[quest.pillar].level);
     statPointsAwarded = pillarRank.statPointsPerLevel || 1;
+    // Auto-assign based on performance — user does NOT choose
+    autoStatResult = autoAssignStatPoints(state.stats || {}, quest.pillar, statPointsAwarded);
   }
 
   // Mark quest complete
@@ -137,18 +144,19 @@ export function completeDailyQuest(state, questUniqueId) {
     pillars: newPillars,
     dailyQuests: newDailyQuests,
     gold: state.gold + gold,
-    statPoints: state.statPoints + statPointsAwarded,
     history: [...state.history, historyEntry],
   };
 
-  if (statPointsAwarded > 0) {
+  if (autoStatResult) {
+    result.stats = autoStatResult.stats;
+    const assignStr = autoStatResult.assignments.map(a => `${a.stat.toUpperCase()} +${a.points}`).join(', ');
     result.systemMessages = [
       ...(result.systemMessages || []),
       {
         type: 'levelUp',
         title: `${quest.pillar.toUpperCase()} LEVEL UP!`,
-        subtitle: `Level ${newPillars[quest.pillar].level} — ${statPointsAwarded} Stat Points awarded`,
-        message: 'Distribute them in the Build tab.',
+        subtitle: `Level ${newPillars[quest.pillar].level}`,
+        message: `SYSTEM auto-assigned: ${assignStr}. Performance determines growth.`,
       },
     ];
   }
@@ -211,11 +219,10 @@ export function completeLevelQuest(state, levelQuestIndex, questIndex) {
       });
     }
 
-    return {
+    let nextState = {
       ...state,
       levelQuests: newLevelQuests,
       gold: state.gold + (reward.gold || 0) + gold,
-      statPoints: state.statPoints + (reward.statPoints || 0),
       systemMessages: [...state.systemMessages, ...messages],
       history: [
         ...state.history,
@@ -229,6 +236,28 @@ export function completeLevelQuest(state, levelQuestIndex, questIndex) {
         },
       ],
     };
+
+    // Auto-assign any reward stat points directly
+    const rewardSp = reward.statPoints || 0;
+    if (rewardSp > 0) {
+      const pillar = quest.pillar || 'deen';
+      const autoStatResult = autoAssignStatPoints(state.stats || {}, pillar, rewardSp);
+      if (autoStatResult) {
+        nextState.stats = autoStatResult.stats;
+        const assignStr = autoStatResult.assignments.map(a => `${a.stat.toUpperCase()} +${a.points}`).join(', ');
+        nextState.systemMessages = [
+          ...nextState.systemMessages,
+          {
+            type: 'levelUp',
+            title: 'STAT GROWTH',
+            subtitle: `Level Quest Reward`,
+            message: `SYSTEM auto-assigned: ${assignStr}.`,
+          },
+        ];
+      }
+    }
+
+    return nextState;
   }
 
   return {
@@ -253,25 +282,25 @@ export function completeRedemptionQuest(state, redemptionQuestId) {
   const quest = state.redemptionQuests.find(rq => rq.id === redemptionQuestId);
   if (!quest || quest.completed) return state;
 
+  const pillar = quest.pillar;
+  if (!pillar || !state.pillars[pillar]) return state;
+
   // Mark complete
   const newRedemptionQuests = state.redemptionQuests.map(rq =>
     rq.id === redemptionQuestId ? { ...rq, completed: true, completedAt: new Date().toISOString() } : rq
   );
 
-  // Clear debuffs
+  // Clear debuff ONLY for the matching pillar
   const newPillars = { ...state.pillars };
-  Object.keys(newPillars).forEach(key => {
-    newPillars[key] = { ...newPillars[key], activeDebuff: null };
-  });
+  newPillars[pillar] = { ...newPillars[pillar], activeDebuff: null };
 
   const reward = quest.reward || {};
 
-  return {
+  let nextState = {
     ...state,
     redemptionQuests: newRedemptionQuests,
     pillars: newPillars,
     gold: state.gold + (reward.gold || 0),
-    statPoints: state.statPoints + (reward.statPoints || 0),
     systemMessages: [
       ...state.systemMessages,
       {
@@ -282,6 +311,27 @@ export function completeRedemptionQuest(state, redemptionQuestId) {
       },
     ],
   };
+
+  // Auto-assign any reward stat points directly
+  const rewardSp = reward.statPoints || 0;
+  if (rewardSp > 0) {
+    const autoStatResult = autoAssignStatPoints(state.stats || {}, pillar, rewardSp);
+    if (autoStatResult) {
+      nextState.stats = autoStatResult.stats;
+      const assignStr = autoStatResult.assignments.map(a => `${a.stat.toUpperCase()} +${a.points}`).join(', ');
+      nextState.systemMessages = [
+        ...nextState.systemMessages,
+        {
+          type: 'levelUp',
+          title: 'STAT GROWTH',
+          subtitle: `Redemption Reward`,
+          message: `SYSTEM auto-assigned: ${assignStr}.`,
+        },
+      ];
+    }
+  }
+
+  return nextState;
 }
 
 // ─── OVERALL LEVEL CALCULATION ───
@@ -321,25 +371,24 @@ export function recalculateOverallLevel(state) {
   return newState;
 }
 
-// ─── FLOW STATE ───
-const FLOW_WINDOW_MS = 60 * 60 * 1000; // 60 minutes
-const FLOW_THRESHOLD = 3;
-const FLOW_MULTIPLIER = 1.2;
-
-export function checkFlowState(history) {
+// ─── FLOW STATE (Rank-Scaled) ───
+export function checkFlowState(history, rankKey = 'E') {
+  const config = getScaledFlowConfig(rankKey);
   const now = Date.now();
-  const recent = history.filter(h => h.completed && now - new Date(h.date).getTime() < FLOW_WINDOW_MS);
+  const windowMs = config.window * 60 * 1000;
+  const recent = history.filter(h => h.completed && now - new Date(h.date).getTime() < windowMs);
 
-  if (recent.length >= FLOW_THRESHOLD) {
+  if (recent.length >= config.quests) {
     return {
       active: true,
-      multiplier: FLOW_MULTIPLIER,
-      expiresAt: now + FLOW_WINDOW_MS,
+      multiplier: config.multiplier,
+      expiresAt: now + windowMs,
       questsInWindow: recent.length,
+      rankKey,
     };
   }
 
-  return { active: false, multiplier: 1, expiresAt: 0, questsInWindow: recent.length };
+  return { active: false, multiplier: 1, expiresAt: 0, questsInWindow: recent.length, rankKey };
 }
 
 export function getFlowStateDisplay(flowState) {
@@ -402,11 +451,13 @@ export function completeWeeklyDungeon(state, pillar) {
   const pillarLevel = newPillars[pillar].level;
   const pillarXp = newPillars[pillar].xp;
   const needed = xpForNextLevel(pillarLevel);
+  let autoStatResult = null;
   if (pillarXp >= needed) {
     newPillars[pillar].level = pillarLevel + 1;
     newPillars[pillar].xp = pillarXp - needed;
     const pillarRank = getRankByLevel(newPillars[pillar].level);
     statPointsAwarded = pillarRank.statPointsPerLevel || 1;
+    autoStatResult = autoAssignStatPoints(state.stats || {}, pillar, statPointsAwarded);
   }
 
   // Mark dungeon pillar as completed
@@ -430,19 +481,20 @@ export function completeWeeklyDungeon(state, pillar) {
     ...state,
     pillars: newPillars,
     gold: state.gold + scaledGold,
-    statPoints: state.statPoints + statPointsAwarded,
     weeklyDungeons: newWeeklyDungeons,
     history: [...state.history, historyEntry],
   };
 
-  if (statPointsAwarded > 0) {
+  if (autoStatResult) {
+    nextState.stats = autoStatResult.stats;
+    const assignStr = autoStatResult.assignments.map(a => `${a.stat.toUpperCase()} +${a.points}`).join(', ');
     nextState.systemMessages = [
       ...(nextState.systemMessages || []),
       {
         type: 'levelUp',
         title: `${pillar.toUpperCase()} LEVEL UP!`,
-        subtitle: `Level ${newPillars[pillar].level} — ${statPointsAwarded} Stat Points awarded`,
-        message: 'Distribute them in the Build tab.',
+        subtitle: `Level ${newPillars[pillar].level}`,
+        message: `SYSTEM auto-assigned: ${assignStr}. Performance determines growth.`,
       },
     ];
   }

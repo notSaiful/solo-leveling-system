@@ -7,6 +7,24 @@ dist/
 # iOS build artifacts
 ios/App/DerivedData/
 ios/App/build/
+ios/App/CapApp-SPM/build/
 ios/App/App.xcarchive/
 *.xcuserstate
 *.xcworkspace/xcuserdata/
+
+# Build outputs
+*.ipa
+
+# Obsidian local state
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+.obsidian/graph.json
+.obsidian/plugins/
+.obsidian/cache
+
+# User context memory (personal, do not commit)
+memory/
+
+# Claude Code session data
+.claude/
+.obsidian/

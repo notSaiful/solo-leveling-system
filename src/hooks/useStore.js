@@ -5,7 +5,6 @@ import { isSupabaseConfigured } from '../services/supabaseClient';
 export function useStore() {
   const [state, setState] = useState(() => loadState());
 
-  // Save to localStorage immediately on every change
   useEffect(() => {
     try {
       saveState(state);
@@ -41,6 +40,7 @@ export function useStore() {
           merged[key] = next[key];
         }
       }
+      merged.lastUpdated = Date.now();
       return merged;
     });
   }, []);

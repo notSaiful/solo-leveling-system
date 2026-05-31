@@ -54,8 +54,10 @@ const EXCUSE_PATTERNS = [
 
 // ─── PERFORMANCE METRICS ───
 
+import { getLocalDateString, toLocalDateString } from '../utils/dateUtils';
+
 function calculatePerformanceMetrics(state) {
-  const today = new Date().toLocaleDateString('en-CA');
+  const today = getLocalDateString();
   const dailyQuests = state.dailyQuests || [];
   const totalDaily = dailyQuests.length;
   const completedDaily = dailyQuests.filter(q => q.completed).length;
@@ -69,7 +71,7 @@ function calculatePerformanceMetrics(state) {
 
   // Check last active date
   const lastActive = state.lastActiveDate;
-  const daysSinceActive = lastActive ? Math.floor((new Date(today) - new Date(lastActive)) / (1000 * 60 * 60 * 24)) : 0;
+  const daysSinceActive = lastActive ? Math.floor((new Date(today + 'T00:00:00') - new Date(lastActive + 'T00:00:00')) / (1000 * 60 * 60 * 24)) : 0;
 
   // Debuff status
   const activeDebuffs = ['deen', 'body', 'money'].filter(p => state.pillars?.[p]?.activeDebuff).length;

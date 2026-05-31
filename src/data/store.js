@@ -1,5 +1,6 @@
 import { isSupabaseConfigured, getSupabase } from '../services/supabaseClient';
-import { signInAnonymously, loadStateFromCloud, syncStateToCloud, queueCloudSync } from '../services/supabaseSync';
+import { signInAnonymously, loadStateFromCloud, syncStateToCloud, queueCloudSync, getAuthStatus, getCurrentUser } from '../services/supabaseSync';
+import { getLocalDateString } from '../utils/dateUtils';
 
 export const STORAGE_KEY = 'soloLevelingData';
 const SCHEMA_VERSION = 2;
@@ -30,7 +31,9 @@ export const DEFAULT_STATE = {
   systemMessages: [],
   weeklyDungeons: { weekId: null, deenCompleted: false, bodyCompleted: false, moneyCompleted: false, bonusClaimed: false },
   aiDungeons: [],
-  lastActiveDate: new Date().toLocaleDateString('en-CA'),
+  lastActiveDate: getLocalDateString(),
+  lastPenaltyCheckDate: null,
+  lastUpdated: 0,
 };
 
 // ─── localStorage helpers ───
@@ -113,33 +116,63 @@ export async function initCloudSync() {
   const user = await signInAnonymously();
   if (!user) return { success: false, reason: 'auth_failed' };
 
-  // Check if cloud has existing data
-  const cloudState = await loadStateFromCloud();
   const localState = loadState();
 
+  // Step 1: Push local progress to cloud FIRST so this device's latest state
+  // is recorded before we potentially load older cloud data.
+  if (localState.lastUpdated > 0) {
+    await syncStateToCloud(localState);
+  }
+
+  // Step 2: Load cloud state (now guaranteed to be at least as fresh as local)
+  const cloudState = await loadStateFromCloud();
+
   if (cloudState) {
-    const today = new Date().toLocaleDateString('en-CA');
+    // Step 3: Timestamp-aware merge. Newest state wins.
+    const cloudTime = cloudState.lastUpdated || 0;
+    const localTime = localState.lastUpdated || 0;
+
+    let winner = cloudState;
+    let source = 'cloud';
+
+    // If local is strictly newer (e.g. device was offline, then came back online
+    // and local progress happened after the last successful sync), keep local
+    // and push it again to overwrite stale cloud data.
+    if (localTime > cloudTime) {
+      winner = localState;
+      source = 'local';
+      await syncStateToCloud(localState);
+    }
+
+    // Daily quests are a special case: they rotate every day. Keep whichever
+    // matches the more recent quest date, regardless of overall timestamp.
+    const cloudQuestDate = cloudState.lastQuestDate;
+    const localQuestDate = localState.lastQuestDate;
+    let finalDailyQuests = winner.dailyQuests || [];
+    if (localQuestDate && cloudQuestDate) {
+      const localDateNum = parseInt(localQuestDate.replace(/-/g, ''), 10);
+      const cloudDateNum = parseInt(cloudQuestDate.replace(/-/g, ''), 10);
+      if (localDateNum > cloudDateNum) {
+        finalDailyQuests = localState.dailyQuests || [];
+      } else if (cloudDateNum > localDateNum) {
+        finalDailyQuests = cloudState.dailyQuests || [];
+      }
+    } else if (localQuestDate && !cloudQuestDate) {
+      finalDailyQuests = localState.dailyQuests || [];
+    } else if (cloudQuestDate && !localQuestDate) {
+      finalDailyQuests = cloudState.dailyQuests || [];
+    }
+
     const merged = {
       ...DEFAULT_STATE,
-      ...cloudState,
-      customQuests: cloudState.customQuests?.length ? cloudState.customQuests : localState.customQuests,
-      history: cloudState.history?.length ? cloudState.history : localState.history,
-      systemMessages: cloudState.systemMessages?.length ? cloudState.systemMessages : localState.systemMessages,
-      aiDungeons: cloudState.aiDungeons?.length ? cloudState.aiDungeons : localState.aiDungeons,
-      redemptionQuests: cloudState.redemptionQuests?.length ? cloudState.redemptionQuests : localState.redemptionQuests,
-      levelQuests: cloudState.levelQuests?.length ? cloudState.levelQuests : localState.levelQuests,
-      jobChangeQuests: cloudState.jobChangeQuests?.length ? cloudState.jobChangeQuests : localState.jobChangeQuests,
-      completedJobChanges: cloudState.completedJobChanges?.length ? cloudState.completedJobChanges : localState.completedJobChanges,
-      shadows: cloudState.shadows?.length ? cloudState.shadows : localState.shadows,
-      purchasedRewards: cloudState.purchasedRewards?.length ? cloudState.purchasedRewards : localState.purchasedRewards,
-      dailyQuests: localState.lastQuestDate === today && localState.dailyQuests.length > 0 && (!cloudState.lastQuestDate || cloudState.lastQuestDate !== localState.lastQuestDate)
-        ? localState.dailyQuests
-        : (cloudState.dailyQuests || []),
+      ...winner,
+      dailyQuests: finalDailyQuests,
+      lastUpdated: Math.max(localTime, cloudTime),
     };
+
     saveState(merged);
-    await syncStateToCloud(merged);
     setCloudEnabled(true);
-    return { success: true, source: 'merged', userId: user.id };
+    return { success: true, source, userId: user.id };
   }
 
   // No cloud data — migrate local up
@@ -150,6 +183,35 @@ export async function initCloudSync() {
   }
 
   return { success: false, reason: 'sync_failed' };
+}
+
+export async function reinitCloudSyncAfterLogin() {
+  if (!isSupabaseConfigured()) return { success: false, reason: 'not_configured' };
+
+  const cloudState = await loadStateFromCloud();
+  if (!cloudState) return { success: false, reason: 'no_cloud_data' };
+
+  const localState = loadState();
+  const cloudTime = cloudState.lastUpdated || 0;
+  const localTime = localState.lastUpdated || 0;
+
+  const winner = localTime > cloudTime ? localState : cloudState;
+  const source = localTime > cloudTime ? 'local' : 'cloud';
+
+  // If local is newer, push it to cloud before accepting
+  if (localTime > cloudTime) {
+    await syncStateToCloud(localState);
+  }
+
+  const merged = {
+    ...DEFAULT_STATE,
+    ...winner,
+    version: SCHEMA_VERSION,
+    lastUpdated: Math.max(localTime, cloudTime),
+  };
+  saveState(merged);
+  setCloudEnabled(true);
+  return { success: true, source, userId: (await getCurrentUser())?.id };
 }
 
 export async function fullCloudReset() {
@@ -184,6 +246,17 @@ export async function fullCloudReset() {
   localStorage.removeItem(STORAGE_KEY);
   localStorage.removeItem(CLOUD_ENABLED_KEY);
   window.location.reload();
+}
+
+export async function syncNow(state) {
+  if (!isSupabaseConfigured()) return { success: false, reason: 'not_configured' };
+  // Clear any pending debounced sync so we don't double-fire
+  if (syncTimeout) {
+    clearTimeout(syncTimeout);
+    syncTimeout = null;
+  }
+  const result = await syncStateToCloud(state);
+  return result;
 }
 
 export { queueCloudSync };

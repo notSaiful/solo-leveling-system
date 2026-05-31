@@ -19,6 +19,8 @@ import {
 import { getRankByLevel, xpForNextLevel } from '../data/questCatalog';
 import { isDebuffActive } from '../logic/penalties';
 import { getShadowBonuses } from '../data/shadows';
+import { autoAssignStatPoints } from '../data/stats';
+import { getLocalDateString, toLocalDateString } from '../utils/dateUtils';
 import { AlertTriangle, Skull, Zap, Coins, Sparkles, Activity, Swords, Shield, Crown } from 'lucide-react';
 
 const rankColorMap = {
@@ -32,7 +34,7 @@ const rankColorMap = {
 
 export default function Dashboard({ state, setState }) {
   const rank = getRankByLevel(state.user.overallLevel);
-  const today = new Date().toLocaleDateString('en-CA');
+  const today = getLocalDateString();
 
   // Initialize quests after render (not during render to avoid reversion loops)
   useEffect(() => {
@@ -110,19 +112,23 @@ export default function Dashboard({ state, setState }) {
           if (newPillars[p].xp >= needed) {
             newPillars[p].level += 1;
             newPillars[p].xp -= needed;
-            // Award stat points for the bonus-triggered level-up
+            // Auto-assign stat points for the bonus-triggered level-up
             const pillarRank = getRankByLevel(newPillars[p].level);
             const spAwarded = pillarRank.statPointsPerLevel || 1;
-            next.statPoints = (next.statPoints || 0) + spAwarded;
-            next.systemMessages = [
-              ...(next.systemMessages || []),
-              {
-                type: 'levelUp',
-                title: `${p.toUpperCase()} LEVEL UP!`,
-                subtitle: `Level ${newPillars[p].level} — ${spAwarded} Stat Points awarded`,
-                message: 'Distribute them in the Build tab.',
-              },
-            ];
+            const autoStatResult = autoAssignStatPoints(next.stats || {}, p, spAwarded);
+            if (autoStatResult) {
+              next.stats = autoStatResult.stats;
+              const assignStr = autoStatResult.assignments.map(a => `${a.stat.toUpperCase()} +${a.points}`).join(', ');
+              next.systemMessages = [
+                ...(next.systemMessages || []),
+                {
+                  type: 'levelUp',
+                  title: `${p.toUpperCase()} LEVEL UP!`,
+                  subtitle: `Level ${newPillars[p].level}`,
+                  message: `SYSTEM auto-assigned: ${assignStr}. Performance determines growth.`,
+                },
+              ];
+            }
           }
           next = { ...next, pillars: newPillars };
         }
@@ -132,7 +138,7 @@ export default function Dashboard({ state, setState }) {
       }
 
       // Update flow state after any quest completion
-      next = { ...next, flowState: checkFlowState(next.history || []) };
+      next = { ...next, flowState: checkFlowState(next.history || [], rank.key) };
 
       return next;
     });
@@ -143,7 +149,7 @@ export default function Dashboard({ state, setState }) {
     setState(prev => {
       let next = completeLevelQuest(prev, levelQuestIndex, questIndex);
       next = recalculateOverallLevel(next);
-      next = { ...next, flowState: checkFlowState(next.history || []) };
+      next = { ...next, flowState: checkFlowState(next.history || [], rank.key) };
       return next;
     });
   };
@@ -152,7 +158,7 @@ export default function Dashboard({ state, setState }) {
   const handleCompleteRedemption = (redemptionId) => {
     setState(prev => {
       let next = completeRedemptionQuest(prev, redemptionId);
-      next = { ...next, flowState: checkFlowState(next.history || []) };
+      next = { ...next, flowState: checkFlowState(next.history || [], rank.key) };
       return next;
     });
   };
@@ -170,8 +176,8 @@ export default function Dashboard({ state, setState }) {
       const quest = prev.customQuests.find(q => q.uniqueId === questUniqueId);
       if (!quest || quest.lastCompleted === today) return prev;
       const alreadyDone = prev.history.some(h => {
-        const hDate = h.date ? new Date(h.date).toLocaleDateString('en-CA') : '';
-        return hDate.startsWith(today) && h.questId === quest.id;
+        const hDate = h.date ? toLocalDateString(h.date) : '';
+        return hDate === today && h.questId === quest.id;
       });
       if (alreadyDone) return prev;
 
@@ -198,20 +204,24 @@ export default function Dashboard({ state, setState }) {
         newPillars[pillar].xp -= needed;
         const pillarRank = getRankByLevel(newPillars[pillar].level);
         const spAwarded = pillarRank.statPointsPerLevel || 1;
-        next.statPoints = (next.statPoints || 0) + spAwarded;
-        next.systemMessages = [
-          ...(next.systemMessages || []),
-          {
-            type: 'levelUp',
-            title: `${pillar.toUpperCase()} LEVEL UP!`,
-            subtitle: `Level ${newPillars[pillar].level} — ${spAwarded} Stat Points awarded`,
-            message: 'Distribute them in the Build tab.',
-          },
-        ];
+        const autoStatResult = autoAssignStatPoints(next.stats || {}, pillar, spAwarded);
+        if (autoStatResult) {
+          next.stats = autoStatResult.stats;
+          const assignStr = autoStatResult.assignments.map(a => `${a.stat.toUpperCase()} +${a.points}`).join(', ');
+          next.systemMessages = [
+            ...(next.systemMessages || []),
+            {
+              type: 'levelUp',
+              title: `${pillar.toUpperCase()} LEVEL UP!`,
+              subtitle: `Level ${newPillars[pillar].level}`,
+              message: `SYSTEM auto-assigned: ${assignStr}. Performance determines growth.`,
+            },
+          ];
+        }
         next = { ...next, pillars: newPillars };
       }
       next = recalculateOverallLevel(next);
-      next = { ...next, flowState: checkFlowState(next.history || []) };
+      next = { ...next, flowState: checkFlowState(next.history || [], rank.key) };
       return next;
     });
   };
@@ -286,16 +296,6 @@ export default function Dashboard({ state, setState }) {
         </div>
       )}
 
-      {/* Stat Points Notification */}
-      {state.statPoints > 0 && (
-        <div className="glass-panel p-3 border border-yellow-500/40 bg-yellow-950/20 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-yellow-400">
-            <Sparkles size={18} />
-            <span className="font-semibold text-sm">{state.statPoints} Stat Points</span>
-          </div>
-          <span className="text-xs text-yellow-600">Go to Build tab</span>
-        </div>
-      )}
 
       {/* Gold Display */}
       <div className="flex items-center justify-between glass-panel p-3">

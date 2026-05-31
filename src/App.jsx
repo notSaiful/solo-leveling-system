@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { LayoutDashboard, BarChart3, Swords, Settings, ShoppingBag, Sparkles, Coins, Zap, AlertTriangle } from 'lucide-react';
 import { useStore } from './hooks/useStore';
 import { useLevelUp } from './hooks/useLevelUp';
@@ -14,9 +14,11 @@ import { getCurrentWeekId } from './logic/dungeons';
 import { getRankByLevel, getWeeklyDungeonForRank } from './data/questCatalog';
 import { getFlowStateDisplay } from './logic/questEngine';
 import { getCharacterBuild } from './data/stats';
-import { initCloudSync, STORAGE_KEY } from './data/store';
+import { initCloudSync, syncNow, loadState, STORAGE_KEY } from './data/store';
 import { isSupabaseConfigured } from './services/supabaseClient';
 import { hasApiKey, getApiKey } from './services/aiAssistant';
+import { getLocalDateString } from './utils/dateUtils';
+import { getScaledPenalty } from './data/rankDifficulty';
 
 // Error Boundary to catch runtime crashes and show reset UI
 class ErrorBoundary extends React.Component {
@@ -72,7 +74,7 @@ function DiagnosticPanel() {
           'X-Title': 'Solo Leveling System',
         },
         body: JSON.stringify({
-          model: 'openai/gpt-4o-mini',
+          model: 'openrouter/free',
           messages: [{ role: 'user', content: 'ping' }],
           temperature: 0.85,
           max_tokens: 20,
@@ -140,12 +142,24 @@ export default function App() {
   usePenaltyCheck(state, setState);
 
   const [activeTab, setActiveTab] = useState('dashboard');
+  const stateRef = useRef(state);
+  stateRef.current = state;
 
   // Silent cloud init on mount if credentials exist
   useEffect(() => {
     if (isSupabaseConfigured()) {
-      initCloudSync().catch(() => {});
+      initCloudSync().then((result) => {
+        if (result?.success && result?.source === 'cloud') {
+          const fresh = loadState();
+          // Only overwrite React state if the freshly loaded cloud data is newer
+          // than what we currently hold in memory (handles cross-device sync)
+          if (fresh.lastUpdated > (stateRef.current.lastUpdated || 0)) {
+            setState(fresh);
+          }
+        }
+      }).catch(() => {});
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Initialize weekly dungeons if needed
@@ -154,9 +168,46 @@ export default function App() {
       const rank = getRankByLevel(state.user.overallLevel);
       const newDungeons = getWeeklyDungeonForRank(rank.key);
       newDungeons.weekId = getCurrentWeekId();
+
+      // Check if previous week's dungeon was missed and apply penalties
+      const oldDungeons = state.weeklyDungeons;
+      const missedPillars = [];
+      if (!oldDungeons.deenCompleted) missedPillars.push('deen');
+      if (!oldDungeons.bodyCompleted) missedPillars.push('body');
+      if (!oldDungeons.moneyCompleted) missedPillars.push('money');
+
+      let newPillars = { ...state.pillars };
+      const today = getLocalDateString();
+      const messages = [];
+
+      if (missedPillars.length > 0 && oldDungeons.weekId) {
+        const scaledDungeon = getScaledPenalty(rank.key, 'missedDungeon');
+        for (const pillar of missedPillars) {
+          newPillars[pillar] = {
+            ...newPillars[pillar],
+            activeDebuff: {
+              type: 'missedDungeon',
+              multiplier: scaledDungeon.multiplier,
+              duration: scaledDungeon.duration,
+              message: scaledDungeon.message,
+              appliedAt: Date.now(),
+            },
+          };
+        }
+        messages.push({
+          type: 'penalty',
+          title: '⚠️ DUNGEON PENALTY',
+          subtitle: 'Weekly dungeon missed',
+          message: `${scaledDungeon.message}\nAffected: ${missedPillars.join(', ')}.`,
+          date: today,
+        });
+      }
+
       setState(prev => ({
         ...prev,
+        pillars: newPillars,
         weeklyDungeons: newDungeons,
+        systemMessages: messages.length > 0 ? [...prev.systemMessages, ...messages] : prev.systemMessages,
       }));
     }
   }, [state.weeklyDungeons.weekId, state.user.overallLevel]);
@@ -170,6 +221,25 @@ export default function App() {
       }));
     }
   }, [state.flowState?.active, state.flowState?.expiresAt]);
+
+  // Force cloud sync before app goes to background / closes
+  useEffect(() => {
+    const forceSync = () => {
+      if (isSupabaseConfigured()) {
+        syncNow(state).catch(() => {});
+      }
+    };
+    const handleVisibility = () => {
+      if (document.visibilityState === 'hidden') forceSync();
+    };
+    const handleUnload = () => forceSync();
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('beforeunload', handleUnload);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('beforeunload', handleUnload);
+    };
+  }, [state]);
 
   const flowDisplay = getFlowStateDisplay(state.flowState);
   const build = getCharacterBuild(state.stats || {});
@@ -258,7 +328,7 @@ export default function App() {
                 <span className="font-orbitron text-sm font-semibold text-cyan-300 tracking-wider">SYSTEM STATUS</span>
               </div>
               <div className="text-xs text-cyan-500/50 space-y-1">
-                <p>Forge-Master AI: <span className="text-green-400">Connected (gpt-4o-mini)</span></p>
+                <p>Forge-Master AI: <span className="text-green-400">Connected (openrouter/free)</span></p>
                 <p>Cloud Sync: <span className="text-green-400">Auto-sync active</span></p>
                 <p>Storage: <span className="text-green-400">localStorage + Supabase</span></p>
               </div>

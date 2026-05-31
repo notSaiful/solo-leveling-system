@@ -11,6 +11,7 @@
  *  ============================================================ */
 
 import { getSupabase, isSupabaseConfigured } from './supabaseClient';
+import { getLocalDateString } from '../utils/dateUtils';
 
 const SYNC_DEBOUNCE_MS = 3000;
 let syncTimeout = null;
@@ -43,8 +44,52 @@ export async function signOut() {
 export async function getCurrentUser() {
   const supabase = getSupabase();
   if (!supabase) return null;
-  const { data } = await supabase.auth.getUser();
-  return data?.user || null;
+  // Use getSession (local + no network round-trip) instead of getUser
+  // for reliability during sync operations
+  const { data } = await supabase.auth.getSession();
+  return data?.session?.user || null;
+}
+
+export async function signInWithEmail(email, password) {
+  const supabase = getSupabase();
+  if (!supabase) return { success: false, error: 'Supabase not configured' };
+
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) return { success: false, error: error.message };
+  return { success: true, user: data.user };
+}
+
+export async function signUpWithEmail(email, password) {
+  const supabase = getSupabase();
+  if (!supabase) return { success: false, error: 'Supabase not configured' };
+
+  const { data, error } = await supabase.auth.signUp({ email, password });
+  if (error) return { success: false, error: error.message };
+  return { success: true, user: data.user };
+}
+
+export async function linkAnonymousToEmail(email, password) {
+  const supabase = getSupabase();
+  if (!supabase) return { success: false, error: 'Supabase not configured' };
+
+  // Update the anonymous user's email + password
+  const { data, error } = await supabase.auth.updateUser({ email, password });
+  if (error) return { success: false, error: error.message };
+
+  // Send email confirmation if needed (Supabase handles this based on config)
+  return { success: true, user: data.user };
+}
+
+export async function getAuthStatus() {
+  const supabase = getSupabase();
+  if (!supabase) return { configured: false, loggedIn: false, user: null, isAnonymous: true };
+
+  const { data } = await supabase.auth.getSession();
+  const user = data?.session?.user;
+  if (!user) return { configured: true, loggedIn: false, user: null, isAnonymous: true };
+
+  const isAnonymous = user.is_anonymous === true || !user.email;
+  return { configured: true, loggedIn: true, user, isAnonymous, email: user.email };
 }
 
 // ─── STATE SERIALIZATION / DESERIALIZATION ───
@@ -56,6 +101,7 @@ function serializeState(state) {
       current_rank: state.user?.currentRank || 'E',
       overall_level: state.user?.overallLevel || 0,
       job_class: state.user?.jobClass || null,
+      joined_at: state.user?.joinedDate || new Date().toISOString(),
     },
     gold: state.gold || 0,
     stat_points: state.statPoints || 0,
@@ -63,6 +109,8 @@ function serializeState(state) {
     flow_state: state.flowState || {},
     last_quest_date: state.lastQuestDate || null,
     last_active_date: state.lastActiveDate || null,
+    last_penalty_check_date: state.lastPenaltyCheckDate || null,
+    last_updated: state.lastUpdated || 0,
   };
 }
 
@@ -87,6 +135,8 @@ function deserializeProfile(profile, pillars, stats) {
     flowState: profile.flow_state || { active: false, multiplier: 1, expiresAt: 0, questsInWindow: 0 },
     lastQuestDate: profile.last_quest_date || null,
     lastActiveDate: profile.last_active_date || null,
+    lastPenaltyCheckDate: profile.last_penalty_check_date || null,
+    lastUpdated: profile.last_updated || 0,
   };
 }
 
@@ -113,6 +163,8 @@ export async function syncStateToCloud(state) {
       flow_state: core.flow_state,
       last_quest_date: core.last_quest_date,
       last_active_date: core.last_active_date,
+      last_penalty_check_date: core.last_penalty_check_date,
+      last_updated: core.last_updated,
       updated_at: new Date().toISOString(),
     }, { onConflict: 'id' });
 
@@ -138,7 +190,12 @@ export async function syncStateToCloud(state) {
       updated_at: new Date().toISOString(),
     }, { onConflict: 'user_id' });
 
-    // 4. Upsert daily quests
+    // 4. Upsert daily quests (clean up old ones first to prevent bloat)
+    if (state.lastQuestDate) {
+      await supabase.from('daily_quests').delete()
+        .eq('user_id', userId)
+        .neq('quest_date', state.lastQuestDate);
+    }
     const dailyQuests = (state.dailyQuests || []).map(q => ({
       user_id: userId,
       quest_id: q.id,
@@ -458,13 +515,11 @@ export async function loadStateFromCloud() {
       .eq('user_id', userId)
       .single();
 
-    const today = new Date().toLocaleDateString('en-CA');
-
     const { data: dailyQuests } = await supabase
       .from('daily_quests')
       .select('*')
       .eq('user_id', userId)
-      .eq('quest_date', today);
+      .order('quest_date', { ascending: false });
 
     const { data: shadows } = await supabase
       .from('shadows')
@@ -540,9 +595,15 @@ export async function loadStateFromCloud() {
 
     const partial = deserializeProfile(profile, pillars || [], statsRow);
 
-    return {
-      ...partial,
-      dailyQuests: (dailyQuests || []).map(q => ({
+    // Determine the most recent quest date from cloud daily quests
+    const mostRecentQuestDate = (dailyQuests || []).length > 0
+      ? dailyQuests[0].quest_date
+      : partial.lastQuestDate;
+
+    // Only include daily quests from the most recent day (old ones are irrelevant)
+    const activeDailyQuests = (dailyQuests || [])
+      .filter(q => q.quest_date === mostRecentQuestDate)
+      .map(q => ({
         id: q.quest_id,
         uniqueId: q.unique_id,
         title: q.title,
@@ -554,7 +615,12 @@ export async function loadStateFromCloud() {
         completedAt: q.completed_at,
         tags: q.tags || [],
         estimatedMinutes: q.estimated_minutes,
-      })),
+      }));
+
+    return {
+      ...partial,
+      lastQuestDate: mostRecentQuestDate,
+      dailyQuests: activeDailyQuests,
       shadows: (shadows || []).map(s => ({
         id: s.shadow_id,
         name: s.name,

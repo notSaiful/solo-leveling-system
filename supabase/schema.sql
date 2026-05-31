@@ -377,7 +377,9 @@ create trigger if not exists handle_custom_quests_updated_at
 alter table public.profiles
   add column if not exists flow_state jsonb default null,
   add column if not exists last_quest_date date default null,
-  add column if not exists last_active_date date default null;
+  add column if not exists last_active_date date default null,
+  add column if not exists last_penalty_check_date date default null,
+  add column if not exists last_updated bigint default 0;
 
 -- State snapshots (guaranteed full-state backup, no data loss)
 create table if not exists public.state_snapshots (

@@ -1,59 +1,20 @@
-import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Minus, RotateCcw, Sparkles } from 'lucide-react';
+import { Sparkles, Shield, Brain, Eye, Zap, Heart, Droplets } from 'lucide-react';
 import { STAT_NAMES, STAT_DEFAULTS } from '../data/stats';
 import { getCharacterBuild } from '../data/stats';
 
-export default function StatDistribution({ state, setState }) {
+const statMeta = {
+  strength: { icon: Shield, label: 'STR' },
+  intelligence: { icon: Brain, label: 'INT' },
+  sense: { icon: Eye, label: 'SEN' },
+  agility: { icon: Zap, label: 'AGI' },
+  health: { icon: Heart, label: 'HP' },
+  mana: { icon: Droplets, label: 'MP' },
+};
+
+export default function StatDistribution({ state }) {
   const stats = state.stats || STAT_DEFAULTS;
-  const [pendingChanges, setPendingChanges] = useState({});
-  const statPoints = state.statPoints || 0;
-
-  const totalSpent = Object.values(pendingChanges).reduce((a, b) => a + b, 0);
-  const remainingPoints = statPoints - totalSpent;
-
-  const currentValues = {};
-  for (const [key, val] of Object.entries(stats)) {
-    currentValues[key] = val + (pendingChanges[key] || 0);
-  }
-
-  const build = getCharacterBuild(currentValues);
-
-  const adjustStat = (stat, delta) => {
-    const newVal = currentValues[stat] + delta;
-    if (newVal < 1) return;
-    if (delta > 0 && remainingPoints <= 0) return;
-
-    setPendingChanges(prev => ({
-      ...prev,
-      [stat]: (prev[stat] || 0) + delta,
-    }));
-  };
-
-  const commitChanges = () => {
-    const newStats = { ...stats };
-    for (const [key, delta] of Object.entries(pendingChanges)) {
-      newStats[key] = (newStats[key] || 0) + delta;
-    }
-
-    setState(prev => ({
-      ...prev,
-      stats: newStats,
-      statPoints: remainingPoints,
-      systemMessages: [
-        ...prev.systemMessages,
-        {
-          type: 'levelUp',
-          title: '⚡ Stats Updated!',
-          subtitle: `Build: ${build.name}`,
-          message: 'Your power has been redistributed.',
-        },
-      ],
-    }));
-    setPendingChanges({});
-  };
-
-  const resetChanges = () => setPendingChanges({});
+  const build = getCharacterBuild(stats);
 
   return (
     <div className="max-w-2xl md:max-w-3xl lg:max-w-4xl mx-auto p-2 sm:p-4 space-y-4">
@@ -64,12 +25,8 @@ export default function StatDistribution({ state, setState }) {
             <Sparkles size={24} className="text-rank-s" />
             <div>
               <div className="font-orbitron font-bold text-cyan-100">Character Stats</div>
-              <div className="text-xs text-cyan-400">Distribute your stat points</div>
+              <div className="text-xs text-cyan-400">Auto-assigned by the System based on your performance</div>
             </div>
-          </div>
-          <div className="bg-yellow-400/20 border border-yellow-400/50 px-4 py-2 rounded-lg">
-            <span className="font-bold text-rank-s">{remainingPoints}</span>
-            <span className="text-xs text-yellow-400/70 ml-1">POINTS LEFT</span>
           </div>
         </div>
 
@@ -86,13 +43,13 @@ export default function StatDistribution({ state, setState }) {
       {/* Stats */}
       <div className="space-y-2">
         {Object.entries(STAT_NAMES).map(([key, config]) => {
-          const current = currentValues[key];
-          const hasChange = (pendingChanges[key] || 0) !== 0;
+          const current = stats[key] || 10;
+          const Meta = statMeta[key];
 
           return (
             <motion.div
               key={key}
-              className={`glass-panel p-4 ${hasChange ? 'border-yellow-400/40' : ''}`}
+              className="glass-panel p-4"
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-3">
@@ -102,28 +59,11 @@ export default function StatDistribution({ state, setState }) {
                     <div className="text-xs text-cyan-400">{config.description}</div>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => adjustStat(key, -1)}
-                    disabled={current <= 1}
-                    className="w-8 h-8 rounded-lg bg-cyan-900/40 hover:bg-red-900/30 disabled:opacity-30 flex items-center justify-center transition-colors"
-                  >
-                    <Minus size={14} />
-                  </button>
-
-                  <div className={`text-xl font-bold w-12 text-center ${
-                    hasChange ? 'text-rank-s' : 'text-cyan-100'
-                  }`}>
+                <div className="flex items-center gap-2">
+                  <Meta.icon size={14} className="text-cyan-500/50" />
+                  <div className="text-xl font-bold text-cyan-100 w-12 text-center">
                     {current}
                   </div>
-
-                  <button
-                    onClick={() => adjustStat(key, 1)}
-                    disabled={remainingPoints <= 0}
-                    className="w-8 h-8 rounded-lg bg-cyan-900/40 hover:bg-green-900/30 disabled:opacity-30 flex items-center justify-center transition-colors"
-                  >
-                    <Plus size={14} />
-                  </button>
                 </div>
               </div>
 
@@ -136,32 +76,10 @@ export default function StatDistribution({ state, setState }) {
                   transition={{ duration: 0.3 }}
                 />
               </div>
-              <div className="flex justify-between text-xs text-cyan-400 mt-1">
-                <span>Base: {stats[key] || 10}</span>
-                {hasChange && <span className="text-rank-s">+{pendingChanges[key]}</span>}
-              </div>
             </motion.div>
           );
         })}
       </div>
-
-      {/* Actions */}
-      {totalSpent > 0 && (
-        <div className="flex gap-3">
-          <button
-            onClick={commitChanges}
-            className="flex-1 bg-yellow-400 hover:bg-yellow-400/80 text-black font-bold py-3 rounded-lg transition-colors"
-          >
-            Commit Changes
-          </button>
-          <button
-            onClick={resetChanges}
-            className="px-4 bg-cyan-900/40 hover:bg-cyan-800/40 text-cyan-200 rounded-lg transition-colors"
-          >
-            <RotateCcw size={18} />
-          </button>
-        </div>
-      )}
 
       {/* Info */}
       <div className="glass-panel p-4 text-sm text-cyan-300 space-y-2">
@@ -174,6 +92,9 @@ export default function StatDistribution({ state, setState }) {
           <li>❤️ <strong>Health:</strong> Reduces XP loss from debuffs (max 50%)</li>
           <li>✨ <strong>Mana:</strong> Reduces debuff duration (max 50%)</li>
         </ul>
+        <div className="text-xs text-cyan-500/60 pt-2 border-t border-cyan-900/30 mt-2">
+          Stats grow automatically as you level up pillars. Body → Strength + Agility. Deen → Intelligence + Mana. Money → Sense + Agility.
+        </div>
       </div>
     </div>
   );

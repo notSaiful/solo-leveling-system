@@ -71,3 +71,53 @@ export function getCharacterBuild(stats) {
   }
   return { name: 'Hybrid Build', icon: '🔀', description: 'Mixed specialization' };
 }
+
+/**
+ * Auto-assign stat points based on which pillar just leveled up.
+ * The SYSTEM decides. The user does NOT choose.
+ */
+export function autoAssignStatPoints(stats, pillar, pointsToAssign) {
+  const newStats = { ...stats };
+  let assignments = [];
+
+  // Each pillar maps to two primary stats
+  const pillarMap = {
+    body:  { primary: 'strength', secondary: 'agility', reason: 'Physical power and combat readiness' },
+    deen:  { primary: 'intelligence', secondary: 'mana', reason: 'Spiritual knowledge and discipline energy' },
+    money: { primary: 'sense', secondary: 'agility', reason: 'Intuition and execution speed' },
+  };
+
+  const mapping = pillarMap[pillar];
+  if (!mapping) return { stats: newStats, assignments: [] };
+
+  // Distribute 60% to primary, 40% to secondary (rounded)
+  const primaryPoints = Math.ceil(pointsToAssign * 0.6);
+  const secondaryPoints = pointsToAssign - primaryPoints;
+
+  newStats[mapping.primary] = (newStats[mapping.primary] || 10) + primaryPoints;
+  newStats[mapping.secondary] = (newStats[mapping.secondary] || 10) + secondaryPoints;
+
+  assignments.push({ stat: mapping.primary, points: primaryPoints });
+  assignments.push({ stat: mapping.secondary, points: secondaryPoints });
+
+  return { stats: newStats, assignments };
+}
+
+/**
+ * Analyze recent quest history to determine dominant pillar for auto-stat allocation.
+ */
+export function analyzePillarFocus(history, days = 7) {
+  const cutoff = Date.now() - (days * 24 * 60 * 60 * 1000);
+  const recent = (history || []).filter(h => h.completed && new Date(h.date).getTime() > cutoff);
+
+  const counts = { deen: 0, body: 0, money: 0 };
+  recent.forEach(h => {
+    if (counts[h.pillar] !== undefined) counts[h.pillar]++;
+  });
+
+  const total = counts.deen + counts.body + counts.money;
+  if (total === 0) return { dominant: 'deen', counts, total };
+
+  const dominant = Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
+  return { dominant, counts, total };
+}

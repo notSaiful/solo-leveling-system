@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, X, Send, Bot, User, Sparkles, AlertTriangle, Loader2, CheckCircle2 } from 'lucide-react';
-import { sendMessage, getDailyMotivation, analyzeProgress } from '../services/aiAssistant';
+import { MessageSquare, X, Send, Bot, User, Sparkles, AlertTriangle, Loader2, CheckCircle2, Swords } from 'lucide-react';
+import { sendMessage, getDailyMotivation, analyzeProgress, generateExtraQuests } from '../services/aiAssistant';
 import { parseAdminCommands, stripCommandBlocks, executeAdminCommands } from '../logic/adminCommands';
 
 export default function AIAssistant({ state, setState }) {
@@ -118,6 +118,9 @@ export default function AIAssistant({ state, setState }) {
       } else if (action === 'accountability') {
         rawReply = await sendMessage('Hold me accountable. Scan my recent performance and call out every weakness. Do not hold back. I need to hear the truth.', messages, state);
         userPrompt = 'Hold me accountable';
+      } else if (action === 'forge3') {
+        rawReply = await generateExtraQuests(state, null);
+        userPrompt = 'Forge 3 new quests for me';
       }
 
       const commands = parseAdminCommands(rawReply);
@@ -136,7 +139,7 @@ export default function AIAssistant({ state, setState }) {
       setMessages(prev => [...prev, ...assistantMsgs]);
     } catch (err) {
       setMessages(prev => [...prev,
-        { role: 'user', content: action === 'motivation' ? 'Give me my orders' : action === 'analyze' ? 'Audit me' : 'Hold me accountable' },
+        { role: 'user', content: action === 'motivation' ? 'Give me my orders' : action === 'analyze' ? 'Audit me' : action === 'forge3' ? 'Forge 3 new quests' : 'Hold me accountable' },
         { role: 'assistant', content: `⚠️ ${err.message}`, type: 'error' },
       ]);
     } finally {
@@ -292,6 +295,13 @@ export default function AIAssistant({ state, setState }) {
                 className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-full bg-red-950/40 border border-red-800/30 text-red-400 hover:bg-red-900/30 whitespace-nowrap disabled:opacity-40"
               >
                 <AlertTriangle size={10} /> Hold Me Accountable
+              </button>
+              <button
+                onClick={() => handleQuickAction('forge3')}
+                disabled={loading || pendingCommands}
+                className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-full bg-red-950/40 border border-red-800/30 text-red-400 hover:bg-red-900/30 whitespace-nowrap disabled:opacity-40"
+              >
+                <Swords size={10} /> Forge 3
               </button>
             </div>
 
