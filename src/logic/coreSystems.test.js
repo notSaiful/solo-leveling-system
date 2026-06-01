@@ -7,6 +7,7 @@ import { executeAdminCommands } from './adminCommands';
 import { pruneExpiredCustomQuests } from './customQuests';
 import { MISSION_DOCTRINE, getMissionDoctrinePrompt } from '../data/missionDoctrine';
 import { getMissionMetrics } from './missionMetrics';
+import { getMissionPlan } from './missionPlan';
 import { getForgeMasterSystemPromptForTest } from '../services/aiAssistant';
 
 function baseState(overrides = {}) {
@@ -234,6 +235,33 @@ describe('mission doctrine and metrics', () => {
     expect(prompt).toContain('NEVER encourage vigilantism');
     expect(prompt).toContain('unlawful violence');
     expect(prompt).toContain('servant-leadership');
+  });
+
+  it('turns mission metrics into a phased operating plan', () => {
+    const history = Array.from({ length: 30 }, (_, index) => {
+      const pillars = [
+        { pillar: 'deen', tags: ['tauheed'] },
+        { pillar: 'money', tags: ['budget'] },
+        { pillar: 'body', tags: ['sleep'] },
+      ];
+      const entry = pillars[index % pillars.length];
+      return {
+        type: 'daily',
+        title: `Mission action ${index}`,
+        pillar: entry.pillar,
+        tags: entry.tags,
+        completed: true,
+        localDate: index < 3 ? '2026-06-01' : '2026-05-31',
+      };
+    });
+
+    const plan = getMissionPlan(history, '2026-06-01');
+
+    expect(plan.currentPhase.id).toBe('capacity');
+    expect(plan.weeklyFocus.command).toBeTruthy();
+    expect(plan.trusts.filter(trust => trust.completedToday)).toHaveLength(3);
+    expect(plan.lawfulJusticeProtocol.join(' ')).toContain('lawful');
+    expect(plan.lawfulJusticeProtocol.join(' ')).toContain('proportionate');
   });
 });
 
