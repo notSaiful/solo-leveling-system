@@ -168,6 +168,7 @@ export function mergeStatesForSync(currentState, incomingState) {
     purchasedRewards: mergeUniqueBy(base.purchasedRewards, other.purchasedRewards, item => item.purchaseId || item.id || `${item.name}|${item.purchasedAt}`),
     ummahImpactLedger: mergeUniqueBy(base.ummahImpactLedger, other.ummahImpactLedger),
     justiceResponseLedger: mergeUniqueBy(base.justiceResponseLedger, other.justiceResponseLedger),
+    teachingPipelineLedger: mergeUniqueBy(base.teachingPipelineLedger, other.teachingPipelineLedger),
     shadows: mergeUniqueBy(base.shadows, other.shadows),
     systemMessages: mergeUniqueBy(base.systemMessages, other.systemMessages, item => item.messageId || `${item.type}|${item.title}|${item.date || item.createdAt || ''}`),
     aiDungeons: mergeUniqueBy(base.aiDungeons, other.aiDungeons),

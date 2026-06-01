@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react';
-import { BookOpen, CheckCircle2, Circle, FileText, HandHeart, Megaphone, Scale, ShieldCheck, Target, TrendingUp, Wallet } from 'lucide-react';
+import { BookOpen, CheckCircle2, Circle, FileText, GraduationCap, HandHeart, Megaphone, Scale, ShieldCheck, Target, TrendingUp, Users, Wallet } from 'lucide-react';
 import { MISSION_DOCTRINE } from '../data/missionDoctrine';
 import { IMPACT_CATEGORIES, IMPACT_CATEGORY_LABELS } from '../data/ummahImpact';
 import { JUSTICE_ACTION_LABELS, JUSTICE_ACTION_TYPES, JUSTICE_GUARDRAILS } from '../data/justiceResponse';
+import { TEACHING_FORMAT_LABELS, TEACHING_FORMATS, TEACHING_GUARDRAILS, TEACHING_TOPIC_LABELS, TEACHING_TOPICS } from '../data/teachingPipeline';
 import { getMissionPlan } from '../logic/missionPlan';
 import { addImpactEntryToState, getImpactMetrics } from '../logic/ummahImpact';
 import { addJusticeResponseToState, getJusticeResponseMetrics } from '../logic/justiceResponse';
+import { addTeachingEntryToState, getTeachingMetrics } from '../logic/teachingPipeline';
 
 const dutyIcons = {
   tauheed: BookOpen,
@@ -19,6 +21,7 @@ export default function MissionCommandCenter({ state, setState }) {
   const history = state.history || [];
   const impactLedger = state.ummahImpactLedger || [];
   const justiceLedger = state.justiceResponseLedger || [];
+  const teachingLedger = state.teachingPipelineLedger || [];
   const [impactForm, setImpactForm] = useState({
     amount: '',
     category: 'sadaqah',
@@ -35,16 +38,32 @@ export default function MissionCommandCenter({ state, setState }) {
     note: '',
     guardrailAccepted: true,
   });
+  const [teachingForm, setTeachingForm] = useState({
+    title: '',
+    topic: 'tauheed',
+    format: 'study-note',
+    source: '',
+    audienceCount: '',
+    mentee: '',
+    actionStep: '',
+    followUp: '',
+    note: '',
+  });
   const [formError, setFormError] = useState('');
   const [justiceError, setJusticeError] = useState('');
+  const [teachingError, setTeachingError] = useState('');
   const plan = getMissionPlan(history || []);
   const impactMetrics = useMemo(() => getImpactMetrics(impactLedger), [impactLedger]);
   const justiceMetrics = useMemo(() => getJusticeResponseMetrics(justiceLedger), [justiceLedger]);
+  const teachingMetrics = useMemo(() => getTeachingMetrics(teachingLedger), [teachingLedger]);
   const WeakIcon = dutyIcons[plan.weeklyFocus.duty?.id] || ShieldCheck;
   const recentImpact = [...impactLedger]
     .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
     .slice(0, 4);
   const recentJustice = [...justiceLedger]
+    .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+    .slice(0, 4);
+  const recentTeaching = [...teachingLedger]
     .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
     .slice(0, 4);
 
@@ -56,6 +75,11 @@ export default function MissionCommandCenter({ state, setState }) {
   const updateJusticeForm = (key, value) => {
     setJusticeForm(prev => ({ ...prev, [key]: value }));
     if (justiceError) setJusticeError('');
+  };
+
+  const updateTeachingForm = (key, value) => {
+    setTeachingForm(prev => ({ ...prev, [key]: value }));
+    if (teachingError) setTeachingError('');
   };
 
   const handleImpactSubmit = (event) => {
@@ -70,6 +94,29 @@ export default function MissionCommandCenter({ state, setState }) {
       setFormError('');
     } catch (error) {
       setFormError(error.message || 'Impact entry failed.');
+    }
+  };
+
+  const handleTeachingSubmit = (event) => {
+    event.preventDefault();
+    try {
+      setState(prev => addTeachingEntryToState(prev, {
+        ...teachingForm,
+        audienceCount: Number(teachingForm.audienceCount || 0),
+      }));
+      setTeachingForm(prev => ({
+        ...prev,
+        title: '',
+        source: '',
+        audienceCount: '',
+        mentee: '',
+        actionStep: '',
+        followUp: '',
+        note: '',
+      }));
+      setTeachingError('');
+    } catch (error) {
+      setTeachingError(error.message || 'Teaching entry failed.');
     }
   };
 
@@ -156,6 +203,142 @@ export default function MissionCommandCenter({ state, setState }) {
         <div className="mt-3 text-xs text-cyan-500/50">
           Weakest duty: {plan.weeklyFocus.duty?.label || 'Unknown'}
         </div>
+      </section>
+
+      <section className="glass-panel p-4 border border-cyan-500/20">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
+          <div>
+            <div className="flex items-center gap-2 text-cyan-300 mb-1">
+              <GraduationCap size={17} />
+              <span className="font-orbitron text-sm font-semibold tracking-wider uppercase">Tauheed Teaching Pipeline</span>
+            </div>
+            <div className="text-xs text-cyan-500/60 leading-relaxed">
+              Convert learning into source-backed lessons, mentoring, family tarbiyah, dawah reminders, and action steps.
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-2 sm:min-w-80">
+            <div className="rounded-lg border border-cyan-500/20 bg-cyan-950/10 p-3">
+              <div className="text-[10px] text-cyan-500/70 uppercase tracking-wider">Lessons</div>
+              <div className="text-sm font-bold text-cyan-100">{teachingMetrics.totalLessons.toLocaleString()}</div>
+            </div>
+            <div className="rounded-lg border border-cyan-500/20 bg-cyan-950/10 p-3">
+              <div className="text-[10px] text-cyan-500/70 uppercase tracking-wider">Reached</div>
+              <div className="text-sm font-bold text-cyan-100">{teachingMetrics.totalAudience.toLocaleString()}</div>
+            </div>
+            <div className="rounded-lg border border-cyan-500/20 bg-cyan-950/10 p-3">
+              <div className="text-[10px] text-cyan-500/70 uppercase tracking-wider">Mentees</div>
+              <div className="text-sm font-bold text-cyan-100">{teachingMetrics.totalMentees.toLocaleString()}</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
+          {TEACHING_GUARDRAILS.map(guardrail => (
+            <div key={guardrail} className="flex items-start gap-2 rounded-lg border border-cyan-500/20 bg-cyan-950/10 p-2 text-xs text-cyan-100">
+              <BookOpen size={14} className="text-cyan-300 shrink-0 mt-0.5" />
+              <span>{guardrail}</span>
+            </div>
+          ))}
+        </div>
+
+        <form onSubmit={handleTeachingSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+          <input
+            type="text"
+            value={teachingForm.title}
+            onChange={(event) => updateTeachingForm('title', event.target.value)}
+            placeholder="Lesson title"
+            className="bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+          />
+          <select
+            value={teachingForm.topic}
+            onChange={(event) => updateTeachingForm('topic', event.target.value)}
+            className="bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+          >
+            {TEACHING_TOPICS.map(topic => (
+              <option key={topic.id} value={topic.id}>{topic.label}</option>
+            ))}
+          </select>
+          <select
+            value={teachingForm.format}
+            onChange={(event) => updateTeachingForm('format', event.target.value)}
+            className="bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+          >
+            {TEACHING_FORMATS.map(format => (
+              <option key={format.id} value={format.id}>{format.label}</option>
+            ))}
+          </select>
+          <input
+            type="text"
+            value={teachingForm.source}
+            onChange={(event) => updateTeachingForm('source', event.target.value)}
+            placeholder="Source / reference"
+            className="bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+          />
+          <input
+            type="number"
+            min="0"
+            inputMode="numeric"
+            value={teachingForm.audienceCount}
+            onChange={(event) => updateTeachingForm('audienceCount', event.target.value)}
+            placeholder="People reached"
+            className="bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+          />
+          <input
+            type="text"
+            value={teachingForm.mentee}
+            onChange={(event) => updateTeachingForm('mentee', event.target.value)}
+            placeholder="Mentee / audience"
+            className="bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+          />
+          <input
+            type="text"
+            value={teachingForm.actionStep}
+            onChange={(event) => updateTeachingForm('actionStep', event.target.value)}
+            placeholder="One action step"
+            className="bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+          />
+          <button
+            type="submit"
+            className="rounded-lg border border-cyan-500/40 bg-cyan-900/20 px-3 py-2 text-sm font-semibold text-cyan-100 hover:bg-cyan-900/30 transition-colors"
+          >
+            Log Lesson
+          </button>
+          <input
+            type="text"
+            value={teachingForm.followUp}
+            onChange={(event) => updateTeachingForm('followUp', event.target.value)}
+            placeholder="Follow-up"
+            className="sm:col-span-2 bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+          />
+          <input
+            type="text"
+            value={teachingForm.note}
+            onChange={(event) => updateTeachingForm('note', event.target.value)}
+            placeholder="Note"
+            className="sm:col-span-2 bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+          />
+        </form>
+        {teachingError && <div className="text-xs text-red-300 mt-2">{teachingError}</div>}
+
+        {recentTeaching.length > 0 && (
+          <div className="mt-4 space-y-2">
+            {recentTeaching.map(entry => (
+              <div key={entry.id} className="flex items-center justify-between gap-3 rounded-lg border border-cyan-900/40 bg-black/20 p-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 text-sm text-cyan-100 font-semibold">
+                    <Users size={14} className="text-cyan-300 shrink-0" />
+                    <span className="truncate">{entry.title} · {TEACHING_TOPIC_LABELS[entry.topic] || entry.topicLabel || 'Tauheed'}</span>
+                  </div>
+                  <div className="text-xs text-cyan-500/50 truncate">{TEACHING_FORMAT_LABELS[entry.format] || entry.formatLabel || 'Lesson'} · {entry.source}</div>
+                </div>
+                <div className="text-right shrink-0">
+                  <div className="text-xs text-cyan-400">{entry.audienceCount || 0} reached</div>
+                  <div className="text-[10px] text-cyan-700">{entry.localDate}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="glass-panel p-4 border border-yellow-500/20">

@@ -23,6 +23,7 @@ export const DEFAULT_STATE = {
   purchasedRewards: [],
   ummahImpactLedger: [],
   justiceResponseLedger: [],
+  teachingPipelineLedger: [],
   customQuests: [],
   levelQuests: [],
   redemptionQuests: [],
@@ -58,6 +59,7 @@ function normalizeStateShape(state) {
   normalized.customQuests = pruneExpiredCustomQuests(state.customQuests || []);
   normalized.ummahImpactLedger = state.ummahImpactLedger || [];
   normalized.justiceResponseLedger = state.justiceResponseLedger || [];
+  normalized.teachingPipelineLedger = state.teachingPipelineLedger || [];
   return normalized;
 }
 

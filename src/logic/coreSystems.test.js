@@ -11,6 +11,7 @@ import { getMissionPlan } from './missionPlan';
 import { addMissionDailyQuests } from './missionQuestGenerator';
 import { addImpactEntryToState, getImpactMetrics } from './ummahImpact';
 import { addJusticeResponseToState, containsUnsafeJusticeIntent, getJusticeResponseMetrics } from './justiceResponse';
+import { addTeachingEntryToState, getTeachingMetrics } from './teachingPipeline';
 import { getForgeMasterSystemPromptForTest } from '../services/aiAssistant';
 
 function baseState(overrides = {}) {
@@ -32,6 +33,7 @@ function baseState(overrides = {}) {
     purchasedRewards: [],
     ummahImpactLedger: [],
     justiceResponseLedger: [],
+    teachingPipelineLedger: [],
     shadows: [],
     systemMessages: [],
     weeklyDungeons: {},
@@ -134,6 +136,23 @@ describe('sync conflict merge', () => {
     const merged = mergeStatesForSync(current, incoming);
 
     expect(merged.justiceResponseLedger.map(entry => entry.id).sort()).toEqual(['justice-a', 'justice-b']);
+  });
+
+  it('merges teaching pipeline entries from different devices', () => {
+    const current = baseState({
+      teachingPipelineLedger: [{ id: 'teach-a', title: 'A', topic: 'tauheed', createdAt: '2026-06-01T01:00:00.000Z' }],
+      lastUpdated: 10,
+      syncRevision: 2,
+    });
+    const incoming = baseState({
+      teachingPipelineLedger: [{ id: 'teach-b', title: 'B', topic: 'seerah', createdAt: '2026-06-01T02:00:00.000Z' }],
+      lastUpdated: 9,
+      syncRevision: 2,
+    });
+
+    const merged = mergeStatesForSync(current, incoming);
+
+    expect(merged.teachingPipelineLedger.map(entry => entry.id).sort()).toEqual(['teach-a', 'teach-b']);
   });
 });
 
@@ -408,6 +427,45 @@ describe('mission doctrine and metrics', () => {
       note: 'Verified one report.',
       guardrailAccepted: false,
     })).toThrow(/guardrail/i);
+  });
+
+  it('logs source-backed teaching as tauheed mission evidence', () => {
+    const result = addTeachingEntryToState(baseState(), {
+      title: 'Meaning of La ilaha illa Allah',
+      topic: 'tauheed',
+      format: 'one-to-one',
+      source: 'Quran 47:19 and explanation from reliable teacher',
+      audienceCount: 1,
+      mentee: 'Younger brother',
+      actionStep: 'Repeat the meaning and reject shirk in daily choices.',
+      followUp: 'Review tomorrow',
+    });
+
+    const entry = result.teachingPipelineLedger.at(-1);
+    const history = result.history.at(-1);
+    const teaching = getTeachingMetrics(result.teachingPipelineLedger);
+    const metrics = getMissionMetrics(result.history, history.localDate);
+
+    expect(entry.sourceBacked).toBe(true);
+    expect(entry.topic).toBe('tauheed');
+    expect(history.type).toBe('teachingPipeline');
+    expect(history.missionDuty).toBe('tauheed');
+    expect(teaching.totalLessons).toBe(1);
+    expect(teaching.totalAudience).toBe(1);
+    expect(teaching.totalMentees).toBe(1);
+    expect(metrics.duties.find(d => d.id === 'tauheed').today).toBe(1);
+  });
+
+  it('rejects teaching entries without title or source', () => {
+    expect(() => addTeachingEntryToState(baseState(), {
+      title: '',
+      source: 'Quran 112',
+    })).toThrow(/title/i);
+
+    expect(() => addTeachingEntryToState(baseState(), {
+      title: 'Tauheed reminder',
+      source: '',
+    })).toThrow(/source/i);
   });
 });
 
