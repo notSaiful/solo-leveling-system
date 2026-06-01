@@ -8,6 +8,7 @@ import { pruneExpiredCustomQuests } from './customQuests';
 import { MISSION_DOCTRINE, getMissionDoctrinePrompt } from '../data/missionDoctrine';
 import { getMissionMetrics } from './missionMetrics';
 import { getMissionPlan } from './missionPlan';
+import { getMissionReview } from './missionReview';
 import { addMissionDailyQuests } from './missionQuestGenerator';
 import { addImpactEntryToState, getImpactMetrics } from './ummahImpact';
 import { addJusticeResponseToState, containsUnsafeJusticeIntent, getJusticeResponseMetrics } from './justiceResponse';
@@ -420,6 +421,40 @@ describe('mission doctrine and metrics', () => {
     expect(plan.trusts.filter(trust => trust.completedToday)).toHaveLength(3);
     expect(plan.lawfulJusticeProtocol.join(' ')).toContain('lawful');
     expect(plan.lawfulJusticeProtocol.join(' ')).toContain('proportionate');
+  });
+
+  it('builds a weekly mission review across every mission ledger', () => {
+    const state = baseState({
+      teachingPipelineLedger: [{ id: 'teach', title: 'Tauheed', localDate: '2026-06-01', createdAt: '2026-06-01T01:00:00.000Z' }],
+      ummahImpactLedger: [{ id: 'impact', amount: 500, localDate: '2026-06-01', createdAt: '2026-06-01T02:00:00.000Z' }],
+      justiceResponseLedger: [{ id: 'justice', missionDuty: 'service', localDate: '2026-06-01', createdAt: '2026-06-01T03:00:00.000Z' }],
+      familyCovenantLedger: [{ id: 'family', action: 'Led prayer', localDate: '2026-06-01', createdAt: '2026-06-01T04:00:00.000Z' }],
+      livelihoodPipelineLedger: [{ id: 'livelihood', beneficiary: 'Student', localDate: '2026-06-01', createdAt: '2026-06-01T05:00:00.000Z' }],
+      readinessProtocolLedger: [{ id: 'readiness', action: 'Training', localDate: '2026-06-01', createdAt: '2026-06-01T06:00:00.000Z' }],
+    });
+
+    const review = getMissionReview(state, '2026-06-01');
+
+    expect(review.weeklyCoverage).toBe(100);
+    expect(review.weeklyActions).toBe(6);
+    expect(review.duties.find(duty => duty.id === 'tauheed').week).toBe(1);
+    expect(review.duties.find(duty => duty.id === 'wealth').week).toBe(2);
+    expect(review.duties.find(duty => duty.id === 'service').week).toBe(2);
+    expect(review.duties.find(duty => duty.id === 'family').week).toBe(1);
+    expect(review.duties.find(duty => duty.id === 'readiness').week).toBe(1);
+  });
+
+  it('commands the weakest weekly mission duty from ledger evidence', () => {
+    const state = baseState({
+      teachingPipelineLedger: [{ id: 'teach', title: 'Tauheed', localDate: '2026-06-01', createdAt: '2026-06-01T01:00:00.000Z' }],
+      ummahImpactLedger: [{ id: 'impact', amount: 500, localDate: '2026-06-01', createdAt: '2026-06-01T02:00:00.000Z' }],
+    });
+
+    const review = getMissionReview(state, '2026-06-01');
+
+    expect(review.weeklyCoverage).toBe(40);
+    expect(review.weakestDuty.id).toBe('readiness');
+    expect(review.command).toContain('Train strength');
   });
 
   it('logs Ummah financial impact as mission evidence', () => {

@@ -8,6 +8,7 @@ import { LIVELIHOOD_ACTION_LABELS, LIVELIHOOD_ACTIONS, LIVELIHOOD_GUARDRAILS, LI
 import { READINESS_ACTION_LABELS, READINESS_ACTIONS, READINESS_GUARDRAILS, READINESS_INTENSITIES } from '../data/readinessProtocol';
 import { TEACHING_FORMAT_LABELS, TEACHING_FORMATS, TEACHING_GUARDRAILS, TEACHING_TOPIC_LABELS, TEACHING_TOPICS } from '../data/teachingPipeline';
 import { getMissionPlan } from '../logic/missionPlan';
+import { getMissionReview } from '../logic/missionReview';
 import { addFamilyCovenantEntryToState, getFamilyCovenantMetrics } from '../logic/familyCovenant';
 import { addLivelihoodEntryToState, getLivelihoodMetrics } from '../logic/livelihoodPipeline';
 import { addReadinessEntryToState, getReadinessMetrics } from '../logic/readinessProtocol';
@@ -95,6 +96,7 @@ export default function MissionCommandCenter({ state, setState }) {
   const [livelihoodError, setLivelihoodError] = useState('');
   const [readinessError, setReadinessError] = useState('');
   const plan = getMissionPlan(history || []);
+  const missionReview = useMemo(() => getMissionReview(state), [state]);
   const impactMetrics = useMemo(() => getImpactMetrics(impactLedger), [impactLedger]);
   const justiceMetrics = useMemo(() => getJusticeResponseMetrics(justiceLedger), [justiceLedger]);
   const teachingMetrics = useMemo(() => getTeachingMetrics(teachingLedger), [teachingLedger]);
@@ -338,6 +340,77 @@ export default function MissionCommandCenter({ state, setState }) {
         <div className="text-sm text-cyan-100 leading-relaxed">{plan.weeklyFocus.command}</div>
         <div className="mt-3 text-xs text-cyan-500/50">
           Weakest duty: {plan.weeklyFocus.duty?.label || 'Unknown'}
+        </div>
+      </section>
+
+      <section className="glass-panel p-4 border border-cyan-500/20">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
+          <div>
+            <div className="flex items-center gap-2 text-cyan-300 mb-1">
+              <Target size={17} />
+              <span className="font-orbitron text-sm font-semibold tracking-wider uppercase">Mission Review Dashboard</span>
+            </div>
+            <div className="text-xs text-cyan-500/60 leading-relaxed">
+              Seven-day review across teaching, wealth, justice, family, livelihood, and readiness evidence.
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-2 sm:min-w-80">
+            <div className="rounded-lg border border-cyan-500/20 bg-cyan-950/10 p-3">
+              <div className="text-[10px] text-cyan-500/70 uppercase tracking-wider">Coverage</div>
+              <div className="text-sm font-bold text-cyan-100">{missionReview.weeklyCoverage}%</div>
+            </div>
+            <div className="rounded-lg border border-cyan-500/20 bg-cyan-950/10 p-3">
+              <div className="text-[10px] text-cyan-500/70 uppercase tracking-wider">Week Logs</div>
+              <div className="text-sm font-bold text-cyan-100">{missionReview.weeklyActions.toLocaleString()}</div>
+            </div>
+            <div className="rounded-lg border border-yellow-500/20 bg-yellow-950/10 p-3">
+              <div className="text-[10px] text-yellow-500/70 uppercase tracking-wider">Weakest</div>
+              <div className="text-sm font-bold text-yellow-200">{missionReview.weakestDuty?.label || 'Mission'}</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-yellow-500/20 bg-yellow-950/10 p-3 mb-4">
+          <div className="text-[10px] text-yellow-500/70 uppercase tracking-wider mb-1">Next Command</div>
+          <div className="text-sm text-yellow-100 leading-relaxed">{missionReview.command}</div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
+          {missionReview.duties.map(duty => {
+            const DutyIcon = dutyIcons[duty.id] || Target;
+            const statusClass = duty.status === 'strong'
+              ? 'border-green-500/25 bg-green-950/10 text-green-200'
+              : duty.status === 'active'
+                ? 'border-cyan-500/25 bg-cyan-950/10 text-cyan-100'
+                : 'border-red-500/25 bg-red-950/10 text-red-100';
+            return (
+              <div key={duty.id} className={`rounded-lg border p-3 ${statusClass}`}>
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <DutyIcon size={14} className="shrink-0" />
+                    <span className="text-xs font-semibold truncate">{duty.label}</span>
+                  </div>
+                  <span className="text-[10px] uppercase tracking-wider">{duty.status}</span>
+                </div>
+                <div className="flex items-end justify-between gap-2">
+                  <div>
+                    <div className="text-[10px] uppercase tracking-wider opacity-70">Week</div>
+                    <div className="text-lg font-bold">{duty.week}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-[10px] uppercase tracking-wider opacity-70">Total</div>
+                    <div className="text-sm font-semibold">{duty.total}</div>
+                  </div>
+                </div>
+                <div className="mt-2 h-1.5 rounded-full bg-black/30 overflow-hidden">
+                  <div
+                    className="h-full bg-current"
+                    style={{ width: `${Math.min(100, duty.week * 34)}%` }}
+                  />
+                </div>
+              </div>
+            );
+          })}
         </div>
       </section>
 

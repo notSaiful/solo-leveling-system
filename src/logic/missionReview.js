@@ -1,0 +1,93 @@
+import { MISSION_DOCTRINE } from '../data/missionDoctrine';
+import { getLocalDateString, parseLocalDate } from '../utils/dateUtils';
+
+const DUTY_COMMANDS = {
+  tauheed: 'Teach one source-backed lesson or write one tawheed action step.',
+  wealth: 'Move money or earning capacity today: give, invest, build, sell, or train someone to earn.',
+  readiness: 'Train strength with restraint: include recovery, de-escalation, or lawful protection practice.',
+  service: 'Serve one Muslim through relief, advocacy, mentorship, livelihood, or direct help.',
+  family: 'Lead your home through worship, mercy, repair, provision, presence, or example.',
+};
+
+function addDays(dateStr, offset) {
+  const date = parseLocalDate(dateStr);
+  date.setUTCDate(date.getUTCDate() + offset);
+  return date.toISOString().slice(0, 10);
+}
+
+function normalizeEntries(entries = [], source, dutyResolver) {
+  return entries.flatMap((entry) => {
+    const duties = dutyResolver(entry);
+    return duties.map(dutyId => ({
+      ...entry,
+      source,
+      dutyId,
+      localDate: entry.localDate || (entry.createdAt ? getLocalDateString(new Date(entry.createdAt)) : ''),
+    }));
+  });
+}
+
+export function getMissionReview(state = {}, today = getLocalDateString()) {
+  const weekDates = Array.from({ length: 7 }, (_, index) => addDays(today, index - 6));
+  const weekSet = new Set(weekDates);
+
+  const evidence = [
+    ...normalizeEntries(state.teachingPipelineLedger, 'Teaching', () => ['tauheed']),
+    ...normalizeEntries(state.ummahImpactLedger, 'Impact', () => ['wealth']),
+    ...normalizeEntries(state.justiceResponseLedger, 'Justice', entry => [entry.missionDuty || 'service']),
+    ...normalizeEntries(state.familyCovenantLedger, 'Family', () => ['family']),
+    ...normalizeEntries(state.livelihoodPipelineLedger, 'Livelihood', () => ['wealth', 'service']),
+    ...normalizeEntries(state.readinessProtocolLedger, 'Readiness', () => ['readiness']),
+  ].filter(entry => entry.localDate);
+
+  const weeklyEvidence = evidence.filter(entry => weekSet.has(entry.localDate));
+  const todayEvidence = evidence.filter(entry => entry.localDate === today);
+  const ledgerEntries = [
+    ...(state.teachingPipelineLedger || []),
+    ...(state.ummahImpactLedger || []),
+    ...(state.justiceResponseLedger || []),
+    ...(state.familyCovenantLedger || []),
+    ...(state.livelihoodPipelineLedger || []),
+    ...(state.readinessProtocolLedger || []),
+  ];
+  const weeklyLedgerEntries = ledgerEntries.filter(entry => weekSet.has(entry.localDate || (entry.createdAt ? getLocalDateString(new Date(entry.createdAt)) : '')));
+
+  const duties = MISSION_DOCTRINE.pillars.map((pillar) => {
+    const total = evidence.filter(entry => entry.dutyId === pillar.id).length;
+    const week = weeklyEvidence.filter(entry => entry.dutyId === pillar.id).length;
+    const todayCount = todayEvidence.filter(entry => entry.dutyId === pillar.id).length;
+    const latest = evidence
+      .filter(entry => entry.dutyId === pillar.id)
+      .sort((a, b) => new Date(b.createdAt || b.date || 0) - new Date(a.createdAt || a.date || 0))[0] || null;
+
+    return {
+      id: pillar.id,
+      label: pillar.label,
+      duty: pillar.duty,
+      total,
+      week,
+      today: todayCount,
+      status: week >= 3 ? 'strong' : week >= 1 ? 'active' : 'neglected',
+      command: DUTY_COMMANDS[pillar.id],
+      latest,
+    };
+  });
+
+  const weakestDuty = [...duties].sort((a, b) => a.week - b.week || a.total - b.total)[0] || duties[0];
+  const strongestDuty = [...duties].sort((a, b) => b.week - a.week || b.total - a.total)[0] || duties[0];
+  const weeklyCoverage = duties.length
+    ? Math.round((duties.filter(duty => duty.week > 0).length / duties.length) * 100)
+    : 0;
+
+  return {
+    today,
+    weekDates,
+    weeklyCoverage,
+    weeklyActions: weeklyLedgerEntries.length,
+    totalLedgerEntries: ledgerEntries.length,
+    duties,
+    weakestDuty,
+    strongestDuty,
+    command: weakestDuty?.command || 'Log one mission action today.',
+  };
+}
