@@ -54,6 +54,34 @@ function mergeUniqueBy(itemsA = [], itemsB = [], keyFn = getObjectKey) {
   return Array.from(merged.values());
 }
 
+function getMessageTime(message = {}, fallback = 0) {
+  if (typeof message.createdAt === 'number') return message.createdAt;
+  const parsed = new Date(message.createdAt || message.date || 0).getTime();
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function getChatMessageKey(message = {}, fallbackIndex = 0) {
+  if (message.messageId) return `message:${message.messageId}`;
+  const role = message.role || 'unknown';
+  const type = message.type || '';
+  const createdAt = message.createdAt || message.date || fallbackIndex;
+  return `${role}|${type}|${createdAt}|${message.content || ''}`;
+}
+
+function mergeChatHistory(messagesA = [], messagesB = []) {
+  const merged = new Map();
+  [...messagesA, ...messagesB].forEach((message, index) => {
+    if (!message || typeof message !== 'object' || typeof message.content !== 'string') return;
+    const key = getChatMessageKey(message, index);
+    const previous = merged.get(key);
+    merged.set(key, previous ? { ...previous, ...message } : message);
+  });
+
+  return Array.from(merged.values())
+    .sort((a, b) => getMessageTime(a) - getMessageTime(b))
+    .slice(-120);
+}
+
 function mergeDailyQuests(base = {}, other = {}) {
   const baseDate = base.lastQuestDate || '';
   const otherDate = other.lastQuestDate || '';
@@ -176,6 +204,8 @@ export function mergeStatesForSync(currentState, incomingState) {
     shadows: mergeUniqueBy(base.shadows, other.shadows),
     systemMessages: mergeUniqueBy(base.systemMessages, other.systemMessages, item => item.messageId || `${item.type}|${item.title}|${item.date || item.createdAt || ''}`),
     aiDungeons: mergeUniqueBy(base.aiDungeons, other.aiDungeons),
+    aiChatHistory: mergeChatHistory(base.aiChatHistory, other.aiChatHistory),
+    aiChatUpdatedAt: Math.max(base.aiChatUpdatedAt || 0, other.aiChatUpdatedAt || 0),
     history: mergeUniqueBy(base.history, other.history, getHistoryEventKey),
     lastQuestDate: [base.lastQuestDate, other.lastQuestDate].filter(Boolean).sort().pop() || null,
     lastActiveDate: [base.lastActiveDate, other.lastActiveDate].filter(Boolean).sort().pop() || null,

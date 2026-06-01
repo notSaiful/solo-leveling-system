@@ -75,7 +75,7 @@ User Action → useStore (localStorage) → Auto Cloud Sync (/api/sync-state)
 | `src/App.jsx` | Main app shell, tabs, error boundary, diagnostic panel |
 | `src/hooks/useStore.js` | Central state management, localStorage persistence, deep-merge updates |
 | `src/data/store.js` | Initial state, local persistence, canonical cloud init/reset |
-| `src/services/aiAssistant.js` | Forge-Master API calls, OpenRouter integration, model fallback |
+| `src/services/aiAssistant.js` | Forge-Master API calls, synced chat context, OpenRouter integration, model fallback |
 | `src/services/canonicalSync.js` | Client calls to the canonical sync API |
 | `src/services/cloudSync.js` | Debounced sync wrapper and load/save bridge |
 | `api/sync-state.js` | Vercel serverless sync endpoint backed by private GitHub Gist |
@@ -183,13 +183,14 @@ SLS_GIST_ID
 ```
 
 **Synced Data:**
-- One full JSON state snapshot containing all progress, quests, stats, rewards, history, dungeons, messages, and AI-generated state
+- One full JSON state snapshot containing all progress, quests, stats, rewards, history, dungeons, system messages, Forge-Master chat history, and AI-generated state
 - localStorage remains the instant offline cache
 - The Vercel API is the only cross-device source of truth
 
 **Sync Strategy:**
 - `initCloudSync`: loads the canonical snapshot before penalties, quest rotation, and dungeon initialization
 - Newer `lastUpdated` wins so an old browser cannot overwrite newer progress
+- Forge-Master chat lives in `state.aiChatHistory`; old `system_chat_history` localStorage is only a one-time migration source
 - Daily quests keep the most recent `lastQuestDate` during merge
 - `syncStateToCloud`: uploads the full normalized snapshot through `/api/sync-state`
 - Old custom quests missing `id` are normalized to stable `uniqueId`/`id` keys

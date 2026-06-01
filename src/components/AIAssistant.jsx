@@ -1,27 +1,42 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageSquare, X, Send, Bot, User, Sparkles, AlertTriangle, Loader2, CheckCircle2, Swords } from 'lucide-react';
 import { sendMessage, getDailyMotivation, analyzeProgress, generateExtraQuests } from '../services/aiAssistant';
 import { parseAdminCommands, stripCommandBlocks, executeAdminCommands, describeAdminCommands } from '../logic/adminCommands';
 
+const WELCOME_CONTENT = 'The Forge is hot. I do not coddle. I do not comfort. I forge weak men into warriors. Speak only if you are ready to be hammered.';
+
+function createChatMessage(message) {
+  return {
+    messageId: message.messageId || `chat-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    createdAt: message.createdAt || new Date().toISOString(),
+    ...message,
+  };
+}
+
+function normalizeChatMessages(messages) {
+  if (!Array.isArray(messages)) return [];
+  return messages
+    .filter(message => (
+      message &&
+      typeof message.content === 'string' &&
+      ['user', 'assistant', 'system'].includes(message.role)
+    ))
+    .map(message => createChatMessage(message))
+    .slice(-120);
+}
+
+function getWelcomeMessage() {
+  return createChatMessage({ role: 'assistant', content: WELCOME_CONTENT, type: 'welcome' });
+}
+
 export default function AIAssistant({ state, setState }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState(() => {
-    try {
-      const saved = localStorage.getItem('system_chat_history');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.every(m => typeof m.content === 'string' && ['user','assistant','system'].includes(m.role))) {
-          return parsed;
-        }
-      }
-    } catch {
-      // ignore corrupt history
-    }
-    return [
-      { role: 'assistant', content: 'The Forge is hot. I do not coddle. I do not comfort. I forge weak men into warriors. Speak only if you are ready to be hammered.', type: 'welcome' },
-    ];
-  });
+  const syncedMessages = Array.isArray(state.aiChatHistory) ? state.aiChatHistory : [];
+  const messages = useMemo(
+    () => (syncedMessages.length > 0 ? syncedMessages : [getWelcomeMessage()]),
+    [syncedMessages],
+  );
   const [pendingCommands, setPendingCommands] = useState(null);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -30,10 +45,38 @@ export default function AIAssistant({ state, setState }) {
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
-  // Persist chat history
+  const setMessages = (updater) => {
+    if (!setState) return;
+    setState(prev => {
+      const base = Array.isArray(prev.aiChatHistory) && prev.aiChatHistory.length > 0
+        ? prev.aiChatHistory
+        : [getWelcomeMessage()];
+      const next = typeof updater === 'function' ? updater(base) : updater;
+      return {
+        ...prev,
+        aiChatHistory: normalizeChatMessages(next),
+        aiChatUpdatedAt: Date.now(),
+      };
+    });
+  };
+
+  // Migrate old browser-only chat history into the synced state once.
   useEffect(() => {
-    localStorage.setItem('system_chat_history', JSON.stringify(messages));
-  }, [messages]);
+    if (syncedMessages.length > 0) return;
+    try {
+      const saved = localStorage.getItem('system_chat_history');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        const migrated = normalizeChatMessages(parsed);
+        if (migrated.length > 0) {
+          setMessages(migrated);
+          localStorage.removeItem('system_chat_history');
+        }
+      }
+    } catch {
+      // ignore corrupt history
+    }
+  }, [syncedMessages.length]);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -55,7 +98,7 @@ export default function AIAssistant({ state, setState }) {
     setError(null);
     setLoading(true);
 
-    const userMsg = { role: 'user', content: text };
+    const userMsg = createChatMessage({ role: 'user', content: text });
     setMessages(prev => [...prev, userMsg]);
 
     try {
@@ -66,13 +109,13 @@ export default function AIAssistant({ state, setState }) {
       if (commands.length > 0 && setState) {
         // Show confirmation instead of auto-executing
         setPendingCommands({ commands, previews: describeAdminCommands(commands), cleanReply });
-        setMessages(prev => [...prev, { role: 'assistant', content: cleanReply || 'The System processed your request.', type: 'pending-commands' }]);
+        setMessages(prev => [...prev, createChatMessage({ role: 'assistant', content: cleanReply || 'The System processed your request.', type: 'pending-commands' })]);
       } else {
-        setMessages(prev => [...prev, { role: 'assistant', content: cleanReply || 'The System processed your request.' }]);
+        setMessages(prev => [...prev, createChatMessage({ role: 'assistant', content: cleanReply || 'The System processed your request.' })]);
       }
     } catch (err) {
       setError(err.message);
-      setMessages(prev => [...prev, { role: 'assistant', content: `⚠️ ${err.message}`, type: 'error' }]);
+      setMessages(prev => [...prev, createChatMessage({ role: 'assistant', content: `⚠️ ${err.message}`, type: 'error' })]);
     } finally {
       setLoading(false);
     }
@@ -87,18 +130,18 @@ export default function AIAssistant({ state, setState }) {
       return result.modified ? result.state : prevState;
     });
     if (cmdReports.length > 0) {
-      setMessages(prev => [...prev, {
+      setMessages(prev => [...prev, createChatMessage({
         role: 'assistant',
         content: cmdReports.map(r => (r.type === 'success' ? `✓ ${r.message}` : `✗ ${r.message}`)).join('\n'),
         type: 'system-report',
-      }]);
+      })]);
     }
     setPendingCommands(null);
   };
 
   const handleCancelCommands = () => {
     setPendingCommands(null);
-    setMessages(prev => [...prev, { role: 'assistant', content: 'Command execution cancelled by user.', type: 'system-report' }]);
+    setMessages(prev => [...prev, createChatMessage({ role: 'assistant', content: 'Command execution cancelled by user.', type: 'system-report' })]);
   };
 
   const handleQuickAction = async (action) => {
@@ -127,8 +170,8 @@ export default function AIAssistant({ state, setState }) {
       const cleanReply = stripCommandBlocks(rawReply);
 
       const assistantMsgs = [
-        { role: 'user', content: userPrompt },
-        { role: 'assistant', content: cleanReply },
+        createChatMessage({ role: 'user', content: userPrompt }),
+        createChatMessage({ role: 'assistant', content: cleanReply }),
       ];
 
       if (commands.length > 0 && setState) {
@@ -139,8 +182,8 @@ export default function AIAssistant({ state, setState }) {
       setMessages(prev => [...prev, ...assistantMsgs]);
     } catch (err) {
       setMessages(prev => [...prev,
-        { role: 'user', content: action === 'motivation' ? 'Give me my orders' : action === 'analyze' ? 'Audit me' : action === 'forge3' ? 'Forge 3 new quests' : 'Hold me accountable' },
-        { role: 'assistant', content: `⚠️ ${err.message}`, type: 'error' },
+        createChatMessage({ role: 'user', content: action === 'motivation' ? 'Give me my orders' : action === 'analyze' ? 'Audit me' : action === 'forge3' ? 'Forge 3 new quests' : 'Hold me accountable' }),
+        createChatMessage({ role: 'assistant', content: `⚠️ ${err.message}`, type: 'error' }),
       ]);
     } finally {
       setLoading(false);
@@ -149,9 +192,8 @@ export default function AIAssistant({ state, setState }) {
   };
 
   const clearChat = () => {
-    setMessages([
-      { role: 'assistant', content: 'The Forge is hot. I do not coddle. I do not comfort. I forge weak men into warriors. Speak only if you are ready to be hammered.', type: 'welcome' },
-    ]);
+    localStorage.removeItem('system_chat_history');
+    setMessages([getWelcomeMessage()]);
   };
 
   return (
@@ -212,7 +254,7 @@ export default function AIAssistant({ state, setState }) {
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-3 space-y-3 min-h-[200px] max-h-[50vh] sm:max-h-[450px]">
               {messages.map((msg, i) => (
-                <div key={i} className={`flex gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                <div key={msg.messageId || i} className={`flex gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
                   <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
                     msg.role === 'user' ? 'bg-cyan-800/40' : msg.type === 'error' ? 'bg-red-900/40' : 'bg-cyan-900/40'
                   }`}>

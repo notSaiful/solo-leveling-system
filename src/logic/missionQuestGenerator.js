@@ -29,6 +29,11 @@ function getCoveredMissionDuties(quests = []) {
     .map(duty => duty.id));
 }
 
+function inferMissionDuty(quest) {
+  if (quest.missionDuty) return quest.missionDuty;
+  return MISSION_DOCTRINE.pillars.find(duty => questCoversDuty(quest, duty))?.id || null;
+}
+
 function sortMissingDutiesByNeed(missingDuties, history) {
   const plan = getMissionPlan(history || []);
   const totals = new Map(plan.metrics.duties.map(duty => [duty.id, duty.total]));
@@ -41,7 +46,11 @@ function sortMissingDutiesByNeed(missingDuties, history) {
 }
 
 export function addMissionDailyQuests(baseQuests = [], rankKey = 'E', history = []) {
-  const covered = getCoveredMissionDuties(baseQuests);
+  const enrichedBaseQuests = baseQuests.map(quest => {
+    const missionDuty = inferMissionDuty(quest);
+    return missionDuty && !quest.missionDuty ? { ...quest, missionDuty } : quest;
+  });
+  const covered = getCoveredMissionDuties(enrichedBaseQuests);
   const missingDuties = MISSION_DUTY_ORDER.filter(duty => !covered.has(duty));
   const orderedMissing = sortMissingDutiesByNeed(missingDuties, history);
   const createdAt = Date.now();
@@ -60,5 +69,5 @@ export function addMissionDailyQuests(baseQuests = [], rankKey = 'E', history = 
     };
   }).filter(Boolean);
 
-  return [...baseQuests, ...missionQuests];
+  return [...enrichedBaseQuests, ...missionQuests];
 }

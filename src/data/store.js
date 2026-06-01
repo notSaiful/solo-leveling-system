@@ -40,6 +40,8 @@ export const DEFAULT_STATE = {
   systemMessages: [],
   weeklyDungeons: { weekId: null, deenCompleted: false, bodyCompleted: false, moneyCompleted: false, bonusClaimed: false },
   aiDungeons: [],
+  aiChatHistory: [],
+  aiChatUpdatedAt: 0,
   lastActiveDate: getLocalDateString(),
   lastPenaltyCheckDate: null,
   lastUpdated: 0,
@@ -68,6 +70,8 @@ function normalizeStateShape(state) {
   normalized.livelihoodPipelineLedger = state.livelihoodPipelineLedger || [];
   normalized.readinessProtocolLedger = state.readinessProtocolLedger || [];
   normalized.missionWeeklyReviews = state.missionWeeklyReviews || [];
+  normalized.aiChatHistory = Array.isArray(state.aiChatHistory) ? state.aiChatHistory : [];
+  normalized.aiChatUpdatedAt = state.aiChatUpdatedAt || 0;
   return normalized;
 }
 
@@ -79,8 +83,11 @@ export function loadState() {
     if (!raw) return DEFAULT_STATE;
     const parsed = JSON.parse(raw);
     if (parsed.version !== SCHEMA_VERSION) {
-      localStorage.removeItem(STORAGE_KEY);
-      return DEFAULT_STATE;
+      // Upgrade: normalize old state with new defaults instead of wiping
+      const upgraded = normalizeStateShape(parsed);
+      upgraded.version = SCHEMA_VERSION;
+      saveState(upgraded);
+      return upgraded;
     }
     return normalizeStateShape(parsed);
   } catch {

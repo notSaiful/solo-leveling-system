@@ -46,6 +46,8 @@ function baseState(overrides = {}) {
     systemMessages: [],
     weeklyDungeons: {},
     aiDungeons: [],
+    aiChatHistory: [],
+    aiChatUpdatedAt: 0,
     lastQuestDate: '2026-06-01',
     lastActiveDate: '2026-06-01',
     lastPenaltyCheckDate: '2026-06-01',
@@ -144,6 +146,30 @@ describe('sync conflict merge', () => {
     const merged = mergeStatesForSync(current, incoming);
 
     expect(merged.justiceResponseLedger.map(entry => entry.id).sort()).toEqual(['justice-a', 'justice-b']);
+  });
+
+  it('merges Forge-Master chat history from different devices', () => {
+    const current = baseState({
+      aiChatHistory: [
+        { messageId: 'chat-a', role: 'user', content: 'I trained today.', createdAt: '2026-06-01T04:00:00.000Z' },
+      ],
+      aiChatUpdatedAt: 10,
+      lastUpdated: 10,
+      syncRevision: 2,
+    });
+    const incoming = baseState({
+      aiChatHistory: [
+        { messageId: 'chat-b', role: 'assistant', content: 'Record it. Then pray on time.', createdAt: '2026-06-01T04:01:00.000Z' },
+      ],
+      aiChatUpdatedAt: 11,
+      lastUpdated: 9,
+      syncRevision: 2,
+    });
+
+    const merged = mergeStatesForSync(current, incoming);
+
+    expect(merged.aiChatHistory.map(message => message.messageId)).toEqual(['chat-a', 'chat-b']);
+    expect(merged.aiChatUpdatedAt).toBe(11);
   });
 
   it('merges teaching pipeline entries from different devices', () => {
