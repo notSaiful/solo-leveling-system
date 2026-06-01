@@ -24,9 +24,9 @@ function questCoversDuty(quest, duty) {
 }
 
 function getCoveredMissionDuties(quests = []) {
-  return new Set(MISSION_DOCTRINE.pillars
-    .filter(duty => quests.some(quest => questCoversDuty(quest, duty)))
-    .map(duty => duty.id));
+  return new Set(quests
+    .map(quest => quest.missionDuty || inferMissionDuty(quest))
+    .filter(Boolean));
 }
 
 function inferMissionDuty(quest) {
