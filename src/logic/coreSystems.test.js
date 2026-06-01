@@ -8,7 +8,7 @@ import { pruneExpiredCustomQuests } from './customQuests';
 import { MISSION_DOCTRINE, getMissionDoctrinePrompt } from '../data/missionDoctrine';
 import { getMissionMetrics } from './missionMetrics';
 import { getMissionPlan } from './missionPlan';
-import { addMissionWeeklyReviewToState, createMissionWeeklyReviewNote, getMissionReview, getMissionReviewTrends } from './missionReview';
+import { addMissionCorrectiveQuestsToState, addMissionWeeklyReviewToState, createMissionCorrectiveQuests, createMissionWeeklyReviewNote, getMissionReview, getMissionReviewTrends } from './missionReview';
 import { addMissionDailyQuests } from './missionQuestGenerator';
 import { addImpactEntryToState, getImpactMetrics } from './ummahImpact';
 import { addJusticeResponseToState, containsUnsafeJusticeIntent, getJusticeResponseMetrics } from './justiceResponse';
@@ -524,6 +524,24 @@ describe('mission doctrine and metrics', () => {
     expect(trends.actionDelta).toBe(5);
     expect(trends.dutyTrends.find(duty => duty.id === 'tauheed').delta).toBe(1);
     expect(trends.dutyTrends.find(duty => duty.id === 'wealth').direction).toBe('rising');
+  });
+
+  it('generates corrective custom quests for neglected mission duties', () => {
+    const state = baseState({
+      teachingPipelineLedger: [{ id: 'teach', title: 'Tauheed', localDate: '2026-06-01', createdAt: '2026-06-01T01:00:00.000Z' }],
+      ummahImpactLedger: [{ id: 'impact', amount: 500, localDate: '2026-06-01', createdAt: '2026-06-01T02:00:00.000Z' }],
+    });
+
+    const quests = createMissionCorrectiveQuests(state, '2026-06-01');
+    const next = addMissionCorrectiveQuestsToState(state, '2026-06-01');
+    const noDuplicate = addMissionCorrectiveQuestsToState(next, '2026-06-01');
+
+    expect(quests).toHaveLength(3);
+    expect(quests.map(quest => quest.missionDuty)).toEqual(['readiness', 'service', 'family']);
+    expect(quests.every(quest => quest.source === 'mission-corrective')).toBe(true);
+    expect(quests.find(quest => quest.missionDuty === 'readiness').pillar).toBe('body');
+    expect(next.customQuests).toHaveLength(3);
+    expect(noDuplicate.customQuests).toHaveLength(3);
   });
 
   it('logs Ummah financial impact as mission evidence', () => {

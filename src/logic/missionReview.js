@@ -9,6 +9,47 @@ const DUTY_COMMANDS = {
   family: 'Lead your home through worship, mercy, repair, provision, presence, or example.',
 };
 
+const DUTY_PILLARS = {
+  tauheed: 'deen',
+  wealth: 'money',
+  readiness: 'body',
+  service: 'deen',
+  family: 'deen',
+};
+
+const CORRECTIVE_TEMPLATES = {
+  tauheed: {
+    title: 'Corrective: Teach Tawheed',
+    description: 'Teach or write one source-backed tawheed lesson and define one action it demands today.',
+    xp: 35,
+    tags: ['tauheed', 'teaching', 'correction', 'knowledge'],
+  },
+  wealth: {
+    title: 'Corrective: Wealth Amanah Action',
+    description: 'Do one halal wealth action: give, invest, ship, sell, budget, or help one Muslim earn.',
+    xp: 35,
+    tags: ['wealth', 'halal', 'income', 'sadaqah', 'correction'],
+  },
+  readiness: {
+    title: 'Corrective: Readiness With Restraint',
+    description: 'Train strength or conditioning, then log one restraint or de-escalation lesson.',
+    xp: 35,
+    tags: ['readiness', 'training', 'restraint', 'lawful', 'correction'],
+  },
+  service: {
+    title: 'Corrective: Serve One Muslim',
+    description: 'Serve one Muslim through relief, mentorship, lawful advocacy, education, or direct help.',
+    xp: 35,
+    tags: ['service', 'ummah', 'mentorship', 'relief', 'correction'],
+  },
+  family: {
+    title: 'Corrective: Lead The Home',
+    description: 'Lead one family action through worship, mercy, repair, provision, presence, or example.',
+    xp: 35,
+    tags: ['family', 'leadership', 'mercy', 'home', 'correction'],
+  },
+};
+
 function createId(prefix) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -177,5 +218,64 @@ export function getMissionReviewTrends(reviews = [], limit = 6) {
     actionDelta,
     direction: coverageDelta > 0 ? 'rising' : coverageDelta < 0 ? 'slipping' : 'steady',
     dutyTrends,
+  };
+}
+
+export function getMissionCorrectiveQuestTargets(state = {}, today = getLocalDateString()) {
+  const review = getMissionReview(state, today);
+  const trends = getMissionReviewTrends(state.missionWeeklyReviews || []);
+  const slippingIds = new Set(trends.dutyTrends.filter(duty => duty.direction === 'slipping').map(duty => duty.id));
+  const targetMap = new Map();
+
+  review.duties
+    .filter(duty => duty.week === 0 || slippingIds.has(duty.id))
+    .forEach(duty => targetMap.set(duty.id, duty));
+
+  if (targetMap.size === 0 && review.weakestDuty) {
+    targetMap.set(review.weakestDuty.id, review.weakestDuty);
+  }
+
+  return Array.from(targetMap.values())
+    .sort((a, b) => a.week - b.week || a.total - b.total)
+    .slice(0, 3);
+}
+
+export function createMissionCorrectiveQuests(state = {}, today = getLocalDateString()) {
+  const review = getMissionReview(state, today);
+  const targets = getMissionCorrectiveQuestTargets(state, today);
+  const existingIds = new Set((state.customQuests || []).map(quest => quest.id || quest.uniqueId));
+  const createdAt = new Date().toISOString();
+
+  return targets
+    .map((duty) => {
+      const template = CORRECTIVE_TEMPLATES[duty.id];
+      if (!template) return null;
+      const id = `mission-corrective-${review.weekEnd}-${duty.id}`;
+      return {
+        ...template,
+        id,
+        uniqueId: id,
+        pillar: DUTY_PILLARS[duty.id] || 'deen',
+        missionDuty: duty.id,
+        source: 'mission-corrective',
+        alignmentStatus: 'approved',
+        justification: duty.week === 0
+          ? `${duty.label} had no sealed evidence this week.`
+          : `${duty.label} is the weakest mission duty this week.`,
+        lastCompleted: null,
+        createdAt,
+        createdLocalDate: today,
+      };
+    })
+    .filter(Boolean)
+    .filter(quest => !existingIds.has(quest.id));
+}
+
+export function addMissionCorrectiveQuestsToState(state = {}, today = getLocalDateString()) {
+  const quests = createMissionCorrectiveQuests(state, today);
+  if (quests.length === 0) return state;
+  return {
+    ...state,
+    customQuests: [...(state.customQuests || []), ...quests],
   };
 }

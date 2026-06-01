@@ -8,7 +8,7 @@ import { LIVELIHOOD_ACTION_LABELS, LIVELIHOOD_ACTIONS, LIVELIHOOD_GUARDRAILS, LI
 import { READINESS_ACTION_LABELS, READINESS_ACTIONS, READINESS_GUARDRAILS, READINESS_INTENSITIES } from '../data/readinessProtocol';
 import { TEACHING_FORMAT_LABELS, TEACHING_FORMATS, TEACHING_GUARDRAILS, TEACHING_TOPIC_LABELS, TEACHING_TOPICS } from '../data/teachingPipeline';
 import { getMissionPlan } from '../logic/missionPlan';
-import { addMissionWeeklyReviewToState, getMissionReview, getMissionReviewTrends } from '../logic/missionReview';
+import { addMissionCorrectiveQuestsToState, addMissionWeeklyReviewToState, createMissionCorrectiveQuests, getMissionReview, getMissionReviewTrends } from '../logic/missionReview';
 import { addFamilyCovenantEntryToState, getFamilyCovenantMetrics } from '../logic/familyCovenant';
 import { addLivelihoodEntryToState, getLivelihoodMetrics } from '../logic/livelihoodPipeline';
 import { addReadinessEntryToState, getReadinessMetrics } from '../logic/readinessProtocol';
@@ -104,6 +104,7 @@ export default function MissionCommandCenter({ state, setState }) {
     [weeklyReviews, missionReview.weekStart, missionReview.weekEnd]
   );
   const missionTrends = useMemo(() => getMissionReviewTrends(weeklyReviews), [weeklyReviews]);
+  const correctiveQuests = useMemo(() => createMissionCorrectiveQuests(state), [state]);
   const impactMetrics = useMemo(() => getImpactMetrics(impactLedger), [impactLedger]);
   const justiceMetrics = useMemo(() => getJusticeResponseMetrics(justiceLedger), [justiceLedger]);
   const teachingMetrics = useMemo(() => getTeachingMetrics(teachingLedger), [teachingLedger]);
@@ -295,6 +296,11 @@ export default function MissionCommandCenter({ state, setState }) {
     setReviewMessage('Weekly mission review sealed.');
   };
 
+  const handleForgeCorrectiveQuests = () => {
+    setState(prev => addMissionCorrectiveQuestsToState(prev));
+    setReviewMessage(correctiveQuests.length ? `${correctiveQuests.length} corrective quest${correctiveQuests.length === 1 ? '' : 's'} forged.` : 'Corrective quests already exist for this week.');
+  };
+
   return (
     <div className="max-w-2xl md:max-w-3xl lg:max-w-4xl mx-auto p-2 sm:p-4 space-y-4 sm:space-y-5 relative z-10">
       <section className="glass-panel-strong p-5 sm:p-6 border border-cyan-500/25">
@@ -388,6 +394,36 @@ export default function MissionCommandCenter({ state, setState }) {
         <div className="rounded-lg border border-yellow-500/20 bg-yellow-950/10 p-3 mb-4">
           <div className="text-[10px] text-yellow-500/70 uppercase tracking-wider mb-1">Next Command</div>
           <div className="text-sm text-yellow-100 leading-relaxed">{missionReview.command}</div>
+        </div>
+
+        <div className="mb-4 rounded-lg border border-yellow-500/20 bg-black/20 p-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <div className="text-[10px] text-yellow-500/70 uppercase tracking-wider">Corrective Quests</div>
+              <div className="text-sm text-cyan-100 mt-1">
+                {correctiveQuests.length
+                  ? `${correctiveQuests.length} mission correction${correctiveQuests.length === 1 ? '' : 's'} ready to forge.`
+                  : 'Corrective quests already forged or no new correction needed.'}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleForgeCorrectiveQuests}
+              className="rounded-lg border border-yellow-500/40 bg-yellow-900/20 px-3 py-2 text-sm font-semibold text-yellow-100 hover:bg-yellow-900/30 transition-colors"
+            >
+              Forge Corrections
+            </button>
+          </div>
+          {correctiveQuests.length > 0 && (
+            <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
+              {correctiveQuests.map(quest => (
+                <div key={quest.id} className="rounded-lg border border-yellow-500/20 bg-yellow-950/10 p-2">
+                  <div className="text-xs font-semibold text-yellow-100 truncate">{quest.title}</div>
+                  <div className="text-[10px] text-cyan-500/70 uppercase tracking-wider">{quest.pillar} · {quest.xp} XP</div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {missionTrends.reviews.length > 0 && (
