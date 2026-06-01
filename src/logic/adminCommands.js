@@ -23,6 +23,7 @@ export const ADMIN_COMMANDS = {
       xp: 'number (optional, default 20)',
       type: "string (optional): 'daily' | 'custom' (default 'custom')",
       tags: 'string[] (optional) — mission/category tags such as sleep, teaching, budget',
+      missionDuty: "string (optional): 'tauheed' | 'wealth' | 'readiness' | 'service' | 'family'",
     },
   },
   MODIFY_QUEST: {
@@ -216,6 +217,9 @@ function execCreateQuest(state, data) {
   if (!data.title || !data.pillar) return { error: 'Missing title or pillar' };
   const pillar = data.pillar.toLowerCase();
   if (!['deen', 'body', 'money'].includes(pillar)) return { error: `Invalid pillar: ${pillar}` };
+  const missionDuty = ['tauheed', 'wealth', 'readiness', 'service', 'family'].includes(data.missionDuty)
+    ? data.missionDuty
+    : null;
   const xpCap = getRankXpCap(getCurrentRankKey(state));
   const xp = clampNumber(data.xp, 5, xpCap, 20);
 
@@ -229,6 +233,8 @@ function execCreateQuest(state, data) {
     baseXp: xp,
     completed: false,
     tags: ['ai-generated', ...(Array.isArray(data.tags) ? data.tags : [])],
+    missionDuty,
+    source: 'ai',
     estimatedMinutes: 0,
     createdAt: new Date().toISOString(),
     createdLocalDate: getLocalDateString(),
@@ -335,6 +341,8 @@ function execForceCompleteQuest(state, data) {
     description: quest.description || '',
     pillar,
     tags: quest.tags || [],
+    missionDuty: quest.missionDuty || null,
+    source: quest.source || (isCustom ? 'custom' : 'catalog'),
     xp,
     gold,
     date: completedAt, localDate: today, completed: true,

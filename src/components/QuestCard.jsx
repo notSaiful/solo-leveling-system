@@ -13,6 +13,14 @@ const pillarColors = {
   money: 'border-yellow-500/20 hover:border-yellow-400/60',
 };
 
+const missionDutyLabels = {
+  tauheed: 'Truth',
+  wealth: 'Wealth',
+  readiness: 'Readiness',
+  service: 'Service',
+  family: 'Family',
+};
+
 export default function QuestCard({ quest, onComplete, rank, disabled = false, disabledReason = '' }) {
   const Icon = pillarIcons[quest.pillar];
   const isCompleted = quest.completedToday;
@@ -45,6 +53,7 @@ export default function QuestCard({ quest, onComplete, rank, disabled = false, d
         <div className="text-xs text-cyan-500/40 mt-0.5">
           {quest.isPreset && typeof quest.scaleFn === 'function' ? `+${quest.scaleFn(rank)} XP` : `+${quest.xp || 0} XP`} · {quest.pillar.toUpperCase()}
           {isRedemption && <span className="ml-2 text-red-400">· {disabled ? 'Locked' : 'Clears debuff'}</span>}
+          {quest.missionDuty && <span className="ml-2 text-yellow-400">· {missionDutyLabels[quest.missionDuty] || 'Mission'}</span>}
         </div>
         {quest.description && (
           <div className="text-[11px] text-cyan-500/35 mt-1 line-clamp-2">

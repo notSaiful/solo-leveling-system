@@ -1,13 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { getLocalDateString, getDaysBetween } from '../utils/dateUtils';
 import { mergeStatesForSync } from './stateMerge';
-import { completeDailyQuest, completeRedemptionQuest, getRedemptionProgress } from './questEngine';
+import { completeDailyQuest, completeRedemptionQuest, getRedemptionProgress, initializeDailyQuests } from './questEngine';
 import { isDebuffActive } from './penalties';
 import { executeAdminCommands } from './adminCommands';
 import { pruneExpiredCustomQuests } from './customQuests';
 import { MISSION_DOCTRINE, getMissionDoctrinePrompt } from '../data/missionDoctrine';
 import { getMissionMetrics } from './missionMetrics';
 import { getMissionPlan } from './missionPlan';
+import { addMissionDailyQuests } from './missionQuestGenerator';
 import { getForgeMasterSystemPromptForTest } from '../services/aiAssistant';
 
 function baseState(overrides = {}) {
@@ -191,6 +192,47 @@ describe('mission doctrine and metrics', () => {
     expect(metrics.duties.find(d => d.id === 'wealth').total).toBe(1);
   });
 
+  it('uses explicit mission duty metadata before fuzzy matching', () => {
+    const metrics = getMissionMetrics([
+      {
+        type: 'daily',
+        title: 'Plain Task',
+        description: 'No matching words here.',
+        pillar: 'deen',
+        missionDuty: 'family',
+        tags: [],
+        completed: true,
+        localDate: '2026-06-01',
+      },
+    ], '2026-06-01');
+
+    expect(metrics.duties.find(d => d.id === 'family').total).toBe(1);
+  });
+
+  it('adds mission quests for uncovered daily trusts', () => {
+    const baseQuests = [
+      { id: 'deen', title: 'Study tawheed', description: '', pillar: 'deen', tags: ['tauheed'] },
+      { id: 'body', title: 'Train strength', description: '', pillar: 'body', tags: ['strength'] },
+      { id: 'money', title: 'Budget review', description: '', pillar: 'money', tags: ['budget'] },
+    ];
+
+    const quests = addMissionDailyQuests(baseQuests, 'E', []);
+    const missionDuties = quests.filter(q => q.source === 'mission').map(q => q.missionDuty).sort();
+
+    expect(missionDuties).toEqual(['family', 'service']);
+    expect(quests.every(q => q.uniqueId || !q.source)).toBe(true);
+  });
+
+  it('initializes daily quests with mission coverage', () => {
+    const state = baseState({ lastQuestDate: '2026-05-31' });
+    const initialized = initializeDailyQuests(state);
+    const missionDuties = new Set(initialized.dailyQuests.map(q => q.missionDuty).filter(Boolean));
+
+    expect(initialized.dailyQuests.length).toBeGreaterThan(6);
+    expect(missionDuties.has('service')).toBe(true);
+    expect(missionDuties.has('family')).toBe(true);
+  });
+
   it('stores quest descriptions and tags in completion history', () => {
     const state = baseState({
       dailyQuests: [
@@ -203,6 +245,7 @@ describe('mission doctrine and metrics', () => {
           xp: 20,
           baseXp: 20,
           tags: ['sleep', 'mobility'],
+          missionDuty: 'readiness',
           completed: false,
         },
       ],
@@ -213,6 +256,7 @@ describe('mission doctrine and metrics', () => {
 
     expect(entry.description).toBe('Sleep and mobility work.');
     expect(entry.tags).toEqual(['sleep', 'mobility']);
+    expect(entry.missionDuty).toBe('readiness');
 
     const metrics = getMissionMetrics(next.history, entry.localDate);
     expect(metrics.duties.find(d => d.id === 'readiness').today).toBe(1);

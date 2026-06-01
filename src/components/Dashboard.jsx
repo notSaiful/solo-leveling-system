@@ -216,6 +216,8 @@ export default function Dashboard({ state, setState, ready = true }) {
           description: quest.description || '',
           pillar,
           tags: quest.tags || [],
+          missionDuty: quest.missionDuty || null,
+          source: quest.source || 'custom',
           xp: baseXp,
           gold,
           date: new Date().toISOString(),

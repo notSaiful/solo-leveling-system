@@ -11,11 +11,13 @@ function entryText(entry) {
     entry.description,
     entry.reason,
     entry.pillar,
+    entry.missionDuty,
     ...(entry.tags || []),
   ].map(normalizeText).join(' ');
 }
 
 function matchesMissionPillar(entry, missionPillar) {
+  if (entry.missionDuty === missionPillar.id) return true;
   const text = entryText(entry);
   return missionPillar.tags.some(tag => text.includes(tag));
 }

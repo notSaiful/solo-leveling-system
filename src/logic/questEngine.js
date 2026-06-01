@@ -18,6 +18,7 @@ import { getCurrentWeekId } from './dungeons';
 import { getLocalDateString } from '../utils/dateUtils';
 import { getScaledFlowConfig } from '../data/rankDifficulty';
 import { isDebuffActive } from './penalties';
+import { addMissionDailyQuests } from './missionQuestGenerator';
 
 function createEventId(prefix) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -31,7 +32,8 @@ export function initializeDailyQuests(state) {
   // Only regenerate if date changed
   if (state.lastQuestDate === today) return state;
 
-  const dailyQuests = getDailyQuestsForRank(rank.key, state.dailyQuests);
+  const baseDailyQuests = getDailyQuestsForRank(rank.key, state.dailyQuests);
+  const dailyQuests = addMissionDailyQuests(baseDailyQuests, rank.key, state.history || []);
 
   return {
     ...state,
@@ -141,6 +143,8 @@ export function completeDailyQuest(state, questUniqueId) {
     description: quest.description || '',
     pillar: quest.pillar,
     tags: quest.tags || [],
+    missionDuty: quest.missionDuty || null,
+    source: quest.source || 'catalog',
     xp: finalXp,
     gold,
     date: new Date().toISOString(),
