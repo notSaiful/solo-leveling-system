@@ -172,6 +172,7 @@ export function mergeStatesForSync(currentState, incomingState) {
     familyCovenantLedger: mergeUniqueBy(base.familyCovenantLedger, other.familyCovenantLedger),
     livelihoodPipelineLedger: mergeUniqueBy(base.livelihoodPipelineLedger, other.livelihoodPipelineLedger),
     readinessProtocolLedger: mergeUniqueBy(base.readinessProtocolLedger, other.readinessProtocolLedger),
+    missionWeeklyReviews: mergeUniqueBy(base.missionWeeklyReviews, other.missionWeeklyReviews, item => item.weekId || item.id),
     shadows: mergeUniqueBy(base.shadows, other.shadows),
     systemMessages: mergeUniqueBy(base.systemMessages, other.systemMessages, item => item.messageId || `${item.type}|${item.title}|${item.date || item.createdAt || ''}`),
     aiDungeons: mergeUniqueBy(base.aiDungeons, other.aiDungeons),

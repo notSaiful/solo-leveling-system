@@ -8,7 +8,7 @@ import { pruneExpiredCustomQuests } from './customQuests';
 import { MISSION_DOCTRINE, getMissionDoctrinePrompt } from '../data/missionDoctrine';
 import { getMissionMetrics } from './missionMetrics';
 import { getMissionPlan } from './missionPlan';
-import { getMissionReview } from './missionReview';
+import { addMissionWeeklyReviewToState, createMissionWeeklyReviewNote, getMissionReview } from './missionReview';
 import { addMissionDailyQuests } from './missionQuestGenerator';
 import { addImpactEntryToState, getImpactMetrics } from './ummahImpact';
 import { addJusticeResponseToState, containsUnsafeJusticeIntent, getJusticeResponseMetrics } from './justiceResponse';
@@ -41,6 +41,7 @@ function baseState(overrides = {}) {
     familyCovenantLedger: [],
     livelihoodPipelineLedger: [],
     readinessProtocolLedger: [],
+    missionWeeklyReviews: [],
     shadows: [],
     systemMessages: [],
     weeklyDungeons: {},
@@ -211,6 +212,23 @@ describe('sync conflict merge', () => {
     const merged = mergeStatesForSync(current, incoming);
 
     expect(merged.readinessProtocolLedger.map(entry => entry.id).sort()).toEqual(['readiness-a', 'readiness-b']);
+  });
+
+  it('merges weekly mission review notes by week', () => {
+    const current = baseState({
+      missionWeeklyReviews: [{ id: 'review-old', weekId: '2026-05-26_2026-06-01', weeklyCoverage: 40, createdAt: '2026-06-01T01:00:00.000Z' }],
+      lastUpdated: 10,
+      syncRevision: 2,
+    });
+    const incoming = baseState({
+      missionWeeklyReviews: [{ id: 'review-new', weekId: '2026-06-02_2026-06-08', weeklyCoverage: 80, createdAt: '2026-06-08T01:00:00.000Z' }],
+      lastUpdated: 9,
+      syncRevision: 2,
+    });
+
+    const merged = mergeStatesForSync(current, incoming);
+
+    expect(merged.missionWeeklyReviews.map(entry => entry.weekId).sort()).toEqual(['2026-05-26_2026-06-01', '2026-06-02_2026-06-08']);
   });
 });
 
@@ -455,6 +473,26 @@ describe('mission doctrine and metrics', () => {
     expect(review.weeklyCoverage).toBe(40);
     expect(review.weakestDuty.id).toBe('readiness');
     expect(review.command).toContain('Train strength');
+  });
+
+  it('creates and replaces a sealed weekly mission review note', () => {
+    const state = baseState({
+      teachingPipelineLedger: [{ id: 'teach', title: 'Tauheed', localDate: '2026-06-01', createdAt: '2026-06-01T01:00:00.000Z' }],
+      readinessProtocolLedger: [{ id: 'readiness', action: 'Training', localDate: '2026-06-01', createdAt: '2026-06-01T02:00:00.000Z' }],
+    });
+
+    const note = createMissionWeeklyReviewNote(state, '2026-06-01');
+    const result = addMissionWeeklyReviewToState(state, '2026-06-01');
+    const replaced = addMissionWeeklyReviewToState(result, '2026-06-01');
+
+    expect(note.weekId).toBe('2026-05-26_2026-06-01');
+    expect(note.weeklyCoverage).toBe(40);
+    expect(note.wins).toContain('Tauheed & Truth: 1 action');
+    expect(note.weakSpots).toContain('Wealth as Amanah');
+    expect(note.command).toBeTruthy();
+    expect(result.missionWeeklyReviews).toHaveLength(1);
+    expect(replaced.missionWeeklyReviews).toHaveLength(1);
+    expect(replaced.missionWeeklyReviews[0].weekId).toBe(note.weekId);
   });
 
   it('logs Ummah financial impact as mission evidence', () => {

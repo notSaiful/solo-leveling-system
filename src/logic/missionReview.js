@@ -9,6 +9,10 @@ const DUTY_COMMANDS = {
   family: 'Lead your home through worship, mercy, repair, provision, presence, or example.',
 };
 
+function createId(prefix) {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
 function addDays(dateStr, offset) {
   const date = parseLocalDate(dateStr);
   date.setUTCDate(date.getUTCDate() + offset);
@@ -82,6 +86,8 @@ export function getMissionReview(state = {}, today = getLocalDateString()) {
   return {
     today,
     weekDates,
+    weekStart: weekDates[0],
+    weekEnd: weekDates[6],
     weeklyCoverage,
     weeklyActions: weeklyLedgerEntries.length,
     totalLedgerEntries: ledgerEntries.length,
@@ -89,5 +95,52 @@ export function getMissionReview(state = {}, today = getLocalDateString()) {
     weakestDuty,
     strongestDuty,
     command: weakestDuty?.command || 'Log one mission action today.',
+  };
+}
+
+export function createMissionWeeklyReviewNote(state = {}, today = getLocalDateString()) {
+  const review = getMissionReview(state, today);
+  const wins = review.duties
+    .filter(duty => duty.week > 0)
+    .map(duty => `${duty.label}: ${duty.week} action${duty.week === 1 ? '' : 's'}`);
+  const weakSpots = review.duties
+    .filter(duty => duty.week === 0)
+    .map(duty => duty.label);
+  const dutySnapshot = review.duties.map(duty => ({
+    id: duty.id,
+    label: duty.label,
+    week: duty.week,
+    total: duty.total,
+    status: duty.status,
+    command: duty.command,
+  }));
+  const now = new Date().toISOString();
+
+  return {
+    id: createId('mission-review'),
+    weekId: `${review.weekStart}_${review.weekEnd}`,
+    weekStart: review.weekStart,
+    weekEnd: review.weekEnd,
+    localDate: today,
+    weeklyCoverage: review.weeklyCoverage,
+    weeklyActions: review.weeklyActions,
+    totalLedgerEntries: review.totalLedgerEntries,
+    strongestDuty: review.strongestDuty?.label || '',
+    weakestDuty: review.weakestDuty?.label || '',
+    wins,
+    weakSpots,
+    command: review.command,
+    dutySnapshot,
+    createdAt: now,
+  };
+}
+
+export function addMissionWeeklyReviewToState(state = {}, today = getLocalDateString()) {
+  const note = createMissionWeeklyReviewNote(state, today);
+  const existing = state.missionWeeklyReviews || [];
+  const withoutSameWeek = existing.filter(entry => entry.weekId !== note.weekId);
+  return {
+    ...state,
+    missionWeeklyReviews: [...withoutSameWeek, note],
   };
 }

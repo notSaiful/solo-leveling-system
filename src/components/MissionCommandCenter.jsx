@@ -8,7 +8,7 @@ import { LIVELIHOOD_ACTION_LABELS, LIVELIHOOD_ACTIONS, LIVELIHOOD_GUARDRAILS, LI
 import { READINESS_ACTION_LABELS, READINESS_ACTIONS, READINESS_GUARDRAILS, READINESS_INTENSITIES } from '../data/readinessProtocol';
 import { TEACHING_FORMAT_LABELS, TEACHING_FORMATS, TEACHING_GUARDRAILS, TEACHING_TOPIC_LABELS, TEACHING_TOPICS } from '../data/teachingPipeline';
 import { getMissionPlan } from '../logic/missionPlan';
-import { getMissionReview } from '../logic/missionReview';
+import { addMissionWeeklyReviewToState, getMissionReview } from '../logic/missionReview';
 import { addFamilyCovenantEntryToState, getFamilyCovenantMetrics } from '../logic/familyCovenant';
 import { addLivelihoodEntryToState, getLivelihoodMetrics } from '../logic/livelihoodPipeline';
 import { addReadinessEntryToState, getReadinessMetrics } from '../logic/readinessProtocol';
@@ -32,6 +32,7 @@ export default function MissionCommandCenter({ state, setState }) {
   const familyLedger = state.familyCovenantLedger || [];
   const livelihoodLedger = state.livelihoodPipelineLedger || [];
   const readinessLedger = state.readinessProtocolLedger || [];
+  const weeklyReviews = state.missionWeeklyReviews || [];
   const [impactForm, setImpactForm] = useState({
     amount: '',
     category: 'sadaqah',
@@ -95,8 +96,13 @@ export default function MissionCommandCenter({ state, setState }) {
   const [familyError, setFamilyError] = useState('');
   const [livelihoodError, setLivelihoodError] = useState('');
   const [readinessError, setReadinessError] = useState('');
+  const [reviewMessage, setReviewMessage] = useState('');
   const plan = getMissionPlan(history || []);
   const missionReview = useMemo(() => getMissionReview(state), [state]);
+  const currentWeeklyReview = useMemo(
+    () => weeklyReviews.find(note => note.weekId === `${missionReview.weekStart}_${missionReview.weekEnd}`) || null,
+    [weeklyReviews, missionReview.weekStart, missionReview.weekEnd]
+  );
   const impactMetrics = useMemo(() => getImpactMetrics(impactLedger), [impactLedger]);
   const justiceMetrics = useMemo(() => getJusticeResponseMetrics(justiceLedger), [justiceLedger]);
   const teachingMetrics = useMemo(() => getTeachingMetrics(teachingLedger), [teachingLedger]);
@@ -122,6 +128,9 @@ export default function MissionCommandCenter({ state, setState }) {
   const recentReadiness = [...readinessLedger]
     .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
     .slice(0, 4);
+  const recentWeeklyReviews = [...weeklyReviews]
+    .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+    .slice(0, 3);
 
   const updateImpactForm = (key, value) => {
     setImpactForm(prev => ({ ...prev, [key]: value }));
@@ -280,6 +289,11 @@ export default function MissionCommandCenter({ state, setState }) {
     }
   };
 
+  const handleSealWeeklyReview = () => {
+    setState(prev => addMissionWeeklyReviewToState(prev));
+    setReviewMessage('Weekly mission review sealed.');
+  };
+
   return (
     <div className="max-w-2xl md:max-w-3xl lg:max-w-4xl mx-auto p-2 sm:p-4 space-y-4 sm:space-y-5 relative z-10">
       <section className="glass-panel-strong p-5 sm:p-6 border border-cyan-500/25">
@@ -411,6 +425,59 @@ export default function MissionCommandCenter({ state, setState }) {
               </div>
             );
           })}
+        </div>
+
+        <div className="mt-4 rounded-lg border border-cyan-500/20 bg-black/20 p-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <div className="text-[10px] text-cyan-500/70 uppercase tracking-wider">Weekly Review Note</div>
+              <div className="text-sm text-cyan-100 mt-1">
+                {currentWeeklyReview
+                  ? `Sealed ${currentWeeklyReview.createdAt?.slice(0, 10)} · ${currentWeeklyReview.weeklyCoverage}% coverage · weakest: ${currentWeeklyReview.weakestDuty}`
+                  : `No sealed note for ${missionReview.weekStart} to ${missionReview.weekEnd}.`}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleSealWeeklyReview}
+              className="rounded-lg border border-cyan-500/40 bg-cyan-900/20 px-3 py-2 text-sm font-semibold text-cyan-100 hover:bg-cyan-900/30 transition-colors"
+            >
+              Seal Review
+            </button>
+          </div>
+          {reviewMessage && <div className="text-xs text-green-300 mt-2">{reviewMessage}</div>}
+          {currentWeeklyReview && (
+            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="rounded-lg border border-green-500/20 bg-green-950/10 p-2">
+                <div className="text-[10px] text-green-400/70 uppercase tracking-wider mb-1">Wins</div>
+                <div className="text-xs text-cyan-100 leading-relaxed">
+                  {currentWeeklyReview.wins.length ? currentWeeklyReview.wins.join(' · ') : 'No wins sealed yet.'}
+                </div>
+              </div>
+              <div className="rounded-lg border border-red-500/20 bg-red-950/10 p-2">
+                <div className="text-[10px] text-red-400/70 uppercase tracking-wider mb-1">Weak Spots</div>
+                <div className="text-xs text-cyan-100 leading-relaxed">
+                  {currentWeeklyReview.weakSpots.length ? currentWeeklyReview.weakSpots.join(' · ') : 'No neglected duty this week.'}
+                </div>
+              </div>
+            </div>
+          )}
+          {recentWeeklyReviews.length > 0 && (
+            <div className="mt-3 space-y-2">
+              {recentWeeklyReviews.map(note => (
+                <div key={note.id} className="flex items-center justify-between gap-3 rounded-lg border border-cyan-900/40 bg-black/20 p-2">
+                  <div className="min-w-0">
+                    <div className="text-xs text-cyan-100 font-semibold truncate">{note.weekStart} to {note.weekEnd}</div>
+                    <div className="text-[10px] text-cyan-500/60 truncate">{note.command}</div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <div className="text-xs text-cyan-300">{note.weeklyCoverage}%</div>
+                    <div className="text-[10px] text-cyan-700">{note.weeklyActions} logs</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
