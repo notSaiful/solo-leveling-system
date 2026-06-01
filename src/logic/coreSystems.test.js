@@ -9,6 +9,7 @@ import { MISSION_DOCTRINE, getMissionDoctrinePrompt } from '../data/missionDoctr
 import { getMissionMetrics } from './missionMetrics';
 import { getMissionPlan } from './missionPlan';
 import { addMissionDailyQuests } from './missionQuestGenerator';
+import { addImpactEntryToState, getImpactMetrics } from './ummahImpact';
 import { getForgeMasterSystemPromptForTest } from '../services/aiAssistant';
 
 function baseState(overrides = {}) {
@@ -28,6 +29,7 @@ function baseState(overrides = {}) {
     levelQuests: [],
     redemptionQuests: [],
     purchasedRewards: [],
+    ummahImpactLedger: [],
     shadows: [],
     systemMessages: [],
     weeklyDungeons: {},
@@ -96,6 +98,23 @@ describe('sync conflict merge', () => {
     expect(merged.pillars.deen.xp).toBe(30);
     expect(merged.gold).toBe(13);
     expect(merged.syncRevision).toBe(3);
+  });
+
+  it('merges Ummah impact ledger entries from different devices', () => {
+    const current = baseState({
+      ummahImpactLedger: [{ id: 'impact-a', amount: 100, category: 'sadaqah', createdAt: '2026-06-01T01:00:00.000Z' }],
+      lastUpdated: 10,
+      syncRevision: 2,
+    });
+    const incoming = baseState({
+      ummahImpactLedger: [{ id: 'impact-b', amount: 250, category: 'education', createdAt: '2026-06-01T02:00:00.000Z' }],
+      lastUpdated: 9,
+      syncRevision: 2,
+    });
+
+    const merged = mergeStatesForSync(current, incoming);
+
+    expect(merged.ummahImpactLedger.map(entry => entry.id).sort()).toEqual(['impact-a', 'impact-b']);
   });
 });
 
@@ -306,6 +325,28 @@ describe('mission doctrine and metrics', () => {
     expect(plan.trusts.filter(trust => trust.completedToday)).toHaveLength(3);
     expect(plan.lawfulJusticeProtocol.join(' ')).toContain('lawful');
     expect(plan.lawfulJusticeProtocol.join(' ')).toContain('proportionate');
+  });
+
+  it('logs Ummah financial impact as mission evidence', () => {
+    const result = addImpactEntryToState(baseState(), {
+      amount: 500,
+      category: 'education',
+      peopleHelped: 2,
+      note: 'Books for two students',
+    });
+
+    const entry = result.ummahImpactLedger.at(-1);
+    const history = result.history.at(-1);
+    const impact = getImpactMetrics(result.ummahImpactLedger);
+    const metrics = getMissionMetrics(result.history, history.localDate);
+
+    expect(entry.amount).toBe(500);
+    expect(entry.category).toBe('education');
+    expect(history.type).toBe('ummahImpact');
+    expect(history.missionDuty).toBe('wealth');
+    expect(impact.totalAmount).toBe(500);
+    expect(impact.totalPeopleHelped).toBe(2);
+    expect(metrics.duties.find(d => d.id === 'wealth').today).toBe(1);
   });
 });
 

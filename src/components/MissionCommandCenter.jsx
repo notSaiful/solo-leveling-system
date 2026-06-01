@@ -1,6 +1,9 @@
-import { BookOpen, CheckCircle2, Circle, HandHeart, Scale, ShieldCheck, Target, TrendingUp } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { BookOpen, CheckCircle2, Circle, HandHeart, Scale, ShieldCheck, Target, TrendingUp, Wallet } from 'lucide-react';
 import { MISSION_DOCTRINE } from '../data/missionDoctrine';
+import { IMPACT_CATEGORIES, IMPACT_CATEGORY_LABELS } from '../data/ummahImpact';
 import { getMissionPlan } from '../logic/missionPlan';
+import { addImpactEntryToState, getImpactMetrics } from '../logic/ummahImpact';
 
 const dutyIcons = {
   tauheed: BookOpen,
@@ -10,9 +13,42 @@ const dutyIcons = {
   family: Scale,
 };
 
-export default function MissionCommandCenter({ history }) {
+export default function MissionCommandCenter({ state, setState }) {
+  const history = state.history || [];
+  const impactLedger = state.ummahImpactLedger || [];
+  const [impactForm, setImpactForm] = useState({
+    amount: '',
+    category: 'sadaqah',
+    peopleHelped: '',
+    note: '',
+  });
+  const [formError, setFormError] = useState('');
   const plan = getMissionPlan(history || []);
+  const impactMetrics = useMemo(() => getImpactMetrics(impactLedger), [impactLedger]);
   const WeakIcon = dutyIcons[plan.weeklyFocus.duty?.id] || ShieldCheck;
+  const recentImpact = [...impactLedger]
+    .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+    .slice(0, 4);
+
+  const updateImpactForm = (key, value) => {
+    setImpactForm(prev => ({ ...prev, [key]: value }));
+    if (formError) setFormError('');
+  };
+
+  const handleImpactSubmit = (event) => {
+    event.preventDefault();
+    try {
+      setState(prev => addImpactEntryToState(prev, {
+        ...impactForm,
+        amount: Number(impactForm.amount),
+        peopleHelped: Number(impactForm.peopleHelped || 0),
+      }));
+      setImpactForm({ amount: '', category: impactForm.category, peopleHelped: '', note: '' });
+      setFormError('');
+    } catch (error) {
+      setFormError(error.message || 'Impact entry failed.');
+    }
+  };
 
   return (
     <div className="max-w-2xl md:max-w-3xl lg:max-w-4xl mx-auto p-2 sm:p-4 space-y-4 sm:space-y-5 relative z-10">
@@ -75,6 +111,97 @@ export default function MissionCommandCenter({ history }) {
         <div className="mt-3 text-xs text-cyan-500/50">
           Weakest duty: {plan.weeklyFocus.duty?.label || 'Unknown'}
         </div>
+      </section>
+
+      <section className="glass-panel p-4 border border-yellow-500/20">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
+          <div>
+            <div className="flex items-center gap-2 text-yellow-300 mb-1">
+              <Wallet size={16} />
+              <span className="font-orbitron text-sm font-semibold tracking-wider uppercase">Ummah Burden Ledger</span>
+            </div>
+            <div className="text-xs text-cyan-500/60 leading-relaxed">
+              Track real money directed toward relief, education, livelihood, dawah, family support, and lawful aid.
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-2 sm:min-w-80">
+            <div className="rounded-lg border border-yellow-500/20 bg-yellow-950/10 p-3">
+              <div className="text-[10px] text-yellow-500/70 uppercase tracking-wider">Given</div>
+              <div className="text-sm font-bold text-yellow-200">INR {impactMetrics.totalAmount.toLocaleString()}</div>
+            </div>
+            <div className="rounded-lg border border-cyan-500/20 bg-cyan-950/10 p-3">
+              <div className="text-[10px] text-cyan-500/70 uppercase tracking-wider">People</div>
+              <div className="text-sm font-bold text-cyan-100">{impactMetrics.totalPeopleHelped.toLocaleString()}</div>
+            </div>
+            <div className="rounded-lg border border-cyan-500/20 bg-cyan-950/10 p-3">
+              <div className="text-[10px] text-cyan-500/70 uppercase tracking-wider">Entries</div>
+              <div className="text-sm font-bold text-cyan-100">{impactMetrics.totalEntries.toLocaleString()}</div>
+            </div>
+          </div>
+        </div>
+
+        <form onSubmit={handleImpactSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+          <input
+            type="number"
+            min="1"
+            inputMode="numeric"
+            value={impactForm.amount}
+            onChange={(event) => updateImpactForm('amount', event.target.value)}
+            placeholder="Amount INR"
+            className="bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+          />
+          <select
+            value={impactForm.category}
+            onChange={(event) => updateImpactForm('category', event.target.value)}
+            className="bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+          >
+            {IMPACT_CATEGORIES.map(category => (
+              <option key={category.id} value={category.id}>{category.label}</option>
+            ))}
+          </select>
+          <input
+            type="number"
+            min="0"
+            inputMode="numeric"
+            value={impactForm.peopleHelped}
+            onChange={(event) => updateImpactForm('peopleHelped', event.target.value)}
+            placeholder="People helped"
+            className="bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+          />
+          <button
+            type="submit"
+            className="rounded-lg border border-yellow-500/40 bg-yellow-900/20 px-3 py-2 text-sm font-semibold text-yellow-200 hover:bg-yellow-900/30 transition-colors"
+          >
+            Log Impact
+          </button>
+          <input
+            type="text"
+            value={impactForm.note}
+            onChange={(event) => updateImpactForm('note', event.target.value)}
+            placeholder="Note"
+            className="sm:col-span-2 lg:col-span-4 bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+          />
+        </form>
+        {formError && <div className="text-xs text-red-300 mt-2">{formError}</div>}
+
+        {recentImpact.length > 0 && (
+          <div className="mt-4 space-y-2">
+            {recentImpact.map(entry => (
+              <div key={entry.id} className="flex items-center justify-between gap-3 rounded-lg border border-cyan-900/40 bg-black/20 p-3">
+                <div className="min-w-0">
+                  <div className="text-sm text-cyan-100 font-semibold">
+                    {entry.currency || 'INR'} {(entry.amount || 0).toLocaleString()} · {IMPACT_CATEGORY_LABELS[entry.category] || entry.categoryLabel || 'Impact'}
+                  </div>
+                  <div className="text-xs text-cyan-500/50 truncate">{entry.note || 'No note recorded'}</div>
+                </div>
+                <div className="text-right shrink-0">
+                  <div className="text-xs text-cyan-400">{entry.peopleHelped || 0} helped</div>
+                  <div className="text-[10px] text-cyan-700">{entry.localDate}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="glass-panel p-4 border border-cyan-500/20">

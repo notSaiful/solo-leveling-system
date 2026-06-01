@@ -21,6 +21,7 @@ export const DEFAULT_STATE = {
   gold: 0,
   flowState: { active: false, multiplier: 1, expiresAt: 0, questsInWindow: 0 },
   purchasedRewards: [],
+  ummahImpactLedger: [],
   customQuests: [],
   levelQuests: [],
   redemptionQuests: [],
@@ -54,6 +55,7 @@ function normalizeStateShape(state) {
   normalized.weeklyDungeons = { ...DEFAULT_STATE.weeklyDungeons, ...(state.weeklyDungeons || {}) };
   normalized.syncRevision = state.syncRevision || 0;
   normalized.customQuests = pruneExpiredCustomQuests(state.customQuests || []);
+  normalized.ummahImpactLedger = state.ummahImpactLedger || [];
   return normalized;
 }
 

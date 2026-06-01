@@ -329,7 +329,7 @@ export default function App() {
       {/* Main Content */}
       <main className="relative z-10 py-4 px-2 sm:px-4">
         {activeTab === 'dashboard' && <Dashboard state={state} setState={setState} ready={cloudReady} />}
-        {activeTab === 'mission' && <MissionCommandCenter history={state.history || []} />}
+        {activeTab === 'mission' && <MissionCommandCenter state={state} setState={setState} />}
         {activeTab === 'stats' && <StatsPanel state={state} />}
         {activeTab === 'dungeons' && <WeeklyDungeon state={state} setState={setState} />}
         {activeTab === 'store' && <RewardStore state={state} setState={setState} />}
