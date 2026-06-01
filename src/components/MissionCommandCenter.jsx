@@ -1,12 +1,14 @@
 import { useMemo, useState } from 'react';
-import { BookOpen, CheckCircle2, Circle, FileText, GraduationCap, HandHeart, HeartHandshake, Home, Megaphone, Scale, ShieldCheck, Target, TrendingUp, Users, Wallet } from 'lucide-react';
+import { BookOpen, Briefcase, CheckCircle2, Circle, FileText, GraduationCap, HandHeart, HeartHandshake, Home, Megaphone, Scale, ShieldCheck, Target, TrendingUp, Users, Wallet } from 'lucide-react';
 import { MISSION_DOCTRINE } from '../data/missionDoctrine';
 import { FAMILY_ACTION_LABELS, FAMILY_ACTIONS, FAMILY_GUARDRAILS, FAMILY_RELATION_LABELS, FAMILY_RELATIONS } from '../data/familyCovenant';
 import { IMPACT_CATEGORIES, IMPACT_CATEGORY_LABELS } from '../data/ummahImpact';
 import { JUSTICE_ACTION_LABELS, JUSTICE_ACTION_TYPES, JUSTICE_GUARDRAILS } from '../data/justiceResponse';
+import { LIVELIHOOD_ACTION_LABELS, LIVELIHOOD_ACTIONS, LIVELIHOOD_GUARDRAILS, LIVELIHOOD_OUTCOME_LABELS, LIVELIHOOD_OUTCOMES } from '../data/livelihoodPipeline';
 import { TEACHING_FORMAT_LABELS, TEACHING_FORMATS, TEACHING_GUARDRAILS, TEACHING_TOPIC_LABELS, TEACHING_TOPICS } from '../data/teachingPipeline';
 import { getMissionPlan } from '../logic/missionPlan';
 import { addFamilyCovenantEntryToState, getFamilyCovenantMetrics } from '../logic/familyCovenant';
+import { addLivelihoodEntryToState, getLivelihoodMetrics } from '../logic/livelihoodPipeline';
 import { addImpactEntryToState, getImpactMetrics } from '../logic/ummahImpact';
 import { addJusticeResponseToState, getJusticeResponseMetrics } from '../logic/justiceResponse';
 import { addTeachingEntryToState, getTeachingMetrics } from '../logic/teachingPipeline';
@@ -25,6 +27,7 @@ export default function MissionCommandCenter({ state, setState }) {
   const justiceLedger = state.justiceResponseLedger || [];
   const teachingLedger = state.teachingPipelineLedger || [];
   const familyLedger = state.familyCovenantLedger || [];
+  const livelihoodLedger = state.livelihoodPipelineLedger || [];
   const [impactForm, setImpactForm] = useState({
     amount: '',
     category: 'sadaqah',
@@ -60,15 +63,29 @@ export default function MissionCommandCenter({ state, setState }) {
     repair: '',
     note: '',
   });
+  const [livelihoodForm, setLivelihoodForm] = useState({
+    actionType: 'skill-training',
+    outcome: 'planned',
+    beneficiary: '',
+    skill: '',
+    action: '',
+    peopleHelped: '1',
+    projectedMonthlyIncome: '',
+    followUpDate: '',
+    note: '',
+    halalGuardrailAccepted: true,
+  });
   const [formError, setFormError] = useState('');
   const [justiceError, setJusticeError] = useState('');
   const [teachingError, setTeachingError] = useState('');
   const [familyError, setFamilyError] = useState('');
+  const [livelihoodError, setLivelihoodError] = useState('');
   const plan = getMissionPlan(history || []);
   const impactMetrics = useMemo(() => getImpactMetrics(impactLedger), [impactLedger]);
   const justiceMetrics = useMemo(() => getJusticeResponseMetrics(justiceLedger), [justiceLedger]);
   const teachingMetrics = useMemo(() => getTeachingMetrics(teachingLedger), [teachingLedger]);
   const familyMetrics = useMemo(() => getFamilyCovenantMetrics(familyLedger), [familyLedger]);
+  const livelihoodMetrics = useMemo(() => getLivelihoodMetrics(livelihoodLedger), [livelihoodLedger]);
   const WeakIcon = dutyIcons[plan.weeklyFocus.duty?.id] || ShieldCheck;
   const recentImpact = [...impactLedger]
     .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
@@ -80,6 +97,9 @@ export default function MissionCommandCenter({ state, setState }) {
     .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
     .slice(0, 4);
   const recentFamily = [...familyLedger]
+    .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+    .slice(0, 4);
+  const recentLivelihood = [...livelihoodLedger]
     .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
     .slice(0, 4);
 
@@ -101,6 +121,11 @@ export default function MissionCommandCenter({ state, setState }) {
   const updateFamilyForm = (key, value) => {
     setFamilyForm(prev => ({ ...prev, [key]: value }));
     if (familyError) setFamilyError('');
+  };
+
+  const updateLivelihoodForm = (key, value) => {
+    setLivelihoodForm(prev => ({ ...prev, [key]: value }));
+    if (livelihoodError) setLivelihoodError('');
   };
 
   const handleImpactSubmit = (event) => {
@@ -180,6 +205,31 @@ export default function MissionCommandCenter({ state, setState }) {
       setFamilyError('');
     } catch (error) {
       setFamilyError(error.message || 'Family covenant entry failed.');
+    }
+  };
+
+  const handleLivelihoodSubmit = (event) => {
+    event.preventDefault();
+    try {
+      setState(prev => addLivelihoodEntryToState(prev, {
+        ...livelihoodForm,
+        peopleHelped: Number(livelihoodForm.peopleHelped || 0),
+        projectedMonthlyIncome: Number(livelihoodForm.projectedMonthlyIncome || 0),
+      }));
+      setLivelihoodForm(prev => ({
+        ...prev,
+        beneficiary: '',
+        skill: '',
+        action: '',
+        peopleHelped: '1',
+        projectedMonthlyIncome: '',
+        followUpDate: '',
+        note: '',
+        halalGuardrailAccepted: true,
+      }));
+      setLivelihoodError('');
+    } catch (error) {
+      setLivelihoodError(error.message || 'Livelihood entry failed.');
     }
   };
 
@@ -580,6 +630,151 @@ export default function MissionCommandCenter({ state, setState }) {
                 </div>
                 <div className="text-right shrink-0">
                   <div className="text-xs text-cyan-400">{entry.peopleHelped || 0} helped</div>
+                  <div className="text-[10px] text-cyan-700">{entry.localDate}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="glass-panel p-4 border border-lime-500/20">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
+          <div>
+            <div className="flex items-center gap-2 text-lime-300 mb-1">
+              <Briefcase size={16} />
+              <span className="font-orbitron text-sm font-semibold tracking-wider uppercase">Livelihood Pipeline</span>
+            </div>
+            <div className="text-xs text-cyan-500/60 leading-relaxed">
+              Build earning capacity through halal skills, jobs, client leads, tools, business setup, and follow-up outcomes.
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-2 sm:min-w-80">
+            <div className="rounded-lg border border-lime-500/20 bg-lime-950/10 p-3">
+              <div className="text-[10px] text-lime-500/70 uppercase tracking-wider">People</div>
+              <div className="text-sm font-bold text-lime-100">{livelihoodMetrics.totalPeopleHelped.toLocaleString()}</div>
+            </div>
+            <div className="rounded-lg border border-cyan-500/20 bg-cyan-950/10 p-3">
+              <div className="text-[10px] text-cyan-500/70 uppercase tracking-wider">Monthly INR</div>
+              <div className="text-sm font-bold text-cyan-100">{livelihoodMetrics.totalProjectedMonthlyIncome.toLocaleString()}</div>
+            </div>
+            <div className="rounded-lg border border-cyan-500/20 bg-cyan-950/10 p-3">
+              <div className="text-[10px] text-cyan-500/70 uppercase tracking-wider">Outcomes</div>
+              <div className="text-sm font-bold text-cyan-100">{livelihoodMetrics.earningOutcomes.toLocaleString()}</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
+          {LIVELIHOOD_GUARDRAILS.map(guardrail => (
+            <div key={guardrail} className="flex items-start gap-2 rounded-lg border border-lime-500/20 bg-lime-950/10 p-2 text-xs text-cyan-100">
+              <Briefcase size={14} className="text-lime-300 shrink-0 mt-0.5" />
+              <span>{guardrail}</span>
+            </div>
+          ))}
+        </div>
+
+        <form onSubmit={handleLivelihoodSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+          <select
+            value={livelihoodForm.actionType}
+            onChange={(event) => updateLivelihoodForm('actionType', event.target.value)}
+            className="bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+          >
+            {LIVELIHOOD_ACTIONS.map(action => (
+              <option key={action.id} value={action.id}>{action.label}</option>
+            ))}
+          </select>
+          <select
+            value={livelihoodForm.outcome}
+            onChange={(event) => updateLivelihoodForm('outcome', event.target.value)}
+            className="bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+          >
+            {LIVELIHOOD_OUTCOMES.map(outcome => (
+              <option key={outcome.id} value={outcome.id}>{outcome.label}</option>
+            ))}
+          </select>
+          <input
+            type="text"
+            value={livelihoodForm.beneficiary}
+            onChange={(event) => updateLivelihoodForm('beneficiary', event.target.value)}
+            placeholder="Beneficiary / group"
+            className="bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+          />
+          <input
+            type="text"
+            value={livelihoodForm.skill}
+            onChange={(event) => updateLivelihoodForm('skill', event.target.value)}
+            placeholder="Skill / job path"
+            className="bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+          />
+          <input
+            type="number"
+            min="0"
+            inputMode="numeric"
+            value={livelihoodForm.peopleHelped}
+            onChange={(event) => updateLivelihoodForm('peopleHelped', event.target.value)}
+            placeholder="People helped"
+            className="bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+          />
+          <input
+            type="number"
+            min="0"
+            inputMode="numeric"
+            value={livelihoodForm.projectedMonthlyIncome}
+            onChange={(event) => updateLivelihoodForm('projectedMonthlyIncome', event.target.value)}
+            placeholder="Projected monthly INR"
+            className="bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+          />
+          <input
+            type="date"
+            value={livelihoodForm.followUpDate}
+            onChange={(event) => updateLivelihoodForm('followUpDate', event.target.value)}
+            className="bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+          />
+          <button
+            type="submit"
+            className="rounded-lg border border-lime-500/40 bg-lime-900/20 px-3 py-2 text-sm font-semibold text-lime-100 hover:bg-lime-900/30 transition-colors"
+          >
+            Log Livelihood
+          </button>
+          <input
+            type="text"
+            value={livelihoodForm.action}
+            onChange={(event) => updateLivelihoodForm('action', event.target.value)}
+            placeholder="Concrete action taken"
+            className="sm:col-span-2 bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+          />
+          <label className="flex items-center gap-2 rounded-lg border border-lime-500/20 bg-black/20 px-3 py-2 text-xs text-cyan-100">
+            <input
+              type="checkbox"
+              checked={livelihoodForm.halalGuardrailAccepted}
+              onChange={(event) => updateLivelihoodForm('halalGuardrailAccepted', event.target.checked)}
+            />
+            Halal benefit only
+          </label>
+          <input
+            type="text"
+            value={livelihoodForm.note}
+            onChange={(event) => updateLivelihoodForm('note', event.target.value)}
+            placeholder="Note"
+            className="bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+          />
+        </form>
+        {livelihoodError && <div className="text-xs text-red-300 mt-2">{livelihoodError}</div>}
+
+        {recentLivelihood.length > 0 && (
+          <div className="mt-4 space-y-2">
+            {recentLivelihood.map(entry => (
+              <div key={entry.id} className="flex items-center justify-between gap-3 rounded-lg border border-cyan-900/40 bg-black/20 p-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 text-sm text-cyan-100 font-semibold">
+                    <Briefcase size={14} className="text-lime-300 shrink-0" />
+                    <span className="truncate">{LIVELIHOOD_ACTION_LABELS[entry.actionType] || entry.actionLabel || 'Livelihood'} · {entry.skill}</span>
+                  </div>
+                  <div className="text-xs text-cyan-500/50 truncate">{entry.beneficiary} · {LIVELIHOOD_OUTCOME_LABELS[entry.outcome] || entry.outcomeLabel || 'Outcome'}</div>
+                </div>
+                <div className="text-right shrink-0">
+                  <div className="text-xs text-cyan-400">{entry.currency || 'INR'} {(entry.projectedMonthlyIncome || 0).toLocaleString()}</div>
                   <div className="text-[10px] text-cyan-700">{entry.localDate}</div>
                 </div>
               </div>

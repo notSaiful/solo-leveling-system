@@ -13,6 +13,7 @@ import { addImpactEntryToState, getImpactMetrics } from './ummahImpact';
 import { addJusticeResponseToState, containsUnsafeJusticeIntent, getJusticeResponseMetrics } from './justiceResponse';
 import { addTeachingEntryToState, getTeachingMetrics } from './teachingPipeline';
 import { addFamilyCovenantEntryToState, containsFamilyHarmIntent, getFamilyCovenantMetrics } from './familyCovenant';
+import { addLivelihoodEntryToState, getLivelihoodMetrics } from './livelihoodPipeline';
 import { getForgeMasterSystemPromptForTest } from '../services/aiAssistant';
 
 function baseState(overrides = {}) {
@@ -36,6 +37,7 @@ function baseState(overrides = {}) {
     justiceResponseLedger: [],
     teachingPipelineLedger: [],
     familyCovenantLedger: [],
+    livelihoodPipelineLedger: [],
     shadows: [],
     systemMessages: [],
     weeklyDungeons: {},
@@ -172,6 +174,23 @@ describe('sync conflict merge', () => {
     const merged = mergeStatesForSync(current, incoming);
 
     expect(merged.familyCovenantLedger.map(entry => entry.id).sort()).toEqual(['family-a', 'family-b']);
+  });
+
+  it('merges livelihood pipeline entries from different devices', () => {
+    const current = baseState({
+      livelihoodPipelineLedger: [{ id: 'livelihood-a', actionType: 'skill-training', beneficiary: 'A', createdAt: '2026-06-01T01:00:00.000Z' }],
+      lastUpdated: 10,
+      syncRevision: 2,
+    });
+    const incoming = baseState({
+      livelihoodPipelineLedger: [{ id: 'livelihood-b', actionType: 'client-lead', beneficiary: 'B', createdAt: '2026-06-01T02:00:00.000Z' }],
+      lastUpdated: 9,
+      syncRevision: 2,
+    });
+
+    const merged = mergeStatesForSync(current, incoming);
+
+    expect(merged.livelihoodPipelineLedger.map(entry => entry.id).sort()).toEqual(['livelihood-a', 'livelihood-b']);
   });
 });
 
@@ -523,6 +542,59 @@ describe('mission doctrine and metrics', () => {
       actionType: 'example',
       action: 'I plan to hit them so they fear me',
     })).toThrow(/merciful/i);
+  });
+
+  it('logs livelihood capacity building as wealth and service mission evidence', () => {
+    const result = addLivelihoodEntryToState(baseState(), {
+      actionType: 'skill-training',
+      outcome: 'earning',
+      beneficiary: 'Young Muslim freelancer',
+      skill: 'AI automation services',
+      action: 'Built a two-week learning plan and reviewed first client offer.',
+      peopleHelped: 1,
+      projectedMonthlyIncome: 15000,
+      followUpDate: '2026-06-08',
+      halalGuardrailAccepted: true,
+    });
+
+    const entry = result.livelihoodPipelineLedger.at(-1);
+    const history = result.history.at(-1);
+    const livelihood = getLivelihoodMetrics(result.livelihoodPipelineLedger);
+    const metrics = getMissionMetrics(result.history, history.localDate);
+
+    expect(entry.halalOnly).toBe(true);
+    expect(entry.outcome).toBe('earning');
+    expect(history.type).toBe('livelihoodPipeline');
+    expect(history.missionDuty).toBe('wealth');
+    expect(history.tags).toContain('service');
+    expect(livelihood.totalPeopleHelped).toBe(1);
+    expect(livelihood.totalProjectedMonthlyIncome).toBe(15000);
+    expect(livelihood.earningOutcomes).toBe(1);
+    expect(metrics.duties.find(d => d.id === 'wealth').today).toBe(1);
+    expect(metrics.duties.find(d => d.id === 'service').today).toBe(1);
+  });
+
+  it('rejects livelihood entries without concrete action or halal guardrail', () => {
+    expect(() => addLivelihoodEntryToState(baseState(), {
+      beneficiary: '',
+      skill: 'Sales',
+      action: 'Shared a job lead.',
+      halalGuardrailAccepted: true,
+    })).toThrow(/beneficiary/i);
+
+    expect(() => addLivelihoodEntryToState(baseState(), {
+      beneficiary: 'Student',
+      skill: 'Sales',
+      action: '',
+      halalGuardrailAccepted: true,
+    })).toThrow(/action/i);
+
+    expect(() => addLivelihoodEntryToState(baseState(), {
+      beneficiary: 'Student',
+      skill: 'Sales',
+      action: 'Shared a job lead.',
+      halalGuardrailAccepted: false,
+    })).toThrow(/halal/i);
   });
 });
 
