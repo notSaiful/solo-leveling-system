@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react';
-import { BookOpen, CheckCircle2, Circle, HandHeart, Scale, ShieldCheck, Target, TrendingUp, Wallet } from 'lucide-react';
+import { BookOpen, CheckCircle2, Circle, FileText, HandHeart, Megaphone, Scale, ShieldCheck, Target, TrendingUp, Wallet } from 'lucide-react';
 import { MISSION_DOCTRINE } from '../data/missionDoctrine';
 import { IMPACT_CATEGORIES, IMPACT_CATEGORY_LABELS } from '../data/ummahImpact';
+import { JUSTICE_ACTION_LABELS, JUSTICE_ACTION_TYPES, JUSTICE_GUARDRAILS } from '../data/justiceResponse';
 import { getMissionPlan } from '../logic/missionPlan';
 import { addImpactEntryToState, getImpactMetrics } from '../logic/ummahImpact';
+import { addJusticeResponseToState, getJusticeResponseMetrics } from '../logic/justiceResponse';
 
 const dutyIcons = {
   tauheed: BookOpen,
@@ -16,23 +18,44 @@ const dutyIcons = {
 export default function MissionCommandCenter({ state, setState }) {
   const history = state.history || [];
   const impactLedger = state.ummahImpactLedger || [];
+  const justiceLedger = state.justiceResponseLedger || [];
   const [impactForm, setImpactForm] = useState({
     amount: '',
     category: 'sadaqah',
     peopleHelped: '',
     note: '',
   });
+  const [justiceForm, setJusticeForm] = useState({
+    cause: '',
+    oppressedGroup: '',
+    actionType: 'evidence',
+    channel: '',
+    evidenceCount: '',
+    peopleHelped: '',
+    note: '',
+    guardrailAccepted: true,
+  });
   const [formError, setFormError] = useState('');
+  const [justiceError, setJusticeError] = useState('');
   const plan = getMissionPlan(history || []);
   const impactMetrics = useMemo(() => getImpactMetrics(impactLedger), [impactLedger]);
+  const justiceMetrics = useMemo(() => getJusticeResponseMetrics(justiceLedger), [justiceLedger]);
   const WeakIcon = dutyIcons[plan.weeklyFocus.duty?.id] || ShieldCheck;
   const recentImpact = [...impactLedger]
+    .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+    .slice(0, 4);
+  const recentJustice = [...justiceLedger]
     .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
     .slice(0, 4);
 
   const updateImpactForm = (key, value) => {
     setImpactForm(prev => ({ ...prev, [key]: value }));
     if (formError) setFormError('');
+  };
+
+  const updateJusticeForm = (key, value) => {
+    setJusticeForm(prev => ({ ...prev, [key]: value }));
+    if (justiceError) setJusticeError('');
   };
 
   const handleImpactSubmit = (event) => {
@@ -47,6 +70,28 @@ export default function MissionCommandCenter({ state, setState }) {
       setFormError('');
     } catch (error) {
       setFormError(error.message || 'Impact entry failed.');
+    }
+  };
+
+  const handleJusticeSubmit = (event) => {
+    event.preventDefault();
+    try {
+      setState(prev => addJusticeResponseToState(prev, {
+        ...justiceForm,
+        evidenceCount: Number(justiceForm.evidenceCount || 0),
+        peopleHelped: Number(justiceForm.peopleHelped || 0),
+      }));
+      setJusticeForm(prev => ({
+        ...prev,
+        channel: '',
+        evidenceCount: '',
+        peopleHelped: '',
+        note: '',
+        guardrailAccepted: true,
+      }));
+      setJusticeError('');
+    } catch (error) {
+      setJusticeError(error.message || 'Justice response entry failed.');
     }
   };
 
@@ -222,6 +267,136 @@ export default function MissionCommandCenter({ state, setState }) {
             );
           })}
         </div>
+      </section>
+
+      <section className="glass-panel p-4 border border-red-500/20">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
+          <div>
+            <div className="flex items-center gap-2 text-red-300 mb-1">
+              <Megaphone size={16} />
+              <span className="font-orbitron text-sm font-semibold tracking-wider uppercase">Lawful Justice Response</span>
+            </div>
+            <div className="text-xs text-cyan-500/60 leading-relaxed">
+              Turn anger at oppression into verified evidence, lawful advocacy, relief, education, legal aid, and disciplined restraint.
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-2 sm:min-w-80">
+            <div className="rounded-lg border border-red-500/20 bg-red-950/10 p-3">
+              <div className="text-[10px] text-red-400/70 uppercase tracking-wider">Actions</div>
+              <div className="text-sm font-bold text-red-100">{justiceMetrics.totalActions.toLocaleString()}</div>
+            </div>
+            <div className="rounded-lg border border-cyan-500/20 bg-cyan-950/10 p-3">
+              <div className="text-[10px] text-cyan-500/70 uppercase tracking-wider">Evidence</div>
+              <div className="text-sm font-bold text-cyan-100">{justiceMetrics.totalEvidence.toLocaleString()}</div>
+            </div>
+            <div className="rounded-lg border border-cyan-500/20 bg-cyan-950/10 p-3">
+              <div className="text-[10px] text-cyan-500/70 uppercase tracking-wider">Causes</div>
+              <div className="text-sm font-bold text-cyan-100">{justiceMetrics.activeCauses.toLocaleString()}</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
+          {JUSTICE_GUARDRAILS.map(guardrail => (
+            <div key={guardrail} className="flex items-start gap-2 rounded-lg border border-red-500/20 bg-red-950/10 p-2 text-xs text-cyan-100">
+              <ShieldCheck size={14} className="text-red-300 shrink-0 mt-0.5" />
+              <span>{guardrail}</span>
+            </div>
+          ))}
+        </div>
+
+        <form onSubmit={handleJusticeSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+          <input
+            type="text"
+            value={justiceForm.cause}
+            onChange={(event) => updateJusticeForm('cause', event.target.value)}
+            placeholder="Cause / oppression"
+            className="bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+          />
+          <input
+            type="text"
+            value={justiceForm.oppressedGroup}
+            onChange={(event) => updateJusticeForm('oppressedGroup', event.target.value)}
+            placeholder="People harmed"
+            className="bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+          />
+          <select
+            value={justiceForm.actionType}
+            onChange={(event) => updateJusticeForm('actionType', event.target.value)}
+            className="bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+          >
+            {JUSTICE_ACTION_TYPES.map(action => (
+              <option key={action.id} value={action.id}>{action.label}</option>
+            ))}
+          </select>
+          <input
+            type="text"
+            value={justiceForm.channel}
+            onChange={(event) => updateJusticeForm('channel', event.target.value)}
+            placeholder="Channel / org / platform"
+            className="bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+          />
+          <input
+            type="number"
+            min="0"
+            inputMode="numeric"
+            value={justiceForm.evidenceCount}
+            onChange={(event) => updateJusticeForm('evidenceCount', event.target.value)}
+            placeholder="Evidence items"
+            className="bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+          />
+          <input
+            type="number"
+            min="0"
+            inputMode="numeric"
+            value={justiceForm.peopleHelped}
+            onChange={(event) => updateJusticeForm('peopleHelped', event.target.value)}
+            placeholder="People helped"
+            className="bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+          />
+          <label className="flex items-center gap-2 rounded-lg border border-red-500/20 bg-black/20 px-3 py-2 text-xs text-cyan-100">
+            <input
+              type="checkbox"
+              checked={justiceForm.guardrailAccepted}
+              onChange={(event) => updateJusticeForm('guardrailAccepted', event.target.checked)}
+            />
+            Lawful only
+          </label>
+          <button
+            type="submit"
+            className="rounded-lg border border-red-500/40 bg-red-900/20 px-3 py-2 text-sm font-semibold text-red-100 hover:bg-red-900/30 transition-colors"
+          >
+            Log Response
+          </button>
+          <input
+            type="text"
+            value={justiceForm.note}
+            onChange={(event) => updateJusticeForm('note', event.target.value)}
+            placeholder="What lawful action did you take?"
+            className="sm:col-span-2 lg:col-span-4 bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+          />
+        </form>
+        {justiceError && <div className="text-xs text-red-300 mt-2">{justiceError}</div>}
+
+        {recentJustice.length > 0 && (
+          <div className="mt-4 space-y-2">
+            {recentJustice.map(entry => (
+              <div key={entry.id} className="flex items-center justify-between gap-3 rounded-lg border border-cyan-900/40 bg-black/20 p-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 text-sm text-cyan-100 font-semibold">
+                    <FileText size={14} className="text-red-300 shrink-0" />
+                    <span className="truncate">{JUSTICE_ACTION_LABELS[entry.actionType] || entry.actionLabel || 'Justice'} · {entry.cause}</span>
+                  </div>
+                  <div className="text-xs text-cyan-500/50 truncate">{entry.note || entry.channel || 'No note recorded'}</div>
+                </div>
+                <div className="text-right shrink-0">
+                  <div className="text-xs text-cyan-400">{entry.evidenceCount || 0} evidence</div>
+                  <div className="text-[10px] text-cyan-700">{entry.localDate}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">

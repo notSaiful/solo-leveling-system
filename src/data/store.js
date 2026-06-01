@@ -22,6 +22,7 @@ export const DEFAULT_STATE = {
   flowState: { active: false, multiplier: 1, expiresAt: 0, questsInWindow: 0 },
   purchasedRewards: [],
   ummahImpactLedger: [],
+  justiceResponseLedger: [],
   customQuests: [],
   levelQuests: [],
   redemptionQuests: [],
@@ -56,6 +57,7 @@ function normalizeStateShape(state) {
   normalized.syncRevision = state.syncRevision || 0;
   normalized.customQuests = pruneExpiredCustomQuests(state.customQuests || []);
   normalized.ummahImpactLedger = state.ummahImpactLedger || [];
+  normalized.justiceResponseLedger = state.justiceResponseLedger || [];
   return normalized;
 }
 

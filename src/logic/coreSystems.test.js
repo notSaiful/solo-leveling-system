@@ -10,6 +10,7 @@ import { getMissionMetrics } from './missionMetrics';
 import { getMissionPlan } from './missionPlan';
 import { addMissionDailyQuests } from './missionQuestGenerator';
 import { addImpactEntryToState, getImpactMetrics } from './ummahImpact';
+import { addJusticeResponseToState, containsUnsafeJusticeIntent, getJusticeResponseMetrics } from './justiceResponse';
 import { getForgeMasterSystemPromptForTest } from '../services/aiAssistant';
 
 function baseState(overrides = {}) {
@@ -30,6 +31,7 @@ function baseState(overrides = {}) {
     redemptionQuests: [],
     purchasedRewards: [],
     ummahImpactLedger: [],
+    justiceResponseLedger: [],
     shadows: [],
     systemMessages: [],
     weeklyDungeons: {},
@@ -115,6 +117,23 @@ describe('sync conflict merge', () => {
     const merged = mergeStatesForSync(current, incoming);
 
     expect(merged.ummahImpactLedger.map(entry => entry.id).sort()).toEqual(['impact-a', 'impact-b']);
+  });
+
+  it('merges lawful justice response entries from different devices', () => {
+    const current = baseState({
+      justiceResponseLedger: [{ id: 'justice-a', actionType: 'evidence', cause: 'A', createdAt: '2026-06-01T01:00:00.000Z' }],
+      lastUpdated: 10,
+      syncRevision: 2,
+    });
+    const incoming = baseState({
+      justiceResponseLedger: [{ id: 'justice-b', actionType: 'relief', cause: 'B', createdAt: '2026-06-01T02:00:00.000Z' }],
+      lastUpdated: 9,
+      syncRevision: 2,
+    });
+
+    const merged = mergeStatesForSync(current, incoming);
+
+    expect(merged.justiceResponseLedger.map(entry => entry.id).sort()).toEqual(['justice-a', 'justice-b']);
   });
 });
 
@@ -347,6 +366,48 @@ describe('mission doctrine and metrics', () => {
     expect(impact.totalAmount).toBe(500);
     expect(impact.totalPeopleHelped).toBe(2);
     expect(metrics.duties.find(d => d.id === 'wealth').today).toBe(1);
+  });
+
+  it('logs lawful justice response as mission evidence', () => {
+    const result = addJusticeResponseToState(baseState(), {
+      cause: 'Oppression documentation',
+      oppressedGroup: 'Muslim families',
+      actionType: 'advocacy',
+      channel: 'lawful petition',
+      evidenceCount: 3,
+      peopleHelped: 5,
+      note: 'Verified sources and sent a lawful advocacy brief.',
+      guardrailAccepted: true,
+    });
+
+    const entry = result.justiceResponseLedger.at(-1);
+    const history = result.history.at(-1);
+    const justice = getJusticeResponseMetrics(result.justiceResponseLedger);
+    const metrics = getMissionMetrics(result.history, history.localDate);
+
+    expect(entry.lawfulOnly).toBe(true);
+    expect(entry.actionType).toBe('advocacy');
+    expect(history.type).toBe('justiceResponse');
+    expect(history.missionDuty).toBe('service');
+    expect(justice.totalActions).toBe(1);
+    expect(justice.totalEvidence).toBe(3);
+    expect(justice.totalPeopleHelped).toBe(5);
+    expect(metrics.duties.find(d => d.id === 'service').today).toBe(1);
+  });
+
+  it('rejects unsafe justice intent and missing lawful guardrail', () => {
+    expect(containsUnsafeJusticeIntent('I plan to attack them tomorrow')).toBe(true);
+    expect(() => addJusticeResponseToState(baseState(), {
+      actionType: 'advocacy',
+      note: 'I plan to attack them tomorrow',
+      guardrailAccepted: true,
+    })).toThrow(/lawful/i);
+
+    expect(() => addJusticeResponseToState(baseState(), {
+      actionType: 'evidence',
+      note: 'Verified one report.',
+      guardrailAccepted: false,
+    })).toThrow(/guardrail/i);
   });
 });
 
