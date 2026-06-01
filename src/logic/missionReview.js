@@ -144,3 +144,38 @@ export function addMissionWeeklyReviewToState(state = {}, today = getLocalDateSt
     missionWeeklyReviews: [...withoutSameWeek, note],
   };
 }
+
+export function getMissionReviewTrends(reviews = [], limit = 6) {
+  const sorted = [...reviews]
+    .filter(review => review?.weekId)
+    .sort((a, b) => String(a.weekEnd || a.weekId).localeCompare(String(b.weekEnd || b.weekId)))
+    .slice(-limit);
+  const latest = sorted.at(-1) || null;
+  const previous = sorted.at(-2) || null;
+  const coverageDelta = latest && previous ? (latest.weeklyCoverage || 0) - (previous.weeklyCoverage || 0) : 0;
+  const actionDelta = latest && previous ? (latest.weeklyActions || 0) - (previous.weeklyActions || 0) : 0;
+
+  const previousDuties = new Map((previous?.dutySnapshot || []).map(duty => [duty.id, duty]));
+  const dutyTrends = (latest?.dutySnapshot || []).map((duty) => {
+    const prior = previousDuties.get(duty.id);
+    const delta = (duty.week || 0) - (prior?.week || 0);
+    return {
+      id: duty.id,
+      label: duty.label,
+      week: duty.week || 0,
+      previousWeek: prior?.week || 0,
+      delta,
+      direction: delta > 0 ? 'rising' : delta < 0 ? 'slipping' : 'steady',
+    };
+  });
+
+  return {
+    reviews: sorted,
+    latest,
+    previous,
+    coverageDelta,
+    actionDelta,
+    direction: coverageDelta > 0 ? 'rising' : coverageDelta < 0 ? 'slipping' : 'steady',
+    dutyTrends,
+  };
+}

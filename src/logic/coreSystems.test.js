@@ -8,7 +8,7 @@ import { pruneExpiredCustomQuests } from './customQuests';
 import { MISSION_DOCTRINE, getMissionDoctrinePrompt } from '../data/missionDoctrine';
 import { getMissionMetrics } from './missionMetrics';
 import { getMissionPlan } from './missionPlan';
-import { addMissionWeeklyReviewToState, createMissionWeeklyReviewNote, getMissionReview } from './missionReview';
+import { addMissionWeeklyReviewToState, createMissionWeeklyReviewNote, getMissionReview, getMissionReviewTrends } from './missionReview';
 import { addMissionDailyQuests } from './missionQuestGenerator';
 import { addImpactEntryToState, getImpactMetrics } from './ummahImpact';
 import { addJusticeResponseToState, containsUnsafeJusticeIntent, getJusticeResponseMetrics } from './justiceResponse';
@@ -493,6 +493,37 @@ describe('mission doctrine and metrics', () => {
     expect(result.missionWeeklyReviews).toHaveLength(1);
     expect(replaced.missionWeeklyReviews).toHaveLength(1);
     expect(replaced.missionWeeklyReviews[0].weekId).toBe(note.weekId);
+  });
+
+  it('calculates weekly mission review trends from sealed notes', () => {
+    const trends = getMissionReviewTrends([
+      {
+        weekId: '2026-05-19_2026-05-25',
+        weekEnd: '2026-05-25',
+        weeklyCoverage: 40,
+        weeklyActions: 3,
+        dutySnapshot: [
+          { id: 'tauheed', label: 'Tauheed & Truth', week: 1 },
+          { id: 'wealth', label: 'Wealth as Amanah', week: 0 },
+        ],
+      },
+      {
+        weekId: '2026-05-26_2026-06-01',
+        weekEnd: '2026-06-01',
+        weeklyCoverage: 80,
+        weeklyActions: 8,
+        dutySnapshot: [
+          { id: 'tauheed', label: 'Tauheed & Truth', week: 2 },
+          { id: 'wealth', label: 'Wealth as Amanah', week: 1 },
+        ],
+      },
+    ]);
+
+    expect(trends.direction).toBe('rising');
+    expect(trends.coverageDelta).toBe(40);
+    expect(trends.actionDelta).toBe(5);
+    expect(trends.dutyTrends.find(duty => duty.id === 'tauheed').delta).toBe(1);
+    expect(trends.dutyTrends.find(duty => duty.id === 'wealth').direction).toBe('rising');
   });
 
   it('logs Ummah financial impact as mission evidence', () => {

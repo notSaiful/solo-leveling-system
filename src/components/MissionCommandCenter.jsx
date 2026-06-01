@@ -8,7 +8,7 @@ import { LIVELIHOOD_ACTION_LABELS, LIVELIHOOD_ACTIONS, LIVELIHOOD_GUARDRAILS, LI
 import { READINESS_ACTION_LABELS, READINESS_ACTIONS, READINESS_GUARDRAILS, READINESS_INTENSITIES } from '../data/readinessProtocol';
 import { TEACHING_FORMAT_LABELS, TEACHING_FORMATS, TEACHING_GUARDRAILS, TEACHING_TOPIC_LABELS, TEACHING_TOPICS } from '../data/teachingPipeline';
 import { getMissionPlan } from '../logic/missionPlan';
-import { addMissionWeeklyReviewToState, getMissionReview } from '../logic/missionReview';
+import { addMissionWeeklyReviewToState, getMissionReview, getMissionReviewTrends } from '../logic/missionReview';
 import { addFamilyCovenantEntryToState, getFamilyCovenantMetrics } from '../logic/familyCovenant';
 import { addLivelihoodEntryToState, getLivelihoodMetrics } from '../logic/livelihoodPipeline';
 import { addReadinessEntryToState, getReadinessMetrics } from '../logic/readinessProtocol';
@@ -103,6 +103,7 @@ export default function MissionCommandCenter({ state, setState }) {
     () => weeklyReviews.find(note => note.weekId === `${missionReview.weekStart}_${missionReview.weekEnd}`) || null,
     [weeklyReviews, missionReview.weekStart, missionReview.weekEnd]
   );
+  const missionTrends = useMemo(() => getMissionReviewTrends(weeklyReviews), [weeklyReviews]);
   const impactMetrics = useMemo(() => getImpactMetrics(impactLedger), [impactLedger]);
   const justiceMetrics = useMemo(() => getJusticeResponseMetrics(justiceLedger), [justiceLedger]);
   const teachingMetrics = useMemo(() => getTeachingMetrics(teachingLedger), [teachingLedger]);
@@ -388,6 +389,47 @@ export default function MissionCommandCenter({ state, setState }) {
           <div className="text-[10px] text-yellow-500/70 uppercase tracking-wider mb-1">Next Command</div>
           <div className="text-sm text-yellow-100 leading-relaxed">{missionReview.command}</div>
         </div>
+
+        {missionTrends.reviews.length > 0 && (
+          <div className="mb-4 rounded-lg border border-cyan-500/20 bg-cyan-950/10 p-3">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+              <div className="flex items-center gap-2 text-cyan-300">
+                <TrendingUp size={16} />
+                <span className="font-orbitron text-xs font-semibold tracking-wider uppercase">Weekly Trend</span>
+              </div>
+              <div className="text-xs text-cyan-500/70">
+                Coverage {missionTrends.coverageDelta >= 0 ? '+' : ''}{missionTrends.coverageDelta}% · Logs {missionTrends.actionDelta >= 0 ? '+' : ''}{missionTrends.actionDelta}
+              </div>
+            </div>
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-3">
+              {missionTrends.reviews.map(note => (
+                <div key={note.weekId} className="rounded-lg border border-cyan-900/40 bg-black/20 p-2">
+                  <div className="text-[10px] text-cyan-600 truncate">{note.weekEnd}</div>
+                  <div className="text-sm font-bold text-cyan-100">{note.weeklyCoverage}%</div>
+                  <div className="mt-2 h-12 rounded bg-cyan-950/60 overflow-hidden flex items-end">
+                    <div
+                      className="w-full bg-cyan-400/70"
+                      style={{ height: `${Math.max(6, Math.min(100, note.weeklyCoverage || 0))}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+            {missionTrends.dutyTrends.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-5 gap-2">
+                {missionTrends.dutyTrends.map(duty => (
+                  <div key={duty.id} className="rounded-lg border border-cyan-900/40 bg-black/20 p-2">
+                    <div className="text-[10px] text-cyan-500/70 uppercase tracking-wider truncate">{duty.label}</div>
+                    <div className="text-sm text-cyan-100 font-semibold">
+                      {duty.week} <span className={duty.delta > 0 ? 'text-green-300' : duty.delta < 0 ? 'text-red-300' : 'text-cyan-500'}>{duty.delta >= 0 ? '+' : ''}{duty.delta}</span>
+                    </div>
+                    <div className="text-[10px] text-cyan-600 uppercase tracking-wider">{duty.direction}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
           {missionReview.duties.map(duty => {
