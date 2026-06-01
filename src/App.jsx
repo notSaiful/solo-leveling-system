@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { LayoutDashboard, BarChart3, Swords, Settings, ShoppingBag, Sparkles, Coins, Zap, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { LayoutDashboard, BarChart3, Swords, Settings, ShoppingBag, Sparkles, Coins, Zap, AlertTriangle } from 'lucide-react';
 import { useStore } from './hooks/useStore';
 import { useLevelUp } from './hooks/useLevelUp';
 import { usePenaltyCheck } from './hooks/usePenaltyCheck';
@@ -10,7 +10,6 @@ import SystemMessage from './components/SystemMessage';
 import RewardStore from './components/RewardStore';
 import StatDistribution from './components/StatDistribution';
 import AIAssistant from './components/AIAssistant';
-import MissionCommandCenter from './components/MissionCommandCenter';
 import { getCurrentWeekId } from './logic/dungeons';
 import { getRankByLevel, getWeeklyDungeonForRank } from './data/questCatalog';
 import { getFlowStateDisplay } from './logic/questEngine';
@@ -273,7 +272,6 @@ export default function App() {
 
   const tabs = [
     { id: 'dashboard', label: 'Status', icon: LayoutDashboard },
-    { id: 'mission', label: 'Mission', icon: ShieldCheck },
     { id: 'stats', label: 'Stats', icon: BarChart3 },
     { id: 'dungeons', label: 'Dungeons', icon: Swords },
     { id: 'store', label: 'Store', icon: ShoppingBag },
@@ -329,7 +327,6 @@ export default function App() {
       {/* Main Content */}
       <main className="relative z-10 py-4 px-2 sm:px-4">
         {activeTab === 'dashboard' && <Dashboard state={state} setState={setState} ready={cloudReady} />}
-        {activeTab === 'mission' && <MissionCommandCenter state={state} setState={setState} />}
         {activeTab === 'stats' && <StatsPanel state={state} />}
         {activeTab === 'dungeons' && <WeeklyDungeon state={state} setState={setState} />}
         {activeTab === 'store' && <RewardStore state={state} setState={setState} />}

@@ -3,7 +3,6 @@ import RankBadge from './RankBadge';
 import XpBar from './XpBar';
 import QuestCard from './QuestCard';
 import CustomQuestBuilder from './CustomQuestBuilder';
-import MissionPanel from './MissionPanel';
 import {
   initializeDailyQuests,
   initializeLevelQuest,
@@ -300,8 +299,6 @@ export default function Dashboard({ state, setState, ready = true }) {
           </div>
         )}
       </div>
-
-      <MissionPanel history={state.history || []} />
 
       {/* Flow State Banner */}
       {flowDisplay && (
