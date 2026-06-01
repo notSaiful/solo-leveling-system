@@ -22,6 +22,7 @@ export const ADMIN_COMMANDS = {
       pillar: "string (required): 'deen' | 'body' | 'money'",
       xp: 'number (optional, default 20)',
       type: "string (optional): 'daily' | 'custom' (default 'custom')",
+      tags: 'string[] (optional) — mission/category tags such as sleep, teaching, budget',
     },
   },
   MODIFY_QUEST: {
@@ -227,7 +228,7 @@ function execCreateQuest(state, data) {
     xp,
     baseXp: xp,
     completed: false,
-    tags: ['ai-generated'],
+    tags: ['ai-generated', ...(Array.isArray(data.tags) ? data.tags : [])],
     estimatedMinutes: 0,
     createdAt: new Date().toISOString(),
     createdLocalDate: getLocalDateString(),
@@ -328,7 +329,14 @@ function execForceCompleteQuest(state, data) {
   newState.gold += gold;
   newState.history = [...(newState.history || []), {
     eventId: `force-complete-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    type: isCustom ? 'custom' : 'daily', questId: questKey, title: quest.title, pillar, xp, gold,
+    type: isCustom ? 'custom' : 'daily',
+    questId: questKey,
+    title: quest.title,
+    description: quest.description || '',
+    pillar,
+    tags: quest.tags || [],
+    xp,
+    gold,
     date: completedAt, localDate: today, completed: true,
   }];
 

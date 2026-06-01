@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { getLocalDateString, getDaysBetween } from '../utils/dateUtils';
 import { mergeStatesForSync } from './stateMerge';
-import { completeRedemptionQuest, getRedemptionProgress } from './questEngine';
+import { completeDailyQuest, completeRedemptionQuest, getRedemptionProgress } from './questEngine';
 import { isDebuffActive } from './penalties';
 import { executeAdminCommands } from './adminCommands';
 import { pruneExpiredCustomQuests } from './customQuests';
@@ -164,6 +164,59 @@ describe('mission doctrine and metrics', () => {
     expect(metrics.duties.find(d => d.id === 'service').total).toBeGreaterThan(0);
   });
 
+  it('uses stored quest descriptions and tags as mission evidence', () => {
+    const metrics = getMissionMetrics([
+      {
+        type: 'daily',
+        title: 'Generic Body Quest',
+        description: 'Recovery block after training.',
+        pillar: 'body',
+        tags: ['sleep', 'nutrition'],
+        completed: true,
+        localDate: '2026-06-01',
+      },
+      {
+        type: 'custom',
+        title: 'Generic Money Quest',
+        description: 'Review expenses and set aside sadaqah.',
+        pillar: 'money',
+        tags: ['budget'],
+        completed: true,
+        localDate: '2026-06-01',
+      },
+    ], '2026-06-01');
+
+    expect(metrics.duties.find(d => d.id === 'readiness').total).toBe(1);
+    expect(metrics.duties.find(d => d.id === 'wealth').total).toBe(1);
+  });
+
+  it('stores quest descriptions and tags in completion history', () => {
+    const state = baseState({
+      dailyQuests: [
+        {
+          id: 'recovery-1',
+          uniqueId: 'recovery-1-2026-06-01',
+          title: 'Recovery Protocol',
+          description: 'Sleep and mobility work.',
+          pillar: 'body',
+          xp: 20,
+          baseXp: 20,
+          tags: ['sleep', 'mobility'],
+          completed: false,
+        },
+      ],
+    });
+
+    const next = completeDailyQuest(state, 'recovery-1-2026-06-01');
+    const entry = next.history.at(-1);
+
+    expect(entry.description).toBe('Sleep and mobility work.');
+    expect(entry.tags).toEqual(['sleep', 'mobility']);
+
+    const metrics = getMissionMetrics(next.history, entry.localDate);
+    expect(metrics.duties.find(d => d.id === 'readiness').today).toBe(1);
+  });
+
   it('injects mission doctrine and guardrails into the Forge-Master prompt', () => {
     const prompt = getForgeMasterSystemPromptForTest(baseState({
       history: [{
@@ -267,5 +320,30 @@ describe('debuffs and AI commands', () => {
     expect(audit).toBeTruthy();
     expect(audit.completed).toBe(false);
     expect(audit.commandType).toBe('AWARD_XP');
+  });
+
+  it('preserves quest evidence when the AI force-completes a quest', () => {
+    const result = executeAdminCommands(baseState({
+      dailyQuests: [{
+        id: 'ai-proof',
+        uniqueId: 'ai-proof-1',
+        title: 'Teach one lesson',
+        description: 'Teach a useful deen lesson to someone younger.',
+        pillar: 'deen',
+        xp: 20,
+        tags: ['teaching', 'service'],
+        completed: false,
+      }],
+    }), [{
+      type: 'FORCE_COMPLETE_QUEST',
+      data: { questId: 'ai-proof-1' },
+    }]);
+
+    const completion = result.state.history.find(h => h.questId === 'ai-proof-1' && h.completed);
+    expect(completion.description).toContain('deen lesson');
+    expect(completion.tags).toEqual(['teaching', 'service']);
+
+    const metrics = getMissionMetrics(result.state.history, completion.localDate);
+    expect(metrics.duties.find(d => d.id === 'service').today).toBe(1);
   });
 });
