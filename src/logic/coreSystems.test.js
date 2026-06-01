@@ -12,6 +12,7 @@ import { addMissionDailyQuests } from './missionQuestGenerator';
 import { addImpactEntryToState, getImpactMetrics } from './ummahImpact';
 import { addJusticeResponseToState, containsUnsafeJusticeIntent, getJusticeResponseMetrics } from './justiceResponse';
 import { addTeachingEntryToState, getTeachingMetrics } from './teachingPipeline';
+import { addFamilyCovenantEntryToState, containsFamilyHarmIntent, getFamilyCovenantMetrics } from './familyCovenant';
 import { getForgeMasterSystemPromptForTest } from '../services/aiAssistant';
 
 function baseState(overrides = {}) {
@@ -34,6 +35,7 @@ function baseState(overrides = {}) {
     ummahImpactLedger: [],
     justiceResponseLedger: [],
     teachingPipelineLedger: [],
+    familyCovenantLedger: [],
     shadows: [],
     systemMessages: [],
     weeklyDungeons: {},
@@ -153,6 +155,23 @@ describe('sync conflict merge', () => {
     const merged = mergeStatesForSync(current, incoming);
 
     expect(merged.teachingPipelineLedger.map(entry => entry.id).sort()).toEqual(['teach-a', 'teach-b']);
+  });
+
+  it('merges family covenant entries from different devices', () => {
+    const current = baseState({
+      familyCovenantLedger: [{ id: 'family-a', actionType: 'worship', action: 'Led Maghrib', createdAt: '2026-06-01T01:00:00.000Z' }],
+      lastUpdated: 10,
+      syncRevision: 2,
+    });
+    const incoming = baseState({
+      familyCovenantLedger: [{ id: 'family-b', actionType: 'repair', action: 'Apologized calmly', createdAt: '2026-06-01T02:00:00.000Z' }],
+      lastUpdated: 9,
+      syncRevision: 2,
+    });
+
+    const merged = mergeStatesForSync(current, incoming);
+
+    expect(merged.familyCovenantLedger.map(entry => entry.id).sort()).toEqual(['family-a', 'family-b']);
   });
 });
 
@@ -466,6 +485,44 @@ describe('mission doctrine and metrics', () => {
       title: 'Tauheed reminder',
       source: '',
     })).toThrow(/source/i);
+  });
+
+  it('logs family covenant actions as family mission evidence', () => {
+    const result = addFamilyCovenantEntryToState(baseState(), {
+      actionType: 'worship',
+      relation: 'household',
+      action: 'Led a short family salah and reminded them with mercy.',
+      minutes: 20,
+      repair: 'Asked if anyone needed help after prayer.',
+      note: 'Kept voice calm.',
+    });
+
+    const entry = result.familyCovenantLedger.at(-1);
+    const history = result.history.at(-1);
+    const family = getFamilyCovenantMetrics(result.familyCovenantLedger);
+    const metrics = getMissionMetrics(result.history, history.localDate);
+
+    expect(entry.propheticStandard).toBe(true);
+    expect(entry.actionType).toBe('worship');
+    expect(history.type).toBe('familyCovenant');
+    expect(history.missionDuty).toBe('family');
+    expect(family.totalActions).toBe(1);
+    expect(family.totalMinutes).toBe(20);
+    expect(family.worshipActions).toBe(1);
+    expect(metrics.duties.find(d => d.id === 'family').today).toBe(1);
+  });
+
+  it('rejects family covenant entries with harm intent or missing action', () => {
+    expect(containsFamilyHarmIntent('I plan to hit them so they fear me')).toBe(true);
+    expect(() => addFamilyCovenantEntryToState(baseState(), {
+      actionType: 'mercy',
+      action: '',
+    })).toThrow(/action/i);
+
+    expect(() => addFamilyCovenantEntryToState(baseState(), {
+      actionType: 'example',
+      action: 'I plan to hit them so they fear me',
+    })).toThrow(/merciful/i);
   });
 });
 

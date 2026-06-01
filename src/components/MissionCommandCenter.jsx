@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react';
-import { BookOpen, CheckCircle2, Circle, FileText, GraduationCap, HandHeart, Megaphone, Scale, ShieldCheck, Target, TrendingUp, Users, Wallet } from 'lucide-react';
+import { BookOpen, CheckCircle2, Circle, FileText, GraduationCap, HandHeart, HeartHandshake, Home, Megaphone, Scale, ShieldCheck, Target, TrendingUp, Users, Wallet } from 'lucide-react';
 import { MISSION_DOCTRINE } from '../data/missionDoctrine';
+import { FAMILY_ACTION_LABELS, FAMILY_ACTIONS, FAMILY_GUARDRAILS, FAMILY_RELATION_LABELS, FAMILY_RELATIONS } from '../data/familyCovenant';
 import { IMPACT_CATEGORIES, IMPACT_CATEGORY_LABELS } from '../data/ummahImpact';
 import { JUSTICE_ACTION_LABELS, JUSTICE_ACTION_TYPES, JUSTICE_GUARDRAILS } from '../data/justiceResponse';
 import { TEACHING_FORMAT_LABELS, TEACHING_FORMATS, TEACHING_GUARDRAILS, TEACHING_TOPIC_LABELS, TEACHING_TOPICS } from '../data/teachingPipeline';
 import { getMissionPlan } from '../logic/missionPlan';
+import { addFamilyCovenantEntryToState, getFamilyCovenantMetrics } from '../logic/familyCovenant';
 import { addImpactEntryToState, getImpactMetrics } from '../logic/ummahImpact';
 import { addJusticeResponseToState, getJusticeResponseMetrics } from '../logic/justiceResponse';
 import { addTeachingEntryToState, getTeachingMetrics } from '../logic/teachingPipeline';
@@ -22,6 +24,7 @@ export default function MissionCommandCenter({ state, setState }) {
   const impactLedger = state.ummahImpactLedger || [];
   const justiceLedger = state.justiceResponseLedger || [];
   const teachingLedger = state.teachingPipelineLedger || [];
+  const familyLedger = state.familyCovenantLedger || [];
   const [impactForm, setImpactForm] = useState({
     amount: '',
     category: 'sadaqah',
@@ -49,13 +52,23 @@ export default function MissionCommandCenter({ state, setState }) {
     followUp: '',
     note: '',
   });
+  const [familyForm, setFamilyForm] = useState({
+    actionType: 'worship',
+    relation: 'household',
+    action: '',
+    minutes: '',
+    repair: '',
+    note: '',
+  });
   const [formError, setFormError] = useState('');
   const [justiceError, setJusticeError] = useState('');
   const [teachingError, setTeachingError] = useState('');
+  const [familyError, setFamilyError] = useState('');
   const plan = getMissionPlan(history || []);
   const impactMetrics = useMemo(() => getImpactMetrics(impactLedger), [impactLedger]);
   const justiceMetrics = useMemo(() => getJusticeResponseMetrics(justiceLedger), [justiceLedger]);
   const teachingMetrics = useMemo(() => getTeachingMetrics(teachingLedger), [teachingLedger]);
+  const familyMetrics = useMemo(() => getFamilyCovenantMetrics(familyLedger), [familyLedger]);
   const WeakIcon = dutyIcons[plan.weeklyFocus.duty?.id] || ShieldCheck;
   const recentImpact = [...impactLedger]
     .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
@@ -64,6 +77,9 @@ export default function MissionCommandCenter({ state, setState }) {
     .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
     .slice(0, 4);
   const recentTeaching = [...teachingLedger]
+    .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+    .slice(0, 4);
+  const recentFamily = [...familyLedger]
     .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
     .slice(0, 4);
 
@@ -80,6 +96,11 @@ export default function MissionCommandCenter({ state, setState }) {
   const updateTeachingForm = (key, value) => {
     setTeachingForm(prev => ({ ...prev, [key]: value }));
     if (teachingError) setTeachingError('');
+  };
+
+  const updateFamilyForm = (key, value) => {
+    setFamilyForm(prev => ({ ...prev, [key]: value }));
+    if (familyError) setFamilyError('');
   };
 
   const handleImpactSubmit = (event) => {
@@ -139,6 +160,26 @@ export default function MissionCommandCenter({ state, setState }) {
       setJusticeError('');
     } catch (error) {
       setJusticeError(error.message || 'Justice response entry failed.');
+    }
+  };
+
+  const handleFamilySubmit = (event) => {
+    event.preventDefault();
+    try {
+      setState(prev => addFamilyCovenantEntryToState(prev, {
+        ...familyForm,
+        minutes: Number(familyForm.minutes || 0),
+      }));
+      setFamilyForm(prev => ({
+        ...prev,
+        action: '',
+        minutes: '',
+        repair: '',
+        note: '',
+      }));
+      setFamilyError('');
+    } catch (error) {
+      setFamilyError(error.message || 'Family covenant entry failed.');
     }
   };
 
@@ -203,6 +244,121 @@ export default function MissionCommandCenter({ state, setState }) {
         <div className="mt-3 text-xs text-cyan-500/50">
           Weakest duty: {plan.weeklyFocus.duty?.label || 'Unknown'}
         </div>
+      </section>
+
+      <section className="glass-panel p-4 border border-emerald-500/20">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
+          <div>
+            <div className="flex items-center gap-2 text-emerald-300 mb-1">
+              <HeartHandshake size={17} />
+              <span className="font-orbitron text-sm font-semibold tracking-wider uppercase">Family Covenant</span>
+            </div>
+            <div className="text-xs text-cyan-500/60 leading-relaxed">
+              Track worship, mercy, provision, repair, presence, teaching, protection, and role-model actions at home.
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-2 sm:min-w-80">
+            <div className="rounded-lg border border-emerald-500/20 bg-emerald-950/10 p-3">
+              <div className="text-[10px] text-emerald-500/70 uppercase tracking-wider">Actions</div>
+              <div className="text-sm font-bold text-emerald-100">{familyMetrics.totalActions.toLocaleString()}</div>
+            </div>
+            <div className="rounded-lg border border-cyan-500/20 bg-cyan-950/10 p-3">
+              <div className="text-[10px] text-cyan-500/70 uppercase tracking-wider">Minutes</div>
+              <div className="text-sm font-bold text-cyan-100">{familyMetrics.totalMinutes.toLocaleString()}</div>
+            </div>
+            <div className="rounded-lg border border-cyan-500/20 bg-cyan-950/10 p-3">
+              <div className="text-[10px] text-cyan-500/70 uppercase tracking-wider">Relations</div>
+              <div className="text-sm font-bold text-cyan-100">{familyMetrics.relationsServed.toLocaleString()}</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
+          {FAMILY_GUARDRAILS.map(guardrail => (
+            <div key={guardrail} className="flex items-start gap-2 rounded-lg border border-emerald-500/20 bg-emerald-950/10 p-2 text-xs text-cyan-100">
+              <Home size={14} className="text-emerald-300 shrink-0 mt-0.5" />
+              <span>{guardrail}</span>
+            </div>
+          ))}
+        </div>
+
+        <form onSubmit={handleFamilySubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+          <select
+            value={familyForm.actionType}
+            onChange={(event) => updateFamilyForm('actionType', event.target.value)}
+            className="bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+          >
+            {FAMILY_ACTIONS.map(action => (
+              <option key={action.id} value={action.id}>{action.label}</option>
+            ))}
+          </select>
+          <select
+            value={familyForm.relation}
+            onChange={(event) => updateFamilyForm('relation', event.target.value)}
+            className="bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+          >
+            {FAMILY_RELATIONS.map(relation => (
+              <option key={relation.id} value={relation.id}>{relation.label}</option>
+            ))}
+          </select>
+          <input
+            type="number"
+            min="0"
+            inputMode="numeric"
+            value={familyForm.minutes}
+            onChange={(event) => updateFamilyForm('minutes', event.target.value)}
+            placeholder="Minutes"
+            className="bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+          />
+          <button
+            type="submit"
+            className="rounded-lg border border-emerald-500/40 bg-emerald-900/20 px-3 py-2 text-sm font-semibold text-emerald-100 hover:bg-emerald-900/30 transition-colors"
+          >
+            Log Covenant
+          </button>
+          <input
+            type="text"
+            value={familyForm.action}
+            onChange={(event) => updateFamilyForm('action', event.target.value)}
+            placeholder="What did you do?"
+            className="sm:col-span-2 bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+          />
+          <input
+            type="text"
+            value={familyForm.repair}
+            onChange={(event) => updateFamilyForm('repair', event.target.value)}
+            placeholder="Repair / follow-up"
+            className="sm:col-span-2 bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+          />
+          <input
+            type="text"
+            value={familyForm.note}
+            onChange={(event) => updateFamilyForm('note', event.target.value)}
+            placeholder="Note"
+            className="sm:col-span-2 lg:col-span-4 bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+          />
+        </form>
+        {familyError && <div className="text-xs text-red-300 mt-2">{familyError}</div>}
+
+        {recentFamily.length > 0 && (
+          <div className="mt-4 space-y-2">
+            {recentFamily.map(entry => (
+              <div key={entry.id} className="flex items-center justify-between gap-3 rounded-lg border border-cyan-900/40 bg-black/20 p-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 text-sm text-cyan-100 font-semibold">
+                    <HeartHandshake size={14} className="text-emerald-300 shrink-0" />
+                    <span className="truncate">{FAMILY_ACTION_LABELS[entry.actionType] || entry.actionLabel || 'Family'} · {FAMILY_RELATION_LABELS[entry.relation] || entry.relationLabel || 'Household'}</span>
+                  </div>
+                  <div className="text-xs text-cyan-500/50 truncate">{entry.action}</div>
+                </div>
+                <div className="text-right shrink-0">
+                  <div className="text-xs text-cyan-400">{entry.minutes || 0} min</div>
+                  <div className="text-[10px] text-cyan-700">{entry.localDate}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="glass-panel p-4 border border-cyan-500/20">

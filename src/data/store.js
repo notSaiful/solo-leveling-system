@@ -24,6 +24,7 @@ export const DEFAULT_STATE = {
   ummahImpactLedger: [],
   justiceResponseLedger: [],
   teachingPipelineLedger: [],
+  familyCovenantLedger: [],
   customQuests: [],
   levelQuests: [],
   redemptionQuests: [],
@@ -60,6 +61,7 @@ function normalizeStateShape(state) {
   normalized.ummahImpactLedger = state.ummahImpactLedger || [];
   normalized.justiceResponseLedger = state.justiceResponseLedger || [];
   normalized.teachingPipelineLedger = state.teachingPipelineLedger || [];
+  normalized.familyCovenantLedger = state.familyCovenantLedger || [];
   return normalized;
 }
 
