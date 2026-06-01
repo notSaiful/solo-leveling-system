@@ -26,6 +26,7 @@ export const DEFAULT_STATE = {
   teachingPipelineLedger: [],
   familyCovenantLedger: [],
   livelihoodPipelineLedger: [],
+  readinessProtocolLedger: [],
   customQuests: [],
   levelQuests: [],
   redemptionQuests: [],
@@ -64,6 +65,7 @@ function normalizeStateShape(state) {
   normalized.teachingPipelineLedger = state.teachingPipelineLedger || [];
   normalized.familyCovenantLedger = state.familyCovenantLedger || [];
   normalized.livelihoodPipelineLedger = state.livelihoodPipelineLedger || [];
+  normalized.readinessProtocolLedger = state.readinessProtocolLedger || [];
   return normalized;
 }
 

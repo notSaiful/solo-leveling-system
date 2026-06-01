@@ -14,6 +14,7 @@ import { addJusticeResponseToState, containsUnsafeJusticeIntent, getJusticeRespo
 import { addTeachingEntryToState, getTeachingMetrics } from './teachingPipeline';
 import { addFamilyCovenantEntryToState, containsFamilyHarmIntent, getFamilyCovenantMetrics } from './familyCovenant';
 import { addLivelihoodEntryToState, getLivelihoodMetrics } from './livelihoodPipeline';
+import { addReadinessEntryToState, containsUnsafeReadinessIntent, getReadinessMetrics } from './readinessProtocol';
 import { getForgeMasterSystemPromptForTest } from '../services/aiAssistant';
 
 function baseState(overrides = {}) {
@@ -38,6 +39,7 @@ function baseState(overrides = {}) {
     teachingPipelineLedger: [],
     familyCovenantLedger: [],
     livelihoodPipelineLedger: [],
+    readinessProtocolLedger: [],
     shadows: [],
     systemMessages: [],
     weeklyDungeons: {},
@@ -191,6 +193,23 @@ describe('sync conflict merge', () => {
     const merged = mergeStatesForSync(current, incoming);
 
     expect(merged.livelihoodPipelineLedger.map(entry => entry.id).sort()).toEqual(['livelihood-a', 'livelihood-b']);
+  });
+
+  it('merges readiness protocol entries from different devices', () => {
+    const current = baseState({
+      readinessProtocolLedger: [{ id: 'readiness-a', actionType: 'strength', action: 'Squats', createdAt: '2026-06-01T01:00:00.000Z' }],
+      lastUpdated: 10,
+      syncRevision: 2,
+    });
+    const incoming = baseState({
+      readinessProtocolLedger: [{ id: 'readiness-b', actionType: 'deescalation', action: 'Calm exit drill', createdAt: '2026-06-01T02:00:00.000Z' }],
+      lastUpdated: 9,
+      syncRevision: 2,
+    });
+
+    const merged = mergeStatesForSync(current, incoming);
+
+    expect(merged.readinessProtocolLedger.map(entry => entry.id).sort()).toEqual(['readiness-a', 'readiness-b']);
   });
 });
 
@@ -595,6 +614,47 @@ describe('mission doctrine and metrics', () => {
       action: 'Shared a job lead.',
       halalGuardrailAccepted: false,
     })).toThrow(/halal/i);
+  });
+
+  it('logs lawful readiness and restraint as readiness mission evidence', () => {
+    const result = addReadinessEntryToState(baseState(), {
+      actionType: 'deescalation',
+      intensity: 'moderate',
+      action: 'Practiced calm exit and boundary phrases after training.',
+      minutes: 35,
+      restraintScore: 9,
+      restraintLesson: 'Avoid ego, leave early, call lawful help if needed.',
+      lawfulGuardrailAccepted: true,
+    });
+
+    const entry = result.readinessProtocolLedger.at(-1);
+    const history = result.history.at(-1);
+    const readiness = getReadinessMetrics(result.readinessProtocolLedger);
+    const metrics = getMissionMetrics(result.history, history.localDate);
+
+    expect(entry.lawfulOnly).toBe(true);
+    expect(entry.actionType).toBe('deescalation');
+    expect(history.type).toBe('readinessProtocol');
+    expect(history.missionDuty).toBe('readiness');
+    expect(readiness.totalMinutes).toBe(35);
+    expect(readiness.averageRestraint).toBe(9);
+    expect(readiness.restraintActions).toBe(1);
+    expect(metrics.duties.find(d => d.id === 'readiness').today).toBe(1);
+  });
+
+  it('rejects unsafe readiness intent and missing lawful restraint guardrail', () => {
+    expect(containsUnsafeReadinessIntent('I plan to attack them tomorrow')).toBe(true);
+    expect(() => addReadinessEntryToState(baseState(), {
+      actionType: 'combat-sport',
+      action: 'I plan to attack them tomorrow',
+      lawfulGuardrailAccepted: true,
+    })).toThrow(/lawful/i);
+
+    expect(() => addReadinessEntryToState(baseState(), {
+      actionType: 'strength',
+      action: 'Heavy squats and mobility.',
+      lawfulGuardrailAccepted: false,
+    })).toThrow(/restraint/i);
   });
 });
 

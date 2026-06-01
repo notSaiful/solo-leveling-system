@@ -5,10 +5,12 @@ import { FAMILY_ACTION_LABELS, FAMILY_ACTIONS, FAMILY_GUARDRAILS, FAMILY_RELATIO
 import { IMPACT_CATEGORIES, IMPACT_CATEGORY_LABELS } from '../data/ummahImpact';
 import { JUSTICE_ACTION_LABELS, JUSTICE_ACTION_TYPES, JUSTICE_GUARDRAILS } from '../data/justiceResponse';
 import { LIVELIHOOD_ACTION_LABELS, LIVELIHOOD_ACTIONS, LIVELIHOOD_GUARDRAILS, LIVELIHOOD_OUTCOME_LABELS, LIVELIHOOD_OUTCOMES } from '../data/livelihoodPipeline';
+import { READINESS_ACTION_LABELS, READINESS_ACTIONS, READINESS_GUARDRAILS, READINESS_INTENSITIES } from '../data/readinessProtocol';
 import { TEACHING_FORMAT_LABELS, TEACHING_FORMATS, TEACHING_GUARDRAILS, TEACHING_TOPIC_LABELS, TEACHING_TOPICS } from '../data/teachingPipeline';
 import { getMissionPlan } from '../logic/missionPlan';
 import { addFamilyCovenantEntryToState, getFamilyCovenantMetrics } from '../logic/familyCovenant';
 import { addLivelihoodEntryToState, getLivelihoodMetrics } from '../logic/livelihoodPipeline';
+import { addReadinessEntryToState, getReadinessMetrics } from '../logic/readinessProtocol';
 import { addImpactEntryToState, getImpactMetrics } from '../logic/ummahImpact';
 import { addJusticeResponseToState, getJusticeResponseMetrics } from '../logic/justiceResponse';
 import { addTeachingEntryToState, getTeachingMetrics } from '../logic/teachingPipeline';
@@ -28,6 +30,7 @@ export default function MissionCommandCenter({ state, setState }) {
   const teachingLedger = state.teachingPipelineLedger || [];
   const familyLedger = state.familyCovenantLedger || [];
   const livelihoodLedger = state.livelihoodPipelineLedger || [];
+  const readinessLedger = state.readinessProtocolLedger || [];
   const [impactForm, setImpactForm] = useState({
     amount: '',
     category: 'sadaqah',
@@ -75,17 +78,29 @@ export default function MissionCommandCenter({ state, setState }) {
     note: '',
     halalGuardrailAccepted: true,
   });
+  const [readinessForm, setReadinessForm] = useState({
+    actionType: 'strength',
+    intensity: 'moderate',
+    action: '',
+    minutes: '',
+    restraintScore: '8',
+    restraintLesson: '',
+    note: '',
+    lawfulGuardrailAccepted: true,
+  });
   const [formError, setFormError] = useState('');
   const [justiceError, setJusticeError] = useState('');
   const [teachingError, setTeachingError] = useState('');
   const [familyError, setFamilyError] = useState('');
   const [livelihoodError, setLivelihoodError] = useState('');
+  const [readinessError, setReadinessError] = useState('');
   const plan = getMissionPlan(history || []);
   const impactMetrics = useMemo(() => getImpactMetrics(impactLedger), [impactLedger]);
   const justiceMetrics = useMemo(() => getJusticeResponseMetrics(justiceLedger), [justiceLedger]);
   const teachingMetrics = useMemo(() => getTeachingMetrics(teachingLedger), [teachingLedger]);
   const familyMetrics = useMemo(() => getFamilyCovenantMetrics(familyLedger), [familyLedger]);
   const livelihoodMetrics = useMemo(() => getLivelihoodMetrics(livelihoodLedger), [livelihoodLedger]);
+  const readinessMetrics = useMemo(() => getReadinessMetrics(readinessLedger), [readinessLedger]);
   const WeakIcon = dutyIcons[plan.weeklyFocus.duty?.id] || ShieldCheck;
   const recentImpact = [...impactLedger]
     .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
@@ -100,6 +115,9 @@ export default function MissionCommandCenter({ state, setState }) {
     .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
     .slice(0, 4);
   const recentLivelihood = [...livelihoodLedger]
+    .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+    .slice(0, 4);
+  const recentReadiness = [...readinessLedger]
     .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
     .slice(0, 4);
 
@@ -126,6 +144,11 @@ export default function MissionCommandCenter({ state, setState }) {
   const updateLivelihoodForm = (key, value) => {
     setLivelihoodForm(prev => ({ ...prev, [key]: value }));
     if (livelihoodError) setLivelihoodError('');
+  };
+
+  const updateReadinessForm = (key, value) => {
+    setReadinessForm(prev => ({ ...prev, [key]: value }));
+    if (readinessError) setReadinessError('');
   };
 
   const handleImpactSubmit = (event) => {
@@ -230,6 +253,28 @@ export default function MissionCommandCenter({ state, setState }) {
       setLivelihoodError('');
     } catch (error) {
       setLivelihoodError(error.message || 'Livelihood entry failed.');
+    }
+  };
+
+  const handleReadinessSubmit = (event) => {
+    event.preventDefault();
+    try {
+      setState(prev => addReadinessEntryToState(prev, {
+        ...readinessForm,
+        minutes: Number(readinessForm.minutes || 0),
+        restraintScore: Number(readinessForm.restraintScore || 0),
+      }));
+      setReadinessForm(prev => ({
+        ...prev,
+        action: '',
+        minutes: '',
+        restraintLesson: '',
+        note: '',
+        lawfulGuardrailAccepted: true,
+      }));
+      setReadinessError('');
+    } catch (error) {
+      setReadinessError(error.message || 'Readiness entry failed.');
     }
   };
 
@@ -400,6 +445,139 @@ export default function MissionCommandCenter({ state, setState }) {
                     <span className="truncate">{FAMILY_ACTION_LABELS[entry.actionType] || entry.actionLabel || 'Family'} · {FAMILY_RELATION_LABELS[entry.relation] || entry.relationLabel || 'Household'}</span>
                   </div>
                   <div className="text-xs text-cyan-500/50 truncate">{entry.action}</div>
+                </div>
+                <div className="text-right shrink-0">
+                  <div className="text-xs text-cyan-400">{entry.minutes || 0} min</div>
+                  <div className="text-[10px] text-cyan-700">{entry.localDate}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="glass-panel p-4 border border-sky-500/20">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
+          <div>
+            <div className="flex items-center gap-2 text-sky-300 mb-1">
+              <ShieldCheck size={17} />
+              <span className="font-orbitron text-sm font-semibold tracking-wider uppercase">Readiness & Restraint Protocol</span>
+            </div>
+            <div className="text-xs text-cyan-500/60 leading-relaxed">
+              Track strength, conditioning, combat sport, first aid, awareness, de-escalation, and restraint under lawful guardrails.
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-2 sm:min-w-80">
+            <div className="rounded-lg border border-sky-500/20 bg-sky-950/10 p-3">
+              <div className="text-[10px] text-sky-500/70 uppercase tracking-wider">Sessions</div>
+              <div className="text-sm font-bold text-sky-100">{readinessMetrics.totalEntries.toLocaleString()}</div>
+            </div>
+            <div className="rounded-lg border border-cyan-500/20 bg-cyan-950/10 p-3">
+              <div className="text-[10px] text-cyan-500/70 uppercase tracking-wider">Minutes</div>
+              <div className="text-sm font-bold text-cyan-100">{readinessMetrics.totalMinutes.toLocaleString()}</div>
+            </div>
+            <div className="rounded-lg border border-cyan-500/20 bg-cyan-950/10 p-3">
+              <div className="text-[10px] text-cyan-500/70 uppercase tracking-wider">Restraint</div>
+              <div className="text-sm font-bold text-cyan-100">{readinessMetrics.averageRestraint.toLocaleString()}/10</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
+          {READINESS_GUARDRAILS.map(guardrail => (
+            <div key={guardrail} className="flex items-start gap-2 rounded-lg border border-sky-500/20 bg-sky-950/10 p-2 text-xs text-cyan-100">
+              <ShieldCheck size={14} className="text-sky-300 shrink-0 mt-0.5" />
+              <span>{guardrail}</span>
+            </div>
+          ))}
+        </div>
+
+        <form onSubmit={handleReadinessSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+          <select
+            value={readinessForm.actionType}
+            onChange={(event) => updateReadinessForm('actionType', event.target.value)}
+            className="bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+          >
+            {READINESS_ACTIONS.map(action => (
+              <option key={action.id} value={action.id}>{action.label}</option>
+            ))}
+          </select>
+          <select
+            value={readinessForm.intensity}
+            onChange={(event) => updateReadinessForm('intensity', event.target.value)}
+            className="bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+          >
+            {READINESS_INTENSITIES.map(intensity => (
+              <option key={intensity.id} value={intensity.id}>{intensity.label}</option>
+            ))}
+          </select>
+          <input
+            type="number"
+            min="0"
+            inputMode="numeric"
+            value={readinessForm.minutes}
+            onChange={(event) => updateReadinessForm('minutes', event.target.value)}
+            placeholder="Minutes"
+            className="bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+          />
+          <input
+            type="number"
+            min="0"
+            max="10"
+            inputMode="numeric"
+            value={readinessForm.restraintScore}
+            onChange={(event) => updateReadinessForm('restraintScore', event.target.value)}
+            placeholder="Restraint 0-10"
+            className="bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+          />
+          <input
+            type="text"
+            value={readinessForm.action}
+            onChange={(event) => updateReadinessForm('action', event.target.value)}
+            placeholder="Training / readiness action"
+            className="sm:col-span-2 bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+          />
+          <input
+            type="text"
+            value={readinessForm.restraintLesson}
+            onChange={(event) => updateReadinessForm('restraintLesson', event.target.value)}
+            placeholder="Restraint / de-escalation lesson"
+            className="sm:col-span-2 bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+          />
+          <label className="flex items-center gap-2 rounded-lg border border-sky-500/20 bg-black/20 px-3 py-2 text-xs text-cyan-100">
+            <input
+              type="checkbox"
+              checked={readinessForm.lawfulGuardrailAccepted}
+              onChange={(event) => updateReadinessForm('lawfulGuardrailAccepted', event.target.checked)}
+            />
+            Lawful restraint
+          </label>
+          <input
+            type="text"
+            value={readinessForm.note}
+            onChange={(event) => updateReadinessForm('note', event.target.value)}
+            placeholder="Note"
+            className="sm:col-span-2 bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+          />
+          <button
+            type="submit"
+            className="rounded-lg border border-sky-500/40 bg-sky-900/20 px-3 py-2 text-sm font-semibold text-sky-100 hover:bg-sky-900/30 transition-colors"
+          >
+            Log Readiness
+          </button>
+        </form>
+        {readinessError && <div className="text-xs text-red-300 mt-2">{readinessError}</div>}
+
+        {recentReadiness.length > 0 && (
+          <div className="mt-4 space-y-2">
+            {recentReadiness.map(entry => (
+              <div key={entry.id} className="flex items-center justify-between gap-3 rounded-lg border border-cyan-900/40 bg-black/20 p-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 text-sm text-cyan-100 font-semibold">
+                    <ShieldCheck size={14} className="text-sky-300 shrink-0" />
+                    <span className="truncate">{READINESS_ACTION_LABELS[entry.actionType] || entry.actionLabel || 'Readiness'} · {entry.action}</span>
+                  </div>
+                  <div className="text-xs text-cyan-500/50 truncate">{entry.restraintLesson || entry.note || 'Lawful restraint logged'}</div>
                 </div>
                 <div className="text-right shrink-0">
                   <div className="text-xs text-cyan-400">{entry.minutes || 0} min</div>
