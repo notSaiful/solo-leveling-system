@@ -6,7 +6,6 @@ import { pruneExpiredCustomQuests } from '../logic/customQuests';
 export const STORAGE_KEY = 'soloLevelingData';
 const SCHEMA_VERSION = 2;
 const CLOUD_ENABLED_KEY = 'cloudSyncEnabled';
-let cloudHydratedForSession = !isCanonicalSyncConfigured();
 
 export const DEFAULT_STATE = {
   version: SCHEMA_VERSION,
@@ -135,17 +134,8 @@ export function setCloudEnabled(enabled) {
   localStorage.setItem(CLOUD_ENABLED_KEY, enabled ? 'true' : 'false');
 }
 
-export function canQueueCloudSync() {
-  return cloudHydratedForSession;
-}
-
-function markCloudHydratedForSession() {
-  cloudHydratedForSession = true;
-}
-
 export async function initCloudSync() {
   if (!isCanonicalSyncConfigured()) {
-    markCloudHydratedForSession();
     return { success: false, reason: 'not_configured' };
   }
 
@@ -156,7 +146,6 @@ export async function initCloudSync() {
     const canonical = normalizeStateShape(cloudState);
     saveState(canonical);
     setCloudEnabled(true);
-    markCloudHydratedForSession();
     return { success: true, source: 'cloud' };
   }
 
@@ -164,7 +153,6 @@ export async function initCloudSync() {
   const result = await syncStateToCloud(localState);
   if (result.success) {
     setCloudEnabled(true);
-    markCloudHydratedForSession();
     return { success: true, source: 'migrated' };
   }
 
@@ -180,7 +168,6 @@ export async function reinitCloudSyncAfterLogin() {
   const canonical = normalizeStateShape(cloudState);
   saveState(canonical);
   setCloudEnabled(true);
-  markCloudHydratedForSession();
   return { success: true, source: 'cloud' };
 }
 
