@@ -73,6 +73,9 @@ describe('sync conflict merge', () => {
     const current = baseState({
       gold: 5,
       pillars: { ...baseState().pillars, deen: { level: 0, xp: 10, streak: 1, activeDebuff: null } },
+      dailyQuests: [
+        { id: 'q-a', uniqueId: 'q-a-2026-06-01', title: 'A', pillar: 'deen', completed: false },
+      ],
       history: [{
         eventId: 'a',
         type: 'daily',
@@ -91,6 +94,10 @@ describe('sync conflict merge', () => {
     const incoming = baseState({
       gold: 8,
       pillars: { ...baseState().pillars, deen: { level: 0, xp: 20, streak: 1, activeDebuff: null } },
+      dailyQuests: [
+        { id: 'q-a', uniqueId: 'q-a-2026-06-01', title: 'A', pillar: 'deen', completed: true, completedAt: '2026-06-01T05:00:00.000Z' },
+        { id: 'q-b', uniqueId: 'q-b-2026-06-01', title: 'B', pillar: 'deen', completed: true },
+      ],
       history: [{
         eventId: 'b',
         type: 'daily',
@@ -109,6 +116,8 @@ describe('sync conflict merge', () => {
 
     const merged = mergeStatesForSync(current, incoming);
     expect(merged.history.map(h => h.eventId).sort()).toEqual(['a', 'b']);
+    expect(merged.dailyQuests.map(q => q.id)).toEqual(['q-a']);
+    expect(merged.dailyQuests[0].completed).toBe(true);
     expect(merged.pillars.deen.xp).toBe(30);
     expect(merged.gold).toBe(13);
     expect(merged.syncRevision).toBe(3);

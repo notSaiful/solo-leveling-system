@@ -1,7 +1,6 @@
 import { loadStateFromCloud, syncStateToCloud, queueCloudSync, clearQueuedCloudSync } from '../services/cloudSync';
 import { isCanonicalSyncConfigured } from '../services/canonicalSync';
 import { getLocalDateString } from '../utils/dateUtils';
-import { mergeStatesForSync } from '../logic/stateMerge';
 import { pruneExpiredCustomQuests } from '../logic/customQuests';
 
 export const STORAGE_KEY = 'soloLevelingData';
@@ -144,15 +143,10 @@ export async function initCloudSync() {
   const cloudState = await loadStateFromCloud();
 
   if (cloudState) {
-    const cloudTime = cloudState.lastUpdated || 0;
-    const localTime = localState.lastUpdated || 0;
-    const merged = normalizeStateShape(mergeStatesForSync(cloudState, localState));
-    const source = localTime > cloudTime ? 'merged-local' : 'merged-cloud';
-
-    saveState(merged);
-    await syncStateToCloud(merged);
+    const canonical = normalizeStateShape(cloudState);
+    saveState(canonical);
     setCloudEnabled(true);
-    return { success: true, source };
+    return { success: true, source: 'cloud' };
   }
 
   // No cloud data — migrate local up
@@ -171,16 +165,10 @@ export async function reinitCloudSyncAfterLogin() {
   const cloudState = await loadStateFromCloud();
   if (!cloudState) return { success: false, reason: 'no_cloud_data' };
 
-  const localState = loadState();
-  const cloudTime = cloudState.lastUpdated || 0;
-  const localTime = localState.lastUpdated || 0;
-
-  const merged = normalizeStateShape(mergeStatesForSync(cloudState, localState));
-  const source = localTime > cloudTime ? 'merged-local' : 'merged-cloud';
-  await syncStateToCloud(merged);
-  saveState(merged);
+  const canonical = normalizeStateShape(cloudState);
+  saveState(canonical);
   setCloudEnabled(true);
-  return { success: true, source };
+  return { success: true, source: 'cloud' };
 }
 
 export async function fullCloudReset() {

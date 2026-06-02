@@ -166,9 +166,7 @@ export default function App() {
       initCloudSync().then((result) => {
         if (result?.success) {
           const fresh = loadState();
-          if ((fresh.syncRevision || 0) > (stateRef.current.syncRevision || 0) || fresh.lastUpdated > (stateRef.current.lastUpdated || 0)) {
-            setState({ ...fresh, __preserveLastUpdated: true });
-          }
+          setState({ ...fresh, __preserveLastUpdated: true });
         }
       }).catch(() => {}).finally(() => setCloudReady(true));
     }

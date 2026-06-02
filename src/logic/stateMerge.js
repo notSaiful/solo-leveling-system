@@ -82,29 +82,31 @@ function mergeChatHistory(messagesA = [], messagesB = []) {
     .slice(-120);
 }
 
-function mergeDailyQuests(base = {}, other = {}) {
-  const baseDate = base.lastQuestDate || '';
-  const otherDate = other.lastQuestDate || '';
-  if (baseDate !== otherDate) {
-    return otherDate > baseDate ? (other.dailyQuests || []) : (base.dailyQuests || []);
+function mergeDailyQuests(currentState = {}, incomingState = {}) {
+  const currentDate = currentState.lastQuestDate || '';
+  const incomingDate = incomingState.lastQuestDate || '';
+  if (currentDate !== incomingDate) {
+    return incomingDate > currentDate ? (incomingState.dailyQuests || []) : (currentState.dailyQuests || []);
   }
 
-  const quests = new Map();
-  [...(base.dailyQuests || []), ...(other.dailyQuests || [])].forEach((quest) => {
+  if (!(currentState.dailyQuests || []).length) return incomingState.dailyQuests || [];
+  if (!(incomingState.dailyQuests || []).length) return currentState.dailyQuests || [];
+
+  const incomingByKey = new Map((incomingState.dailyQuests || []).map(quest => [
+    quest.uniqueId || quest.id || quest.title,
+    quest,
+  ]));
+
+  return (currentState.dailyQuests || []).map((quest) => {
     const key = quest.uniqueId || quest.id || quest.title;
-    const previous = quests.get(key);
-    if (!previous) {
-      quests.set(key, quest);
-      return;
-    }
-    quests.set(key, {
-      ...previous,
+    const incomingQuest = incomingByKey.get(key);
+    if (!incomingQuest) return quest;
+    return {
       ...quest,
-      completed: previous.completed || quest.completed,
-      completedAt: previous.completedAt || quest.completedAt,
-    });
+      completed: quest.completed || incomingQuest.completed,
+      completedAt: quest.completedAt || incomingQuest.completedAt,
+    };
   });
-  return Array.from(quests.values());
 }
 
 function isDebuffNewer(candidate, current) {
@@ -189,7 +191,7 @@ export function mergeStatesForSync(currentState, incomingState) {
     pillars: mergePillars(base.pillars, other.pillars),
     stats: { ...(other.stats || {}), ...(base.stats || {}) },
     gold: base.gold || 0,
-    dailyQuests: mergeDailyQuests(base, other),
+    dailyQuests: mergeDailyQuests(currentState, incomingState),
     customQuests: pruneExpiredCustomQuests(mergeUniqueBy(base.customQuests, other.customQuests)),
     levelQuests: mergeUniqueBy(base.levelQuests, other.levelQuests),
     redemptionQuests: mergeUniqueBy(base.redemptionQuests, other.redemptionQuests),
