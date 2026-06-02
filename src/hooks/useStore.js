@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { loadState, saveState, queueCloudSync } from '../data/store';
+import { canQueueCloudSync, loadState, saveState, queueCloudSync } from '../data/store';
 import { isCanonicalSyncConfigured } from '../services/canonicalSync';
 
 export function useStore() {
@@ -11,7 +11,7 @@ export function useStore() {
     } catch (e) {
       console.warn('useStore save failed:', e);
     }
-    if (isCanonicalSyncConfigured() && (state.lastUpdated || 0) > 0) {
+    if (isCanonicalSyncConfigured() && canQueueCloudSync() && (state.lastUpdated || 0) > 0) {
       try {
         queueCloudSync(state);
       } catch (e) {

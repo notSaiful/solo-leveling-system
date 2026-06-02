@@ -148,10 +148,79 @@ function FloatingParticles() {
   );
 }
 
+function getQuestFingerprint(state) {
+  const raw = [
+    state.lastQuestDate || 'no-date',
+    state.syncRevision || 0,
+    ...(state.dailyQuests || []).map(q => `${q.uniqueId || q.id || q.title}:${q.completed ? 1 : 0}`),
+  ].join('|');
+  let hash = 0;
+  for (let i = 0; i < raw.length; i += 1) {
+    hash = ((hash << 5) - hash + raw.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash).toString(36).toUpperCase().slice(0, 6).padStart(6, '0');
+}
+
+function SyncGate({ status }) {
+  const isError = status.state === 'error';
+  return (
+    <ErrorBoundary>
+      <div className="min-h-screen flex items-center justify-center bg-black text-cyan-400 p-6 relative overflow-hidden">
+        <FloatingParticles />
+        <div className="fixed inset-0 grid-bg pointer-events-none z-0" />
+        <div className={`glass-panel-strong p-6 max-w-md w-full text-center space-y-4 relative z-10 ${isError ? 'border-red-500/40' : ''}`}>
+          {isError ? (
+            <AlertTriangle size={42} className="mx-auto text-red-400" />
+          ) : (
+            <Zap size={42} className="mx-auto text-cyan-400 animate-pulse" />
+          )}
+          <h2 className="font-orbitron text-lg font-bold tracking-wider">
+            {isError ? 'CLOUD SYNC BLOCKED' : 'SYNCING SYSTEM'}
+          </h2>
+          <p className="text-sm text-cyan-500/70">
+            {isError
+              ? 'The app cannot load your unified progress state. Local cached quests are blocked to prevent device drift.'
+              : 'Loading your single canonical progress state before quests are shown.'}
+          </p>
+          {isError && (
+            <>
+              <div className="text-xs text-red-300/80 bg-red-950/20 border border-red-900/30 rounded p-2 break-words">
+                {status.error || 'Unknown sync error'}
+              </div>
+              <button
+                onClick={() => window.location.reload()}
+                className="w-full bg-cyan-900/20 hover:bg-cyan-900/40 border border-cyan-700/50 text-cyan-300 py-3 rounded-lg text-sm transition-colors min-h-[44px]"
+              >
+                Retry Cloud Sync
+              </button>
+              <button
+                onClick={() => {
+                  localStorage.removeItem(STORAGE_KEY);
+                  localStorage.removeItem('system_chat_history');
+                  window.location.reload();
+                }}
+                className="w-full bg-red-900/20 hover:bg-red-900/40 border border-red-700/50 text-red-300 py-3 rounded-lg text-sm transition-colors min-h-[44px]"
+              >
+                Clear Local Cache & Retry
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </ErrorBoundary>
+  );
+}
+
 export default function App() {
   const { state, setState } = useStore();
   const { notification, dismiss } = useLevelUp(state);
-  const [cloudReady, setCloudReady] = useState(() => !isCanonicalSyncConfigured());
+  const syncConfigured = isCanonicalSyncConfigured();
+  const [cloudReady, setCloudReady] = useState(() => !syncConfigured);
+  const [syncStatus, setSyncStatus] = useState(() => ({
+    state: syncConfigured ? 'loading' : 'local',
+    source: syncConfigured ? 'cloud' : 'local',
+    error: null,
+  }));
 
   // Check penalties on mount
   usePenaltyCheck(state, setState, cloudReady);
@@ -162,13 +231,27 @@ export default function App() {
 
   // Silent cloud init on mount if credentials exist
   useEffect(() => {
-    if (isCanonicalSyncConfigured()) {
+    if (syncConfigured) {
+      setCloudReady(false);
+      setSyncStatus({ state: 'loading', source: 'cloud', error: null });
       initCloudSync().then((result) => {
         if (result?.success) {
           const fresh = loadState();
           setState({ ...fresh, __preserveLastUpdated: true });
+          setCloudReady(true);
+          setSyncStatus({ state: 'ready', source: result.source || 'cloud', error: null });
+          return;
         }
-      }).catch(() => {}).finally(() => setCloudReady(true));
+        setCloudReady(false);
+        setSyncStatus({
+          state: 'error',
+          source: 'cloud',
+          error: result?.error || result?.reason || 'Canonical sync failed',
+        });
+      }).catch((error) => {
+        setCloudReady(false);
+        setSyncStatus({ state: 'error', source: 'cloud', error: error.message || 'Canonical sync failed' });
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -267,6 +350,11 @@ export default function App() {
 
   const flowDisplay = getFlowStateDisplay(state.flowState);
   const build = getCharacterBuild(state.stats || {});
+  const questFingerprint = useMemo(() => getQuestFingerprint(state), [
+    state.lastQuestDate,
+    state.syncRevision,
+    state.dailyQuests,
+  ]);
 
   const tabs = [
     { id: 'dashboard', label: 'Status', icon: LayoutDashboard },
@@ -276,6 +364,10 @@ export default function App() {
     { id: 'build', label: 'Build', icon: Sparkles },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
+
+  if (syncConfigured && !cloudReady) {
+    return <SyncGate status={syncStatus} />;
+  }
 
   return (
     <ErrorBoundary>
@@ -353,8 +445,9 @@ export default function App() {
               </div>
               <div className="text-xs text-cyan-500/50 space-y-1">
                 <p>Forge-Master AI: <span className="text-green-400">Server proxy + fallback model</span></p>
-                <p>Cloud Sync: <span className="text-green-400">Auto-sync active</span></p>
+                <p>Cloud Sync: <span className="text-green-400">{syncStatus.source === 'local' ? 'Local dev mode' : `Canonical ${syncStatus.source}`}</span></p>
                 <p>Storage: <span className="text-green-400">localStorage + cloud snapshot</span></p>
+                <p>Snapshot: <span className="text-cyan-300">rev {state.syncRevision || 0} / {state.lastQuestDate || 'no-date'} / {(state.dailyQuests || []).length} quests / {questFingerprint}</span></p>
               </div>
               <DiagnosticPanel />
             </div>
