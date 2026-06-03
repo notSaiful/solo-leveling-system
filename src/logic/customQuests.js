@@ -1,4 +1,4 @@
-import { getLocalDateString, toLocalDateString } from '../utils/dateUtils';
+import { getLocalDateString, toLocalDateString } from '../utils/dateUtils.js';
 
 export function normalizeCustomQuest(quest) {
   const stableId = quest.id || quest.uniqueId || `custom-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;

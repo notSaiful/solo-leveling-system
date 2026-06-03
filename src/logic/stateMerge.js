@@ -1,4 +1,4 @@
-import { pruneExpiredCustomQuests } from './customQuests';
+import { pruneExpiredCustomQuests } from './customQuests.js';
 
 const PILLARS = ['deen', 'body', 'money'];
 
