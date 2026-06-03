@@ -1,4 +1,14 @@
 {
+  "redirects": [
+    {
+      "source": "/:path*",
+      "missing": [
+        { "type": "host", "value": "solo-leveling-system-psi.vercel.app" }
+      ],
+      "destination": "https://solo-leveling-system-psi.vercel.app/:path*",
+      "permanent": false
+    }
+  ],
   "rewrites": [
     { "source": "/(.*)", "destination": "/" }
   ],
@@ -10,7 +20,7 @@
       ]
     },
     {
-      "source": "/index.html",
+      "source": "/manifest.json",
       "headers": [
         { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
         { "key": "Pragma", "value": "no-cache" },
@@ -18,7 +28,7 @@
       ]
     },
     {
-      "source": "/",
+      "source": "/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
         { "key": "Pragma", "value": "no-cache" },

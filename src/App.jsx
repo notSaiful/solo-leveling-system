@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { LayoutDashboard, BarChart3, Swords, Settings, ShoppingBag, Sparkles, Coins, Zap, AlertTriangle, Users, Crown, Wrench, Play, Heart } from 'lucide-react';
 import { activateSkill, getSkillCooldownRemaining } from './data/skills';
-import { checkLegacyShadowExtraction, LEGACY_SHADOW_QUESTS, getConsecutiveDailyCompletions } from './data/legacyShadows';
+import { checkLegacyShadowExtraction, LEGACY_SHADOW_QUESTS, getLegacyShadowProgress, logLegacyShadowDay } from './data/legacyShadows';
 import { useStore } from './hooks/useStore';
 import { useLevelUp } from './hooks/useLevelUp';
 import { usePenaltyCheck } from './hooks/usePenaltyCheck';
@@ -297,10 +297,12 @@ export default function App() {
             {/* Legacy Shadow Extraction */}
             <div className="glass-panel p-4 space-y-3 border border-cyan-700/30">
               <div className="text-sm text-cyan-500/60">Manhood Forge — Extract Shadow</div>
+              <div className="text-[11px] text-cyan-500/40">Log each day manually. Streaks break if you miss a day. No auto-counting.</div>
               <div className="space-y-2">
                 {LEGACY_SHADOW_QUESTS.map(template => {
                   const alreadyExtracted = state.legacyShadows?.some(s => s.id === template.shadow.id);
-                  const progress = alreadyExtracted ? template.requiredDays : getConsecutiveDailyCompletions(state.history, template.pillar);
+                  const { currentStreak, canLogToday } = getLegacyShadowProgress(state, template.id);
+                  const progress = alreadyExtracted ? template.requiredDays : currentStreak;
                   const canExtract = progress >= template.requiredDays;
                   return (
                     <div key={template.id} className={`rounded-lg border p-3 ${alreadyExtracted ? 'bg-green-950/10 border-green-800/20' : 'bg-cyan-950/10 border-cyan-800/20'}`}>
@@ -309,23 +311,36 @@ export default function App() {
                         {alreadyExtracted ? (
                           <span className="text-[10px] text-green-400">Extracted ✓</span>
                         ) : (
-                          <button
-                            onClick={() => setState(prev => checkLegacyShadowExtraction(prev, template.id))}
-                            disabled={!canExtract}
-                            className={`text-xs px-2 py-1 rounded border transition-colors ${
-                              canExtract
-                                ? 'bg-cyan-900/30 border-cyan-500/40 text-cyan-300 hover:bg-cyan-800/40'
-                                : 'bg-cyan-950/20 border-cyan-800/20 text-cyan-600 cursor-not-allowed'
-                            }`}
-                          >
-                            {canExtract ? 'Extract' : 'Locked'}
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => setState(prev => logLegacyShadowDay(prev, template.id))}
+                              disabled={!canLogToday}
+                              className={`text-xs px-2 py-1 rounded border transition-colors ${
+                                canLogToday
+                                  ? 'bg-cyan-900/30 border-cyan-500/40 text-cyan-300 hover:bg-cyan-800/40'
+                                  : 'bg-green-950/20 border-green-700/30 text-green-400 cursor-default'
+                              }`}
+                            >
+                              {canLogToday ? 'Log Today' : 'Logged ✓'}
+                            </button>
+                            <button
+                              onClick={() => setState(prev => checkLegacyShadowExtraction(prev, template.id))}
+                              disabled={!canExtract}
+                              className={`text-xs px-2 py-1 rounded border transition-colors ${
+                                canExtract
+                                  ? 'bg-purple-900/30 border-purple-500/40 text-purple-300 hover:bg-purple-800/40'
+                                  : 'bg-cyan-950/20 border-cyan-800/20 text-cyan-600 cursor-not-allowed'
+                              }`}
+                            >
+                              {canExtract ? 'Extract' : 'Locked'}
+                            </button>
+                          </div>
                         )}
                       </div>
                       <div className="text-xs text-cyan-500/60">{template.description}</div>
                       <div className="mt-2">
                         <div className="flex items-center justify-between text-[10px] text-cyan-500/40 mb-1">
-                          <span>Progress: {progress}/{template.requiredDays} days</span>
+                          <span>Streak: {progress}/{template.requiredDays} days</span>
                           <span>{Math.min(100, Math.round((progress / template.requiredDays) * 100))}%</span>
                         </div>
                         <div className="w-full bg-cyan-900/30 rounded-full h-1">

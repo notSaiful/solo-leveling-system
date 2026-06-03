@@ -1,6 +1,6 @@
 // Stat system inspired by Solo Leveling's 6 attributes
 export const STAT_NAMES = {
-  strength: { name: 'Strength', icon: '💪', description: 'Physical power. Boosts Body quest XP.', color: '#f44336' },
+  strength: { name: 'Strength', icon: '💪', description: 'Physical endurance. Boosts Body quest XP.', color: '#f44336' },
   agility: { name: 'Agility', icon: '⚡', description: 'Speed and consistency. Enables Flow State faster.', color: '#2196F3' },
   intelligence: { name: 'Intelligence', icon: '🧠', description: 'Knowledge depth. Boosts Deen quest XP.', color: '#9C27B0' },
   sense: { name: 'Sense', icon: '👁️', description: 'Intuition and awareness. Boosts Money quest XP.', color: '#FF9800' },
@@ -58,7 +58,7 @@ export function getCharacterBuild(stats) {
   const topStats = entries.filter(([_, v]) => v >= max - 5).map(([k]) => k);
 
   if (topStats.includes('strength') && topStats.includes('health')) {
-    return { name: 'Warrior Build', icon: '⚔️', description: 'Dominant in physical power' };
+    return { name: 'Warrior Build', icon: '⚔️', description: 'Dominant in physical endurance' };
   }
   if (topStats.includes('intelligence') && topStats.includes('mana')) {
     return { name: 'Scholar Build', icon: '📜', description: 'Dominant in spiritual knowledge' };

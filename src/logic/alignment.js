@@ -1,6 +1,6 @@
 const ALIGNMENT_KEYWORDS = {
   deen: ['quran', 'islam', 'allah', 'prayer', 'salah', 'dhikr', 'hadith', 'fiqh', 'seerah', 'aqeedah', 'tafsir', 'dua', 'ramadan', 'zakat', 'hajj', 'umrah', 'mosque', 'masjid', 'ummah', 'sunnah'],
-  body: ['workout', 'exercise', 'gym', 'run', 'pushup', 'pullup', 'squat', 'cardio', 'strength', 'fitness', 'health', 'nutrition', 'protein', 'fasting', 'sleep', 'hydration', 'cold shower', 'meditation', 'mental'],
+  body: ['outdoor', 'explore', 'hike', 'trek', 'trail', 'walk', 'nature', 'climb', 'camp', 'navigation', 'endurance', 'terrain', 'wilderness', 'run', 'strength', 'health', 'fasting', 'sleep', 'hydration', 'cold shower', 'meditation', 'mental'],
   money: ['income', 'investment', 'stock', 'business', 'side hustle', 'freelance', 'savings', 'expense', 'budget', 'finance', 'wealth', 'halal', 'sadaqah', 'charity', 'zakat', 'trade', 'money', 'profit', 'revenue', 'client'],
 };
 

@@ -22,7 +22,7 @@ export const MISSION_PHASES = [
       'Maintain worship, training, earning, service, and family action every week.',
       'Create one repeatable income or learning asset.',
       'Teach what you learn in simple language.',
-      'Practice lawful protection readiness: fitness, restraint, first aid, documentation, and de-escalation.',
+      'Practice lawful protection readiness: outdoor endurance, restraint, first aid, documentation, and de-escalation.',
     ],
   },
   {

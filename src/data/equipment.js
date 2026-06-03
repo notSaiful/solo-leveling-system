@@ -11,11 +11,11 @@ export const EQUIPMENT_SLOTS = ['weapon', 'armor', 'ring'];
 
 export const EQUIPMENT_TEMPLATES = {
   // E-D rank gear (100 durability)
-  'training-blade': {
-    id: 'training-blade', name: 'Training Blade', slot: 'weapon', pillar: 'body', boost: 0.05, maxDurability: 100,
+  'trail-staff': {
+    id: 'trail-staff', name: 'Trail Staff', slot: 'weapon', pillar: 'body', boost: 0.05, maxDurability: 100,
   },
-  'recruit-vest': {
-    id: 'recruit-vest', name: 'Recruit Vest', slot: 'armor', pillar: 'body', boost: 0.05, maxDurability: 100,
+  'wanderer-cloak': {
+    id: 'wanderer-cloak', name: 'Wanderer Cloak', slot: 'armor', pillar: 'body', boost: 0.05, maxDurability: 100,
   },
   'apprentice-seal': {
     id: 'apprentice-seal', name: 'Apprentice Seal', slot: 'ring', pillar: 'all', boost: 0.03, maxDurability: 100,
@@ -27,11 +27,11 @@ export const EQUIPMENT_TEMPLATES = {
     id: 'code-tablet', name: 'Strategy Tablet', slot: 'weapon', pillar: 'money', boost: 0.05, maxDurability: 100,
   },
   // C-B rank gear (150 durability)
-  'scimitar-of-truth': {
-    id: 'scimitar-of-truth', name: 'Scimitar of Truth', slot: 'weapon', pillar: 'body', boost: 0.15, maxDurability: 150,
+  'compass-of-truth': {
+    id: 'compass-of-truth', name: 'Compass of Truth', slot: 'weapon', pillar: 'body', boost: 0.15, maxDurability: 150,
   },
-  'battle-plate': {
-    id: 'battle-plate', name: 'Battle Plate', slot: 'armor', pillar: 'body', boost: 0.15, maxDurability: 150,
+  'expedition-gear': {
+    id: 'expedition-gear', name: 'Expedition Gear', slot: 'armor', pillar: 'body', boost: 0.15, maxDurability: 150,
   },
   'tactician-signet': {
     id: 'tactician-signet', name: 'Tactician Signet', slot: 'ring', pillar: 'all', boost: 0.10, maxDurability: 150,

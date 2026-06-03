@@ -4,7 +4,8 @@ import { getLocalDateString } from '../utils/dateUtils';
 import { pruneExpiredCustomQuests } from '../logic/customQuests';
 
 export const STORAGE_KEY = 'soloLevelingData';
-const SCHEMA_VERSION = 3;
+const SCHEMA_VERSION = 5;
+const BUILD_VERSION = '2026-06-04-v3.2-adventure-final';
 const CLOUD_ENABLED_KEY = 'cloudSyncEnabled';
 
 export const DEFAULT_STATE = {
@@ -59,10 +60,12 @@ export const DEFAULT_STATE = {
   seerahChains: [],
   nabawiTraits: [],
   legacyShadows: [],
+  legacyShadowProgress: {},
   jobChangeGates: [],
   monarchTrials: { active: false, stage: 0, startedAt: null, completedAt: null },
   ummahCommand: { unlocked: false, linkedMembers: [] },
   weeklyStats: { soloClear: false, aiPromptsUsed: 0, weekId: null },
+  buildVersion: BUILD_VERSION,
 };
 
 function normalizeStateShape(state) {
@@ -107,6 +110,7 @@ function normalizeStateShape(state) {
   normalized.seerahChains = Array.isArray(state.seerahChains) ? state.seerahChains : [];
   normalized.nabawiTraits = Array.isArray(state.nabawiTraits) ? state.nabawiTraits : [];
   normalized.legacyShadows = Array.isArray(state.legacyShadows) ? state.legacyShadows : [];
+  normalized.legacyShadowProgress = state.legacyShadowProgress || {};
   normalized.jobChangeGates = Array.isArray(state.jobChangeGates) ? state.jobChangeGates : [];
   normalized.monarchTrials = {
     active: state.monarchTrials?.active || false,
@@ -123,6 +127,7 @@ function normalizeStateShape(state) {
     aiPromptsUsed: state.weeklyStats?.aiPromptsUsed || 0,
     weekId: state.weeklyStats?.weekId || null,
   };
+  normalized.buildVersion = state.buildVersion || BUILD_VERSION;
   return normalized;
 }
 
@@ -133,10 +138,19 @@ export function loadState() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return DEFAULT_STATE;
     const parsed = JSON.parse(raw);
-    if (parsed.version !== SCHEMA_VERSION) {
+    const buildMismatch = parsed.buildVersion && parsed.buildVersion !== BUILD_VERSION;
+    if (parsed.version !== SCHEMA_VERSION || buildMismatch) {
       // Upgrade: normalize old state with new defaults instead of wiping
       const upgraded = normalizeStateShape(parsed);
       upgraded.version = SCHEMA_VERSION;
+      upgraded.buildVersion = BUILD_VERSION;
+      // Force regeneration of quests from updated catalog
+      upgraded.dailyQuests = [];
+      upgraded.levelQuests = [];
+      upgraded.redemptionQuests = [];
+      upgraded.customQuests = [];
+      upgraded.lastQuestDate = null;
+      upgraded.weeklyDungeons = { ...DEFAULT_STATE.weeklyDungeons };
       saveState(upgraded);
       return upgraded;
     }

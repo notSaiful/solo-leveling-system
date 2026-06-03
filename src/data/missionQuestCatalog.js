@@ -27,12 +27,12 @@ export const MISSION_DAILY_QUEST_TEMPLATES = {
     {
       id: 'mission-readiness-restraint',
       title: 'Readiness With Restraint',
-      description: 'Train one lawful protection capacity: strength, recovery, first aid, situational awareness, de-escalation, or fitness discipline.',
+      description: 'Train one lawful protection capacity: outdoor endurance, navigation, first aid, situational awareness, de-escalation, or wilderness discipline.',
       baseXp: 12,
       pillar: 'body',
       estimatedMinutes: 10,
       missionDuty: 'readiness',
-      tags: ['readiness', 'strength', 'recovery', 'first aid', 'de-escalation', 'discipline'],
+      tags: ['readiness', 'endurance', 'navigation', 'first aid', 'de-escalation', 'discipline'],
     },
   ],
   service: [

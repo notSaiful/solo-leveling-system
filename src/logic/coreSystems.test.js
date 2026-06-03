@@ -812,7 +812,7 @@ describe('mission doctrine and metrics', () => {
 
     expect(() => addReadinessEntryToState(baseState(), {
       actionType: 'strength',
-      action: 'Heavy squats and mobility.',
+      action: 'Heavy hiking and terrain navigation.',
       lawfulGuardrailAccepted: false,
     })).toThrow(/restraint/i);
   });

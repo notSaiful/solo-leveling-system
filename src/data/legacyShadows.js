@@ -56,7 +56,68 @@ export const LEGACY_SHADOW_QUESTS = [
   },
 ];
 
-/** Count consecutive days of completed daily quests for a pillar */
+/** Get explicit manual progress for a legacy shadow quest (no auto-counting) */
+export function getLegacyShadowProgress(state, questId) {
+  const progress = state.legacyShadowProgress?.[questId];
+  if (!progress) return { currentStreak: 0, lastLogDate: null, canLogToday: true };
+
+  const today = getLocalDateString();
+  const canLogToday = progress.lastLogDate !== today;
+
+  // Check if streak is still valid (not broken by a missed day)
+  if (progress.lastLogDate) {
+    const last = new Date(progress.lastLogDate + 'T12:00:00');
+    const now = new Date(today + 'T12:00:00');
+    const gap = Math.round((now - last) / (24 * 60 * 60 * 1000));
+    if (gap > 1) {
+      // Streak broken — reset to 0 but allow logging today
+      return { currentStreak: 0, lastLogDate: progress.lastLogDate, canLogToday: true };
+    }
+  }
+
+  return { currentStreak: progress.currentStreak || 0, lastLogDate: progress.lastLogDate, canLogToday };
+}
+
+/** Manually log one day of progress for a legacy shadow quest */
+export function logLegacyShadowDay(state, questId) {
+  const template = LEGACY_SHADOW_QUESTS.find(q => q.id === questId);
+  if (!template) return state;
+
+  const alreadyExtracted = state.legacyShadows?.some(s => s.id === template.shadow.id);
+  if (alreadyExtracted) return state;
+
+  const today = getLocalDateString();
+  const existing = state.legacyShadowProgress || {};
+  const progress = existing[questId] || { currentStreak: 0, lastLogDate: null, logHistory: [] };
+
+  if (progress.lastLogDate === today) return state; // Already logged today
+
+  // Check if streak continues or resets
+  let newStreak = 1;
+  if (progress.lastLogDate) {
+    const last = new Date(progress.lastLogDate + 'T12:00:00');
+    const now = new Date(today + 'T12:00:00');
+    const gap = Math.round((now - last) / (24 * 60 * 60 * 1000));
+    if (gap === 1) {
+      newStreak = (progress.currentStreak || 0) + 1;
+    }
+  }
+
+  return {
+    ...state,
+    legacyShadowProgress: {
+      ...existing,
+      [questId]: {
+        ...progress,
+        currentStreak: newStreak,
+        lastLogDate: today,
+        logHistory: [...(progress.logHistory || []), today],
+      },
+    },
+  };
+}
+
+/** Kept for backward compatibility — no longer used for legacy shadow progress */
 export function getConsecutiveDailyCompletions(history, pillar) {
   const completions = (history || [])
     .filter(h => h.pillar === pillar && h.completed && h.type === 'daily')
@@ -88,13 +149,11 @@ export function getConsecutiveDailyCompletions(history, pillar) {
     prevDate = date;
   }
 
-  // If the streak ends before today, only count up to the last completion day
   const lastCompletion = sorted[sorted.length - 1];
   const lastDate = new Date(lastCompletion + 'T12:00:00');
   const todayDate = new Date(today + 'T12:00:00');
   const gap = Math.round((todayDate - lastDate) / (24 * 60 * 60 * 1000));
   if (gap > 1) {
-    // Streak is broken — don't count past days as current progress
     return 0;
   }
 
@@ -108,8 +167,8 @@ export function checkLegacyShadowExtraction(state, questId) {
   const alreadyExtracted = state.legacyShadows.some(s => s.id === template.shadow.id);
   if (alreadyExtracted) return state;
 
-  const consecutiveDays = getConsecutiveDailyCompletions(state.history, template.pillar);
-  if (consecutiveDays < template.requiredDays) {
+  const { currentStreak } = getLegacyShadowProgress(state, questId);
+  if (currentStreak < template.requiredDays) {
     return {
       ...state,
       systemMessages: [
@@ -118,7 +177,7 @@ export function checkLegacyShadowExtraction(state, questId) {
           type: 'warning',
           title: 'EXTRACTION FAILED',
           subtitle: template.shadow.name,
-          message: `Complete ${template.requiredDays} consecutive days of ${template.pillar} quests first. Current streak: ${consecutiveDays} days.`,
+          message: `Complete ${template.requiredDays} consecutive days of ${template.title} first. Current streak: ${currentStreak} days. Log each day manually in the Legion tab.`,
         },
       ],
     };

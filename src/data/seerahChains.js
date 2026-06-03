@@ -50,7 +50,7 @@ export const SEERAH_CHAINS = [
     dailyQuests: [
       { title: 'Patience in Delay', description: 'Accept one delay or cancellation without complaint. Plan B execution. The Khalifa does not break under pressure.', pillar: 'deen', xp: 40 },
       { title: 'Market Loss Grace', description: 'If any investment or AI project declined, do not panic. Hold with tawakkul, audit honestly, and strategize for the next move.', pillar: 'money', xp: 40 },
-      { title: 'Physical Pain Endurance', description: 'Complete workout despite discomfort. No excuses. The warrior endures — your future family will inherit that discipline.', pillar: 'body', xp: 40 },
+      { title: 'Outdoor Pain Endurance', description: 'Complete an outdoor challenge despite discomfort. No excuses. The warrior endures — your future family will inherit that discipline.', pillar: 'body', xp: 40 },
     ],
     reward: {
       nabawiTrait: 'Sabir',
@@ -98,7 +98,7 @@ export const SEERAH_CHAINS = [
     totalDays: 21,
     dailyQuests: [
       { title: 'Courage Under Fire', description: 'Do one thing that scares you today for the sake of the Ummah. Speak truth to power. Stand when others sit.', pillar: 'deen', xp: 70 },
-      { title: 'Protect the Innocent', description: 'Identify one person or group being wronged and take one protective action. The warrior-Khalifa is the shield of the Ummah — strength exists to defend.', pillar: 'body', xp: 70 },
+      { title: 'Protect the Innocent', description: 'Identify one person or group being wronged and take one protective action. The warrior-Khalifa is the shield of the Ummah — endurance exists to defend.', pillar: 'body', xp: 70 },
       { title: 'Strength for Justice', description: 'Use your AI skills, wealth, or influence to combat one injustice today. Wealth is worthless if it does not defend the oppressed.', pillar: 'money', xp: 70 },
     ],
     reward: {
