@@ -12,26 +12,25 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
-    <meta name="build-version" content="2026-06-04-v3.3-adventure" />
+    <meta name="build-version" content="2026-06-04-v3.4-adventure-nuclear" />
     <title>Solo Leveling System</title>
     <script>
+      // Immediate service worker kill + hard reload on version mismatch
       (function() {
-        // Unregister any service workers to prevent PWA stale caching
+        var BUILD = '2026-06-04-v3.4-adventure-nuclear';
         if ('serviceWorker' in navigator) {
           navigator.serviceWorker.getRegistrations().then(function(regs) {
             regs.forEach(function(reg) { reg.unregister(); });
           });
         }
-        // Build version cache busting — hard navigate with timestamp (reload(true) is deprecated)
-        var build = document.querySelector('meta[name="build-version"]')?.content || 'unknown';
-        var stored = localStorage.getItem('sls_build_version');
-        if (stored && stored !== build) {
-          localStorage.setItem('sls_build_version', build);
+        var stored = localStorage.getItem('sls_app_version');
+        if (stored && stored !== BUILD) {
+          localStorage.clear();
+          sessionStorage.clear();
           var url = new URL(location.href);
-          url.searchParams.set('_v', build);
+          url.searchParams.set('_v', BUILD);
+          url.searchParams.set('_t', Date.now());
           location.replace(url.toString());
-        } else {
-          localStorage.setItem('sls_build_version', build);
         }
       })();
     </script>

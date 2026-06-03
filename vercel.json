@@ -1,14 +1,4 @@
 {
-  "redirects": [
-    {
-      "source": "/:path*",
-      "missing": [
-        { "type": "host", "value": "solo-leveling-system-psi.vercel.app" }
-      ],
-      "destination": "https://solo-leveling-system-psi.vercel.app/:path*",
-      "permanent": false
-    }
-  ],
   "rewrites": [
     { "source": "/(.*)", "destination": "/" }
   ],

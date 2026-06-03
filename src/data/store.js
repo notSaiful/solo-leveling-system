@@ -5,7 +5,7 @@ import { pruneExpiredCustomQuests } from '../logic/customQuests';
 
 export const STORAGE_KEY = 'soloLevelingData';
 const SCHEMA_VERSION = 5;
-const BUILD_VERSION = '2026-06-04-v3.2-adventure-final';
+const BUILD_VERSION = '2026-06-04-v3.4-adventure-nuclear';
 const CLOUD_ENABLED_KEY = 'cloudSyncEnabled';
 
 export const DEFAULT_STATE = {
@@ -209,6 +209,17 @@ export async function initCloudSync() {
   const cloudState = await loadStateFromCloud();
 
   if (cloudState) {
+    // If cloud state is from an old build, discard it — quest catalog may have changed
+    const cloudBuild = cloudState.buildVersion || 'unknown';
+    if (cloudBuild !== BUILD_VERSION) {
+      // Push fresh local state to cloud, overwriting stale cloud data
+      const result = await syncStateToCloud(localState);
+      if (result.success) {
+        setCloudEnabled(true);
+        return { success: true, source: 'local_upgraded', reason: 'build_mismatch' };
+      }
+    }
+
     const localTime = localState?.lastUpdated || 0;
     const cloudTime = cloudState?.lastUpdated || 0;
     // If local is newer, push local to cloud instead of overwriting
@@ -240,6 +251,16 @@ export async function reinitCloudSyncAfterLogin() {
 
   const cloudState = await loadStateFromCloud();
   if (!cloudState) return { success: false, reason: 'no_cloud_data' };
+
+  const cloudBuild = cloudState.buildVersion || 'unknown';
+  if (cloudBuild !== BUILD_VERSION) {
+    // Cloud state is stale — start fresh and push clean state
+    const fresh = normalizeStateShape(DEFAULT_STATE);
+    saveState(fresh);
+    await syncStateToCloud(fresh);
+    setCloudEnabled(true);
+    return { success: true, source: 'fresh', reason: 'build_mismatch' };
+  }
 
   const canonical = normalizeStateShape(cloudState);
   saveState(canonical);
