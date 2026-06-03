@@ -24,7 +24,7 @@ export const EQUIPMENT_TEMPLATES = {
     id: 'dhikr-strand', name: 'Dhikr Strand', slot: 'ring', pillar: 'deen', boost: 0.05, maxDurability: 100,
   },
   'code-tablet': {
-    id: 'code-tablet', name: 'Code Tablet', slot: 'weapon', pillar: 'money', boost: 0.05, maxDurability: 100,
+    id: 'code-tablet', name: 'Strategy Tablet', slot: 'weapon', pillar: 'money', boost: 0.05, maxDurability: 100,
   },
   // C-B rank gear (150 durability)
   'scimitar-of-truth': {

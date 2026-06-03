@@ -14,8 +14,8 @@ import { formatMissionMetricsForPrompt, getMissionMetrics } from '../logic/missi
 
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const AI_PROXY_URL = '/api/forge-master';
-const PRIMARY_MODEL = 'openrouter/free';
-const FALLBACK_MODEL = 'openai/gpt-4o-mini';
+const PRIMARY_MODEL = 'deepseek/deepseek-chat:free';
+const FALLBACK_MODEL = 'meta-llama/llama-3.3-70b-instruct:free';
 
 function looksLikeOpenRouterKey(k) {
   return typeof k === 'string' && k.length > 20 && k.startsWith('sk-');
@@ -348,10 +348,10 @@ export function getForgeMasterSystemPromptForTest(state, chatHistory = []) {
 
 // ─── CORE API ───
 
-async function tryModel(model, messages, state, chatHistory, maxTokens = 1500) {
+async function tryModel(model, messages, state, chatHistory, maxTokens = 1500, temperature = 0.5) {
   const apiKey = getApiKey();
 
-  console.log('[Forge-Master] tryModel:', model, 'maxTokens:', maxTokens, 'mode:', apiKey ? 'direct' : 'server-proxy', 'origin:', window.location.origin);
+  console.log('[Forge-Master] tryModel:', model, 'maxTokens:', maxTokens, 'temp:', temperature, 'mode:', apiKey ? 'direct' : 'server-proxy', 'origin:', window.location.origin);
 
   const systemPrompt = buildForgeMasterPrompt(state, chatHistory);
   const payload = {
@@ -360,7 +360,7 @@ async function tryModel(model, messages, state, chatHistory, maxTokens = 1500) {
       { role: 'system', content: systemPrompt },
       ...messages,
     ],
-    temperature: 0.85,
+    temperature,
     max_tokens: maxTokens,
     include_reasoning: false,
   };
@@ -393,13 +393,13 @@ async function tryModel(model, messages, state, chatHistory, maxTokens = 1500) {
   return data.choices?.[0]?.message?.content || 'The Forge is silent. The silence is your answer. Move.';
 }
 
-async function callOpenRouter(messages, state, chatHistory = [], maxTokens = 1500) {
+async function callOpenRouter(messages, state, chatHistory = [], maxTokens = 1500, temperature = 0.5) {
   let lastError = null;
-  console.log('[Forge-Master] Sending request. Key valid?', hasApiKey(), 'Messages:', messages.length, 'maxTokens:', maxTokens);
+  console.log('[Forge-Master] Sending request. Key valid?', hasApiKey(), 'Messages:', messages.length, 'maxTokens:', maxTokens, 'temp:', temperature);
 
   // Try primary model first
   try {
-    const result = await tryModel(PRIMARY_MODEL, messages, state, chatHistory, maxTokens);
+    const result = await tryModel(PRIMARY_MODEL, messages, state, chatHistory, maxTokens, temperature);
     console.log('[Forge-Master] Primary model succeeded');
     return result;
   } catch (err) {
@@ -411,7 +411,7 @@ async function callOpenRouter(messages, state, chatHistory = [], maxTokens = 150
   if (lastError) {
     console.log('[Forge-Master] Trying fallback model...');
     try {
-      const result = await tryModel(FALLBACK_MODEL, messages, state, chatHistory, maxTokens);
+      const result = await tryModel(FALLBACK_MODEL, messages, state, chatHistory, maxTokens, temperature);
       console.log('[Forge-Master] Fallback model succeeded');
       return result;
     } catch (err2) {
@@ -447,7 +447,7 @@ export async function sendMessage(userMessage, chatHistory, state) {
   }));
   messages.push({ role: 'user', content: sanitize(userMessage) });
 
-  const reply = await callOpenRouter(messages, state, chatHistory);
+  const reply = await callOpenRouter(messages, state, chatHistory, 1500, 0.5);
   return reply;
 }
 
@@ -549,12 +549,13 @@ Forged quest:`;
   }
 
   try {
-    let reply = await callOpenRouter([{ role: 'user', content: prompt }], state, [], 2000);
+    // Try primary model first
+    let reply = await tryModel(PRIMARY_MODEL, [{ role: 'user', content: prompt }], state, [], 2000, 0.3);
 
-    // If the free model returned garbage, retry once (fallback router may pick a different model)
+    // If primary response is malformed, try fallback model directly
     if (!looksValid(reply)) {
-      console.warn('[Forge-Master] Primary response invalid. Retrying with fallback...');
-      reply = await callOpenRouter([{ role: 'user', content: prompt }], state, [], 2000);
+      console.warn('[Forge-Master] Primary response invalid. Trying fallback model...');
+      reply = await tryModel(FALLBACK_MODEL, [{ role: 'user', content: prompt }], state, [], 2000, 0.2);
     }
 
     return reply;
@@ -631,7 +632,7 @@ CRITICAL:
 - No angle brackets in the output.
 - XP must be appropriate for ${rank}-Rank Level ${level}.`;
 
-  const reply = await callOpenRouter([{ role: 'user', content: prompt }], state, [], 2500);
+  const reply = await callOpenRouter([{ role: 'user', content: prompt }], state, [], 2500, 0.3);
   return reply;
 }
 
@@ -639,7 +640,7 @@ export async function getDailyMotivation(state) {
   const profile = buildUserProfile(state);
   const prompt = `${profile}\n\nYou are the Forge-Master. Analyze the user's weakest pillar and give them ONE specific order for today that targets that gap. Not generic motivation. A direct command tied to their rank, level, and weakest pillar. Under 80 words.`;
 
-  const reply = await callOpenRouter([{ role: 'user', content: prompt }], state, [], 600);
+  const reply = await callOpenRouter([{ role: 'user', content: prompt }], state, [], 600, 0.6);
   return reply;
 }
 
@@ -651,6 +652,6 @@ export async function analyzeProgress(state) {
 3. ONE command to close the biggest gap that is DIFFERENT from their recent actions.
 Under 120 words.`;
 
-  const reply = await callOpenRouter([{ role: 'user', content: prompt }], state, [], 800);
+  const reply = await callOpenRouter([{ role: 'user', content: prompt }], state, [], 800, 0.5);
   return reply;
 }

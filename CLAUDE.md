@@ -226,9 +226,20 @@ Each pillar has: Level, XP, Streak, Active Debuffs
 
 **Model Configuration:**
 ```javascript
-PRIMARY_MODEL   = 'openai/gpt-4o-mini'      // Reliable, always try first
-FALLBACK_MODEL  = 'moonshotai/kimi-k2.6:free' // Often 503 from Crucible
+PRIMARY_MODEL   = 'deepseek/deepseek-chat:free'          // DeepSeek V3, 671B MoE, excellent reasoning
+FALLBACK_MODEL  = 'meta-llama/llama-3.3-70b-instruct:free' // Meta 70B, reliable backup
 ```
+
+**Temperature by Call Type:**
+| Call Type | Temperature | Why |
+|-----------|-------------|-----|
+| Main chat (`sendMessage`) | 0.5 | Reliable command execution, less hallucination |
+| Custom quest (`forgeCustomQuest`) | 0.3 | Strict structured output (`[[FORGED_QUEST]]`) |
+| Extra quests (`generateExtraQuests`) | 0.3 | Strict `[[CMD]]` block compliance |
+| Daily motivation | 0.6 | Slightly creative for variety |
+| Progress analysis | 0.5 | Analytical, consistent depth |
+
+**Why the upgrade:** The previous `openrouter/free` primary routed to random low-quality 7B-13B models that could not reliably follow the 300-line Forge-Master system prompt, parse `[[CMD]]` markers, or reason about rank-based XP scaling. `deepseek/deepseek-chat:free` is a 671B parameter MoE model with excellent instruction following and structured output. `llama-3.3-70b-instruct:free` serves as a reliable fallback. Both are free-tier on OpenRouter.
 
 **Key Behaviors:**
 - Embedded default API key in `DEFAULT_API_KEY_B64` (base64)
@@ -237,6 +248,7 @@ FALLBACK_MODEL  = 'moonshotai/kimi-k2.6:free' // Often 503 from Crucible
 - Admin commands embedded in JSON inside `[[CMD]]` / `[[/CMD]]` markers
 - Brutal, Islamic, zero-excuses personality
 - Every response ends with a COMMAND, not a suggestion
+- Temperature tuned per call type: 0.3 for structured output, 0.5 for chat, 0.6 for motivation
 
 **Error Handling:**
 - 429 → Rate limit, retry later
@@ -371,7 +383,7 @@ bash build-ios-ipa.sh
 
 ### Known Limitations
 - **Chunk size warning:** Vite build produces JS chunk ~560KB. Consider code-splitting with dynamic imports if performance becomes an issue
-- **Free model fallback:** `moonshotai/kimi-k2.6:free` is often 503 from Crucible. Primary model (`gpt-4o-mini`) is reliable
+- **Free model reliability:** `deepseek/deepseek-chat:free` and `llama-3.3-70b-instruct:free` are free-tier models. They may experience rate limits (429) or temporary unavailability (503). The fallback chain handles most failures, but occasional retries may be needed during peak hours.
 - **Unsigned IPA:** Must be re-signed every 7 days via AltStore/Sideloadly
 - **Browser cache:** Users with old JS bundles may need "Clear Cache & Reload" from Settings
 - **Client-visible sync secret:** Current design is acceptable only for a solo private app. A public multi-user version needs real authentication.

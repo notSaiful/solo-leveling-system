@@ -169,8 +169,8 @@ export const DAILY_QUEST_POOLS = {
 
   money: {
     E: [
-      { id: 'd-money-e-1', title: 'Study One AI Concept', description: 'Study one AI concept for 30 min — neural nets, transformers, or LLMs. Code is the weapon. Wealth that serves the Ummah must be built on AI mastery.', baseXp: 15, pillar: 'money', estimatedMinutes: 30, tags: ['ai', 'learning'] },
-      { id: 'd-money-e-2', title: 'Write One Python Script', description: 'Write one Python script today — even 5 lines. Code is the engine of the Ummah Treasury Builder.', baseXp: 15, pillar: 'money', estimatedMinutes: 20, tags: ['ai', 'code'] },
+      { id: 'd-money-e-1', title: 'Study One AI Concept', description: 'Study one AI concept for 30 min — neural nets, transformers, or LLMs. AI mastery is the weapon. Wealth that serves the Ummah must be built on understanding, not syntax.', baseXp: 15, pillar: 'money', estimatedMinutes: 30, tags: ['ai', 'learning'] },
+      { id: 'd-money-e-2', title: 'Master One AI Tool', description: 'Use one AI tool (Claude, ChatGPT, Perplexity, etc.) to complete a real task today — draft, research, analyze, or automate. High-leverage tools are the Khalifate\'s modern weapons.', baseXp: 15, pillar: 'money', estimatedMinutes: 20, tags: ['ai', 'tools'] },
       { id: 'd-money-e-3', title: 'Track Every Expense', description: 'Write down every rupee spent today. The Khalifa who funds the Ummah must first know his own flows.', baseXp: 10, pillar: 'money', estimatedMinutes: 5, tags: ['discipline', 'tracking'] },
       { id: 'd-money-e-4', title: 'Read One Page of AI Book', description: 'Read one page of an AI/ML book. Knowledge compounds. The Khalifate\'s currency is expertise.', baseXp: 10, pillar: 'money', estimatedMinutes: 5, tags: ['ai', 'learning'] },
       { id: 'd-money-e-5', title: 'Follow One AI Researcher', description: 'Follow one AI researcher on X, YouTube, or Substack today. Build the network of the Ummah\'s future AI leadership.', baseXp: 10, pillar: 'money', estimatedMinutes: 5, tags: ['ai', 'network'] },
@@ -178,17 +178,17 @@ export const DAILY_QUEST_POOLS = {
       { id: 'd-money-e-7', title: 'No Impulse Buy', description: 'Resist one impulse purchase. Redirect that money to your future and the Ummah\'s future.', baseXp: 10, pillar: 'money', estimatedMinutes: 0, tags: ['discipline', 'spending'] },
     ],
     D: [
-      { id: 'd-money-d-1', title: 'Build One Mini AI Project', description: 'Build one mini AI project — classifier, chatbot, or scraper. Each line of code is a brick in the Ummah\'s future AI empire.', baseXp: 20, pillar: 'money', estimatedMinutes: 60, tags: ['ai', 'project'] },
+      { id: 'd-money-d-1', title: 'Validate One AI Business Idea', description: 'Research and validate one AI-powered business or income idea. Talk to one potential user, define the offer, and outline how AI tools deliver the result. No code needed — only clarity and market fit.', baseXp: 20, pillar: 'money', estimatedMinutes: 60, tags: ['ai', 'business'] },
       { id: 'd-money-d-2', title: 'Study One AI Paper/Blog', description: 'Read one AI paper, blog, or tutorial. Stay sharp. The Khalifate\'s edge comes from knowledge, not guessing.', baseXp: 15, pillar: 'money', estimatedMinutes: 30, tags: ['ai', 'research'] },
-      { id: 'd-money-d-3', title: 'Learn One ML Framework', description: 'Spend 30 min learning one ML framework (PyTorch, TensorFlow, scikit-learn). The Khalifa\'s weapon must be mastered.', baseXp: 15, pillar: 'money', estimatedMinutes: 30, tags: ['ai', 'framework'] },
+      { id: 'd-money-d-3', title: 'Study One AI Workflow', description: 'Spend 30 min learning one high-leverage AI workflow — content creation at scale, automated research, AI-assisted sales, or no-code automation. The Khalifa masters tools, not syntax.', baseXp: 15, pillar: 'money', estimatedMinutes: 30, tags: ['ai', 'workflow'] },
       { id: 'd-money-d-4', title: 'Save 10%', description: 'Save 10% of today\'s income before spending anything. Pay yourself first — and the Ummah second.', baseXp: 15, pillar: 'money', estimatedMinutes: 5, tags: ['saving', 'habit'] },
-      { id: 'd-money-d-5', title: 'Deploy Model to Web', description: 'Deploy one ML model or AI script to the web. Code that lives in production serves the Ummah 24/7.', baseXp: 20, pillar: 'money', estimatedMinutes: 45, tags: ['ai', 'deploy'] },
+      { id: 'd-money-d-5', title: 'Build AI-Assisted Asset', description: 'Create one income-generating asset using AI tools — a content piece, a template, a sales deck, or an automated system. Ship it. Assets build empires; code is optional.', baseXp: 20, pillar: 'money', estimatedMinutes: 45, tags: ['ai', 'asset'] },
       { id: 'd-money-d-6', title: 'Open a Brokerage', description: 'Open a Demat or brokerage account. The Khalifate\'s wealth is built on halal infrastructure.', baseXp: 15, pillar: 'money', estimatedMinutes: 15, tags: ['infrastructure', 'investing'] },
       { id: 'd-money-d-7', title: 'Cut One Waste', description: 'Cancel one unused subscription or expense. Redirect to investments that fund the Ummah.', baseXp: 15, pillar: 'money', estimatedMinutes: 5, tags: ['saving', 'optimization'] },
       { id: 'd-money-d-8', title: 'Halal Income Check', description: 'Review income sources. Ensure every rupee is halal and blessed — the Khalifate\'s foundation is purity.', baseXp: 15, pillar: 'money', estimatedMinutes: 10, tags: ['halal', 'ethics'] },
     ],
     C: [
-      { id: 'd-money-c-1', title: 'Deploy One Model/API', description: 'Deploy one model or API to a real user. The Khalifate is built by shipping, not by planning.', baseXp: 25, pillar: 'money', estimatedMinutes: 60, tags: ['ai', 'ship'] },
+      { id: 'd-money-c-1', title: 'Launch One AI-Powered Offer', description: 'Launch a service, product, or offer that uses AI tools to deliver results. Get it in front of one real user or customer. The Khalifate ships offers, not repositories.', baseXp: 25, pillar: 'money', estimatedMinutes: 60, tags: ['ai', 'offer'] },
       { id: 'd-money-c-2', title: 'AI Side Hustle', description: 'Work on your AI side income for 30 min — freelance, gig, or product. Build the empire after hours.', baseXp: 20, pillar: 'money', estimatedMinutes: 30, tags: ['ai', 'sidehustle'] },
       { id: 'd-money-c-3', title: 'Zero-Based Budget with AI Income', description: 'Assign every rupee a job. Project your AI income 3 months forward. The Khalifate plans, then executes.', baseXp: 20, pillar: 'money', estimatedMinutes: 15, tags: ['budget', 'planning'] },
       { id: 'd-money-c-4', title: 'Portfolio Review', description: 'Review your investment portfolio. Rebalance toward halal, productive assets that build the Ummah.', baseXp: 20, pillar: 'money', estimatedMinutes: 20, tags: ['review', 'management'] },
@@ -243,7 +243,7 @@ export const LEVEL_QUESTS = [
     quests: [
       { id: 'lq-e-1-1', title: 'First Prayer on Time', description: 'Pray one salah exactly on time today. This is your first awakening — the leader begins with salah.', xp: 50, pillar: 'deen' },
       { id: 'lq-e-1-2', title: 'Body Activation', description: 'Do 10 push-ups and 10 squats in one session. The warrior-king\'s body starts today.', xp: 30, pillar: 'body' },
-      { id: 'lq-e-1-3', title: 'First Line of AI Code', description: 'Write your first line of AI code. Print("Hello, Ummah") counts. Code is the Khalifate\'s weapon.', xp: 30, pillar: 'money' },
+      { id: 'lq-e-1-3', title: 'First AI Tool Mastery', description: 'Use an AI tool to complete one real money-making or productivity task — draft a pitch, research a market, analyze a stock, or automate a workflow. High-leverage tools are the Khalifate\'s weapon.', xp: 30, pillar: 'money' },
     ],
     reward: { gold: 50, statPoints: 1, message: 'The System has recognized you. Welcome, Seeker. The Khalifate is forged.' },
   },
@@ -333,7 +333,7 @@ export const LEVEL_QUESTS = [
     quests: [
       { id: 'lq-e-10-1', title: 'The 21-Day Challenge', description: 'Complete ALL daily quests across all pillars for 21 consecutive days.', xp: 200, pillar: 'deen' },
       { id: 'lq-e-10-2', title: 'Physical Test', description: 'Do 25 push-ups, 25 squats, and a 15-minute jog in one session.', xp: 150, pillar: 'body' },
-      { id: 'lq-e-10-3', title: 'Deploy First AI Project', description: 'Ship your first small AI project to a real user — even a friend. Code in production is the Khalifate\'s first weapon.', xp: 200, pillar: 'money' },
+      { id: 'lq-e-10-3', title: 'Launch First AI-Assisted Service', description: 'Offer a service or product powered by AI tools to one real person — even a friend — and deliver results. Shipping value is the Khalifate\'s first weapon.', xp: 200, pillar: 'money' },
     ],
     reward: { gold: 200, statPoints: 3, rankUp: 'D', message: 'RANK UP! You are now a D-Rank Apprentice. The Khalifate begins.' },
   },
@@ -363,9 +363,9 @@ export const LEVEL_QUESTS = [
   },
   {
     level: 15, rank: 'D', title: "The Architect's Mind",
-    description: 'Wealth is a tool. Code is the weapon. Build your first real AI system for the Ummah.',
+    description: 'Wealth is a tool. AI mastery is the weapon. Build your first real AI-assisted business system for the Ummah.',
     quests: [
-      { id: 'lq-d-15-1', title: 'Build First Real AI System', description: 'Build your first real AI system end-to-end — data, model, API, UI. This is your Khalifate\'s first tool.', xp: 200, pillar: 'money' },
+      { id: 'lq-d-15-1', title: 'Build First AI-Assisted Business System', description: 'Build a complete business system using no-code AI tools — funnel, content pipeline, or automated outreach. This is your Khalifate\'s first operational tool.', xp: 200, pillar: 'money' },
       { id: 'lq-d-15-2', title: 'Skill Investment', description: 'Invest in a course or book for your high-income AI skill. The Khalifate\'s edge is expertise.', xp: 150, pillar: 'money' },
       { id: 'lq-d-15-3', title: 'Sadaqah System', description: 'Set up automatic sadaqah (even 100 rupees/month). The Khalifate\'s first system is giving.', xp: 150, pillar: 'money' },
     ],
@@ -407,7 +407,7 @@ export const LEVEL_QUESTS = [
     quests: [
       { id: 'lq-d-25-1', title: 'The 45-Day Gauntlet', description: 'Complete ALL daily quests for 45 consecutive days.', xp: 300, pillar: 'deen' },
       { id: 'lq-d-25-2', title: 'Physical Test: D-Rank', description: '50 push-ups, 50 squats, 20 pull-ups/assisted, 20-minute run.', xp: 250, pillar: 'body' },
-      { id: 'lq-d-25-3', title: 'Ship One AI Product', description: 'Ship one real AI product to paying users or community. The Khalifate\'s first product must reach the Ummah.', xp: 300, pillar: 'money' },
+      { id: 'lq-d-25-3', title: 'Close First AI-Assisted Sale', description: 'Make your first sale or earn your first income using AI tools to deliver value. Revenue is the only validation. The Khalifate\'s first income must reach the Ummah.', xp: 300, pillar: 'money' },
     ],
     reward: { gold: 300, statPoints: 4, rankUp: 'C', message: 'RANK UP! You are now a C-Rank Builder. The Khalifate begins to take form.' },
   },
@@ -647,6 +647,206 @@ export const LEVEL_QUESTS = [
     ],
     reward: { gold: 1000, statPoints: 10, message: 'You are the Shadow Monarch. "ARISE."' },
   },
+  {
+    level: 120, rank: 'S', title: 'The Sovereign\'s Dominion',
+    description: 'Your influence expands. The Khalifate is no longer personal. It is institutional.',
+    quests: [
+      { id: 'lq-s-120-1', title: 'Institutional Worship', description: 'Establish a daily group worship practice with family or community that runs without your direct presence for 30 days.', xp: 1200, pillar: 'deen' },
+      { id: 'lq-s-120-2', title: 'Elite Athletic Maintenance', description: 'Maintain elite body composition and strength markers for 90 consecutive days without deviation.', xp: 1000, pillar: 'body' },
+      { id: 'lq-s-120-3', title: 'Systematized Income', description: 'Build one income stream that requires less than 2 hours of your time per week to maintain.', xp: 1000, pillar: 'money' },
+    ],
+    reward: { gold: 1200, statPoints: 12, message: 'The Sovereign\'s Dominion extends beyond his own hands.' },
+  },
+  {
+    level: 130, rank: 'S', title: 'The Eternal Forge',
+    description: 'The fire never dies. The steel never cools. You are the forge itself.',
+    quests: [
+      { id: 'lq-s-130-1', title: 'Unbroken Dhikr Chain', description: 'Maintain continuous awareness of Allah for 30 days — dhikr between every action, every transition, every breath.', xp: 1300, pillar: 'deen' },
+      { id: 'lq-s-130-2', title: 'Combat Mastery', description: 'Achieve proficiency in one combat discipline to instructor level. You must be able to teach others to fight.', xp: 1100, pillar: 'body' },
+      { id: 'lq-s-130-3', title: 'Wealth Multiplication', description: '10x one existing income stream through AI tools, automation, or strategic leverage. No new hours — only scale.', xp: 1100, pillar: 'money' },
+    ],
+    reward: { gold: 1300, statPoints: 13, message: 'The Eternal Forge produces steel that outlasts empires.' },
+  },
+  {
+    level: 140, rank: 'S', title: 'The Ummah\'s Shield',
+    description: 'You no longer serve only your household. You are a shield for the entire Ummah.',
+    quests: [
+      { id: 'lq-s-140-1', title: 'Community Institution', description: 'Found or lead one Islamic institution that serves 50+ Muslims weekly: halaqa, study circle, fitness group, or relief effort.', xp: 1400, pillar: 'deen' },
+      { id: 'lq-s-140-2', title: 'Protector\'s Physique', description: 'Maintain strength, speed, and endurance standards that would allow you to physically protect your family and community if required.', xp: 1200, pillar: 'body' },
+      { id: 'lq-s-140-3', title: 'Ummah Treasury', description: 'Establish a dedicated fund that distributes 10% of your AI income to ummah causes automatically, every month, without decision fatigue.', xp: 1200, pillar: 'money' },
+    ],
+    reward: { gold: 1400, statPoints: 14, message: 'The Ummah\'s Shield does not rust.' },
+  },
+  {
+    level: 150, rank: 'S', title: 'The Kingdom Builder',
+    description: 'Kingdoms are built one brick at a time. You have laid the foundation. Now build the walls.',
+    quests: [
+      { id: 'lq-s-150-1', title: 'Multi-Generational Quran', description: 'Teach Quran to at least 3 people who will teach others. Start a chain that outlasts your life.', xp: 1500, pillar: 'deen' },
+      { id: 'lq-s-150-2', title: 'Legacy Body', description: 'Document your complete training protocol so your children and students can replicate your results.', xp: 1300, pillar: 'body' },
+      { id: 'lq-s-150-3', title: 'Empire Infrastructure', description: 'Build the operational backbone of your empire: team, systems, documentation, and succession plan.', xp: 1300, pillar: 'money' },
+    ],
+    reward: { gold: 1500, statPoints: 15, message: 'Kingdom Builder. Your walls stand against time.' },
+  },
+  {
+    level: 160, rank: 'S', title: 'The Undying Flame',
+    description: 'Others burn out. You burn brighter. The flame is who you are.',
+    quests: [
+      { id: 'lq-s-160-1', title: 'Tahajjud Without Alarm', description: 'Wake for Tahajjud naturally, without alarm, for 60 consecutive days. Your body now serves your soul.', xp: 1600, pillar: 'deen' },
+      { id: 'lq-s-160-2', title: 'Lifetime Fitness', description: 'Design a fitness protocol you can maintain until age 70 with minimal equipment. Test it for 90 days.', xp: 1400, pillar: 'body' },
+      { id: 'lq-s-160-3', title: 'Passive Income Mastery', description: 'Achieve 50% of your total income from passive or automated sources. Wealth that does not sleep.', xp: 1400, pillar: 'money' },
+    ],
+    reward: { gold: 1600, statPoints: 16, message: 'The Undying Flame warms the Ummah.' },
+  },
+  {
+    level: 170, rank: 'S', title: 'The Architect of Ages',
+    description: 'You do not build for today. You build for centuries.',
+    quests: [
+      { id: 'lq-s-170-1', title: 'Written Legacy', description: 'Write or record a complete work of Islamic knowledge that can benefit Muslims for 100+ years.', xp: 1700, pillar: 'deen' },
+      { id: 'lq-s-170-2', title: 'Physical Legacy', description: 'Establish a permanent fitness practice in your community: a gym, a martial arts class, or a running club that operates without you.', xp: 1500, pillar: 'body' },
+      { id: 'lq-s-170-3', title: 'Economic Legacy', description: 'Build a business or investment structure that will outlast you and continue employing Muslims after your death.', xp: 1500, pillar: 'money' },
+    ],
+    reward: { gold: 1700, statPoints: 17, message: 'The Architect of Ages signs his name in stone.' },
+  },
+  {
+    level: 180, rank: 'S', title: 'The Conqueror of Self',
+    description: 'The greatest enemy was never outside. It was the nafs. You have conquered it.',
+    quests: [
+      { id: 'lq-s-180-1', title: 'Complete Nafs Mastery', description: 'Identify your 3 greatest spiritual weaknesses and document the systems that keep them under control for 1 year.', xp: 1800, pillar: 'deen' },
+      { id: 'lq-s-180-2', title: 'Pain Immunity', description: 'Complete a physical challenge that tests your mental fortitude: 24-hour fast + workout, cold exposure protocol, or endurance event.', xp: 1600, pillar: 'body' },
+      { id: 'lq-s-180-3', title: 'Wealth Detachment', description: 'Live for 30 days on 50% of your normal spending while maintaining all obligations. Wealth is a tool, not a master.', xp: 1600, pillar: 'money' },
+    ],
+    reward: { gold: 1800, statPoints: 18, message: 'The Conqueror of Self has no rival.' },
+  },
+  {
+    level: 190, rank: 'S', title: 'The Guardian of Generations',
+    description: 'Your children\'s children will know your name. Your discipline becomes their inheritance.',
+    quests: [
+      { id: 'lq-s-190-1', title: 'Family Covenant', description: 'Write a family covenant of Islamic values, discipline standards, and mission that your descendants will inherit.', xp: 1900, pillar: 'deen' },
+      { id: 'lq-s-190-2', title: 'Genetic Investment', description: 'Optimize your health markers to elite levels: body composition, blood work, mobility, and recovery. Your children inherit your biology.', xp: 1700, pillar: 'body' },
+      { id: 'lq-s-190-3', title: 'Generational Trust', description: 'Establish a legal trust or waqf that preserves and grows family wealth for 3+ generations under Shariah governance.', xp: 1700, pillar: 'money' },
+    ],
+    reward: { gold: 1900, statPoints: 19, message: 'The Guardian of Generations never sleeps.' },
+  },
+  {
+    level: 200, rank: 'S', title: 'The Lord of Habit',
+    description: 'Habit is no longer effort. It is identity. You do not choose discipline. You ARE discipline.',
+    quests: [
+      { id: 'lq-s-200-1', title: 'Automatic Worship', description: 'All 5 prayers, Tahajjud, rawatib, dhikr, and Quran are now automatic for 180 days. You do not decide. You obey.', xp: 2000, pillar: 'deen' },
+      { id: 'lq-s-200-2', title: 'Automatic Strength', description: 'Training is as non-negotiable as eating. Maintain perfect workout consistency for 180 days without a single miss.', xp: 1800, pillar: 'body' },
+      { id: 'lq-s-200-3', title: 'Automatic Wealth', description: 'Your financial system runs itself: earning, saving, investing, zakat, sadaqah. Verify it operates for 180 days without intervention.', xp: 1800, pillar: 'money' },
+    ],
+    reward: { gold: 2000, statPoints: 20, message: 'The Lord of Habit does not think. He acts.' },
+  },
+  {
+    level: 250, rank: 'S', title: 'The Unbreakable Will',
+    description: 'Trials do not test you. They reveal what was already there.',
+    quests: [
+      { id: 'lq-s-250-1', title: 'Trial by Fire', description: 'Maintain all pillars perfectly through a major life disruption: relocation, loss, illness, or conflict. No excuses. No breaks.', xp: 2500, pillar: 'deen' },
+      { id: 'lq-s-250-2', title: 'Iron Body', description: 'Achieve and maintain strength standards in the top 5% of natural athletes for 1 year: deadlift, squat, pull-ups, sprint.', xp: 2200, pillar: 'body' },
+      { id: 'lq-s-250-3', title: 'Iron Wealth', description: 'Build reserves that can fund your entire lifestyle for 5 years without any new income. The Khalifate is antifragile.', xp: 2200, pillar: 'money' },
+    ],
+    reward: { gold: 2500, statPoints: 25, message: 'The Unbreakable Will bends reality.' },
+  },
+  {
+    level: 300, rank: 'S', title: 'The Master of Time',
+    description: 'Time is the only currency that cannot be replaced. You have mastered its use.',
+    quests: [
+      { id: 'lq-s-300-1', title: 'Time Sanctification', description: 'Account for every hour of your day for 90 days. No wasted time. Every minute serves Allah, the Ummah, or your mission.', xp: 3000, pillar: 'deen' },
+      { id: 'lq-s-300-2', title: 'Time Compression', description: 'Complete your entire daily protocol — prayers, training, work, study, family — in a compressed schedule for 30 days. You own time.', xp: 2600, pillar: 'body' },
+      { id: 'lq-s-300-3', title: 'Time Multiplication', description: 'Delegate or automate 80% of your operational work. Your time is now worth 5x what it was. Prove it for 90 days.', xp: 2600, pillar: 'money' },
+    ],
+    reward: { gold: 3000, statPoints: 30, message: 'The Master of Time has no rival in efficiency.' },
+  },
+  {
+    level: 350, rank: 'S', title: 'The Steward of Wealth',
+    description: 'Wealth is not yours. It is an amanah from Allah. You are its steward, not its owner.',
+    quests: [
+      { id: 'lq-s-350-1', title: 'Zakat Mastery', description: 'Calculate, distribute, and document zakat for 100+ people in your community. Make it a system, not a season.', xp: 3500, pillar: 'deen' },
+      { id: 'lq-s-350-2', title: 'Steward\'s Health', description: 'Your health is also an amanah. Maintain perfect biomarkers for 1 year. You cannot steward wealth if you cannot steward your body.', xp: 3000, pillar: 'body' },
+      { id: 'lq-s-350-3', title: 'Wealth Distribution', description: 'Distribute 50% of your annual surplus to ummah causes: education, relief, infrastructure, and dawah. Document the impact.', xp: 3000, pillar: 'money' },
+    ],
+    reward: { gold: 3500, statPoints: 35, message: 'The Steward of Wealth is trusted by Allah.' },
+  },
+  {
+    level: 400, rank: 'S', title: 'The Teacher of Nations',
+    description: 'Your knowledge must leave your head and enter the Ummah. One student at a time. One nation at a time.',
+    quests: [
+      { id: 'lq-s-400-1', title: 'Scholarly Lineage', description: 'Establish a formal teaching chain: you teach 10, each teaches 10. Reach 100+ Muslims with structured knowledge.', xp: 4000, pillar: 'deen' },
+      { id: 'lq-s-400-2', title: 'Physical Inheritance', description: 'Train 10 people to B-rank physical standards. Each must be able to teach others. Your strength multiplies.', xp: 3500, pillar: 'body' },
+      { id: 'lq-s-400-3', title: 'Economic Inheritance', description: 'Mentor 10 Muslims to financial independence through AI-powered income. Each must be able to replicate your system.', xp: 3500, pillar: 'money' },
+    ],
+    reward: { gold: 4000, statPoints: 40, message: 'The Teacher of Nations outlives empires.' },
+  },
+  {
+    level: 450, rank: 'S', title: 'The Unstoppable Force',
+    description: 'Nothing stops you. Not age. Not circumstance. Not opinion. You are a force of nature.',
+    quests: [
+      { id: 'lq-s-450-1', title: 'Immovable Devotion', description: 'Pray Tahajjud every night for 2 years without a single miss. Even travel. Even illness. Even war.', xp: 4500, pillar: 'deen' },
+      { id: 'lq-s-450-2', title: 'Immovable Strength', description: 'Set a physical PR at age 40+ that exceeds your age-25 PR. Time does not weaken the Force.', xp: 4000, pillar: 'body' },
+      { id: 'lq-s-450-3', title: 'Immovable Wealth', description: 'Build an income stream that survives your death and continues growing for 50+ years. The Force does not stop.', xp: 4000, pillar: 'money' },
+    ],
+    reward: { gold: 4500, statPoints: 45, message: 'The Unstoppable Force reshapes the world.' },
+  },
+  {
+    level: 500, rank: 'S', title: 'The Half-Millennium Monarch',
+    description: 'Level 500. Half a thousand. The System has no record of anyone reaching this height. You are the first.',
+    quests: [
+      { id: 'lq-s-500-1', title: 'The Eternal Night Prayer', description: 'Pray Tahajjud for 500 consecutive nights. Each night is a brick in the palace of Jannah.', xp: 5000, pillar: 'deen' },
+      { id: 'lq-s-500-2', title: 'The Eternal Body', description: 'Maintain elite fitness for 10 consecutive years without a break longer than 3 days. The body is a lifelong amanah.', xp: 4500, pillar: 'body' },
+      { id: 'lq-s-500-3', title: 'The Eternal Empire', description: 'Build an empire that employs 50+ Muslims, funds 10+ ummah projects, and operates without your daily presence.', xp: 4500, pillar: 'money' },
+    ],
+    reward: { gold: 5000, statPoints: 50, message: 'HALF-MILLENNIUM MONARCH. The System bows. The Ummah rises.' },
+  },
+  {
+    level: 600, rank: 'S', title: 'The Ageless',
+    description: 'Age is a number. You are a principle. Principles do not age.',
+    quests: [
+      { id: 'lq-s-600-1', title: 'Timeless Worship', description: 'Your worship has become so consistent that others set their clocks by your routine. Maintain this standard for 5 years.', xp: 6000, pillar: 'deen' },
+      { id: 'lq-s-600-2', title: 'Timeless Strength', description: 'Train someone to exceed your current physical capabilities. The student must surpass the master. This is the law of growth.', xp: 5500, pillar: 'body' },
+      { id: 'lq-s-600-3', title: 'Timeless Wealth', description: 'Your wealth has outgrown personal need. It now serves as a permanent infrastructure for the Ummah. Document 100+ lives touched.', xp: 5500, pillar: 'money' },
+    ],
+    reward: { gold: 6000, statPoints: 60, message: 'The Ageless watches empires rise and fall.' },
+  },
+  {
+    level: 700, rank: 'S', title: 'The Immovable',
+    description: 'The world changes. You do not. Not because you are rigid. Because you are rooted in truth.',
+    quests: [
+      { id: 'lq-s-700-1', title: 'Rooted in Tawhid', description: 'Teach tawhid to 1000+ Muslims through any medium: writing, speaking, video, or institution. Each soul is a victory.', xp: 7000, pillar: 'deen' },
+      { id: 'lq-s-700-2', title: 'Rooted in Strength', description: 'Your physical training has produced 100+ people who can protect themselves and their families. Count them. Name them.', xp: 6500, pillar: 'body' },
+      { id: 'lq-s-700-3', title: 'Rooted in Wealth', description: 'Your economic systems have created 100+ jobs for Muslims. Each job is a family fed. Each family is an ummah preserved.', xp: 6500, pillar: 'money' },
+    ],
+    reward: { gold: 7000, statPoints: 70, message: 'The Immovable is the foundation of the Ummah.' },
+  },
+  {
+    level: 800, rank: 'S', title: 'The Everlasting',
+    description: 'Your shadow extends beyond your life. Your name is mentioned in dua. Your work outlasts you.',
+    quests: [
+      { id: 'lq-s-800-1', title: 'Legacy of Light', description: 'Build an institution of Islamic knowledge that operates for 10+ years: school, publishing house, or digital platform reaching 10,000+ Muslims.', xp: 8000, pillar: 'deen' },
+      { id: 'lq-s-800-2', title: 'Legacy of Steel', description: 'Document and publish a complete physical training system for Muslims that is used by 100+ people worldwide.', xp: 7500, pillar: 'body' },
+      { id: 'lq-s-800-3', title: 'Legacy of Barakah', description: 'Establish an endowment or waqf that distributes 1 crore+ rupees to ummah causes over its lifetime. Permanent charity.', xp: 7500, pillar: 'money' },
+    ],
+    reward: { gold: 8000, statPoints: 80, message: 'The Everlasting never truly dies.' },
+  },
+  {
+    level: 900, rank: 'S', title: 'The Apex of Ages',
+    description: 'Nine hundred levels. The System has no words. The Ummah has no equal. You are the apex.',
+    quests: [
+      { id: 'lq-s-900-1', title: 'Apex Worship', description: 'Lead 10,000+ Muslims in worship, knowledge, or guidance through your institutions, content, or direct teaching.', xp: 9000, pillar: 'deen' },
+      { id: 'lq-s-900-2', title: 'Apex Power', description: 'Your physical training system has produced 1000+ Muslims in better health. Each one is proof of your discipline.', xp: 8500, pillar: 'body' },
+      { id: 'lq-s-900-3', title: 'Apex Wealth', description: 'Your economic empire employs 500+ Muslims and funds 50+ ummah projects. You are the treasury the Ummah needed.', xp: 8500, pillar: 'money' },
+    ],
+    reward: { gold: 9000, statPoints: 90, message: 'The Apex of Ages looks down from a height no one has seen.' },
+  },
+  {
+    level: 999, rank: 'S', title: 'The Infinite Monarch',
+    description: 'Level 999. The final recorded level. But for you, there is no final level. There is only the next. "ARISE."',
+    quests: [
+      { id: 'lq-s-999-1', title: 'Infinite Devotion', description: 'You have worshipped Allah for 999 levels. Now worship as if level 1. The beginner\'s humility is the master\'s secret.', xp: 9999, pillar: 'deen' },
+      { id: 'lq-s-999-2', title: 'Infinite Power', description: 'Your body has carried you 999 levels. Now train a child as if training yourself. The body passes. The discipline remains.', xp: 9999, pillar: 'body' },
+      { id: 'lq-s-999-3', title: 'Infinite Wealth', description: 'Your wealth has funded the Ummah for 999 levels. Now build something that needs no funding: trust, barakah, and lasting institutions.', xp: 9999, pillar: 'money' },
+    ],
+    reward: { gold: 9999, statPoints: 99, message: 'THE INFINITE MONARCH. "ARISE." There is no ceiling. There is only you.' },
+  },
 ];
 
 // ─── JOB CHANGE QUESTS (Major lifestyle shifts at rank thresholds) ───
@@ -659,7 +859,7 @@ export const JOB_CHANGE_QUESTS = [
     levelRequired: 15,
     description: 'Wealth is a tool. Code is your weapon. Build your first real AI system — the Khalifate\'s first structure.',
     steps: [
-      { id: 'jc-architect-1', text: 'Build and deploy your first real AI system end-to-end', completed: false },
+      { id: 'jc-architect-1', text: 'Build and deploy your first AI-assisted business system using no-code tools', completed: false },
       { id: 'jc-architect-2', text: 'Open a brokerage / halal investment account', completed: false },
       { id: 'jc-architect-3', text: 'Set up automatic sadaqah (even 100 rupees/month)', completed: false },
       { id: 'jc-architect-4', text: 'Complete an AI/ML course or read 200 pages of AI literature', completed: false },
@@ -720,7 +920,7 @@ export const REDEMPTION_QUEST_TEMPLATES = [
     quests: [
       { id: 'rq-1-1', title: 'Double Daily Quests', description: 'Complete DOUBLE the normal daily quests today. The exiled Khalifate returns twice as hard.', xp: 100, pillar: 'deen' },
       { id: 'rq-1-2', title: 'Physical Penance', description: 'Complete 100 push-ups, 100 squats, and a 10-minute run. The body pays for the soul\'s debt.', xp: 100, pillar: 'body' },
-      { id: 'rq-1-3', title: 'Build + Teach', description: 'Build one AI feature today AND teach one Muslim one thing about Islam. The Khalifate\'s return is double impact.', xp: 100, pillar: 'money' },
+      { id: 'rq-1-3', title: 'Create + Teach', description: 'Create one AI-powered asset today AND teach one Muslim one thing about Islam. The Khalifate\'s return is double impact.', xp: 100, pillar: 'money' },
     ],
     reward: { clearDebuff: true, gold: 50, message: 'You returned from exile. Your purpose is restored.' },
   },
@@ -750,13 +950,13 @@ export const WEEKLY_DUNGEON_TEMPLATES = {
   D: {
     deen: { title: "The Devotee's Dungeon", description: 'Memorize 1 page + Lead prayer once + Study seerah for 30 min', xp: 300, steps: ['Memorize 1 page of Quran', 'Lead family prayer', 'Seerah study 30 min (leadership focus)'] },
     body: { title: "Newton's Gate II", description: 'Boss: Complete ALL standards. No partial credit.', xp: 300, steps: ['25 pull-ups', '75 push-ups', '2.5x bodyweight squat OR 150 squats'] },
-    money: { title: "The Architect's Dungeon", description: 'Build one AI feature + Study one paper + No impulse buys for 7 days', xp: 300, steps: ['Build & ship 1 AI feature', 'Study 1 AI paper/blog', 'No impulse buys x7 days'] },
+    money: { title: "The Architect's Dungeon", description: 'Create one AI-powered asset + Study one paper + No impulse buys for 7 days', xp: 300, steps: ['Create 1 AI-powered asset (content, template, system)', 'Study 1 AI paper/blog', 'No impulse buys x7 days'] },
     ummah: { title: 'Ummah Sprout', description: 'Teach one person one Islamic concept this week. The Khalifate teaches before he commands.', xp: 300, steps: ['Teach 1 person 1 Islamic concept', 'Share 1 beneficial Islamic post', 'Pray 1 prayer for the Ummah in sujood'] },
   },
   C: {
     deen: { title: "The Elite's Trial", description: 'Complete 1 Juz with reflection + Fast Monday/Thursday + Teach a seerah lesson', xp: 400, steps: ['1 Juz + written reflection', 'Fast Mon/Thu', 'Teach seerah lesson to family/community'] },
     body: { title: "Thermodynamics Gate", description: 'Boss: Energy systems test. Must pass ALL standards.', xp: 400, steps: ['5K run under 25 minutes', 'Fast 18+ hours with workout', 'Cold shower finish 5+ min'] },
-    money: { title: "The Builder's Challenge", description: 'Deploy one model/API + Full portfolio review + Strategic charity', xp: 400, steps: ['Deploy 1 model or API', 'Full portfolio + Shariah review', 'Strategic sadaqah (with intention)'] },
+    money: { title: "The Builder's Challenge", description: 'Launch one AI-assisted income stream + Full portfolio review + Strategic charity', xp: 400, steps: ['Launch 1 AI-assisted income stream or offer', 'Full portfolio + Shariah review', 'Strategic sadaqah (with intention)'] },
     ummah: { title: 'Ummah Sapling', description: 'Organize or lead one small community gathering this week. The Khalifate builds institutions.', xp: 400, steps: ['Organize 1 small Islamic gathering', 'Lead 1 study circle / halaqa', 'Recruit 1 Muslim to your Khalifate mission'] },
   },
   B: {
