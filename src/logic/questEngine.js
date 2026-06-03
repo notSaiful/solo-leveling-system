@@ -50,7 +50,7 @@ export function initializeDailyQuests(state) {
     }
   }
 
-  const baseDailyQuests = getDailyQuestsForRank(rank.key, state.dailyQuests, state.user?.name || '');
+  const baseDailyQuests = getDailyQuestsForRank(rank.key, state.dailyQuests, (state.user?.name || '').trim().toLowerCase());
   const dailyQuests = addMissionDailyQuests(baseDailyQuests, rank.key, state.history || []);
 
   nextState = {
