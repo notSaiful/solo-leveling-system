@@ -986,26 +986,52 @@ export function calculateGoldReward(quest, rankKey) {
   return Math.floor((base / 5) * (rankMultipliers[rankKey] || 1));
 }
 
+// ─── SEEDED RANDOM (deterministic across devices) ───
+function seededRandom(seed) {
+  let s = seed;
+  return function() {
+    s = (s * 16807 + 0) % 2147483647;
+    return (s - 1) / 2147483646;
+  };
+}
+
+function hashString(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return Math.abs(hash);
+}
+
 // ─── QUEST GENERATION HELPERS ───
-export function getDailyQuestsForRank(rankKey, existingQuests = []) {
+export function getDailyQuestsForRank(rankKey, existingQuests = [], userSeed = '') {
   const count = RANK_CONFIG[rankKey].dailyQuestsPerPillar;
   const pools = DAILY_QUEST_POOLS;
   const result = [];
 
+  // Deterministic seed: user identifier + today's date
+  const today = new Date().toLocaleDateString('en-CA');
+  const seedBase = hashString(`${userSeed || 'seeker'}-${today}`);
+  const rng = seededRandom(seedBase);
+
   ['deen', 'body', 'money'].forEach(pillar => {
     const pool = pools[pillar][rankKey] || pools[pillar].E;
-    // Fisher-Yates shuffle and pick
+    // Fisher-Yates shuffle with seeded random
     const shuffled = [...pool];
     for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
+      const j = Math.floor(rng() * (i + 1));
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
     const picked = shuffled.slice(0, count);
-    picked.forEach(q => {
+    picked.forEach((q, idx) => {
+      // Deterministic uniqueId based on seed + pillar + index
+      const deterministicId = `${q.id}-${seedBase}-${pillar}-${idx}`;
       result.push({
         ...q,
         xp: getEffectiveXp(q.baseXp, rankKey),
-        uniqueId: `${q.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        uniqueId: deterministicId,
         completed: false,
         completedAt: null,
       });
