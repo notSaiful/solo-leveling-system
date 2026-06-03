@@ -18,7 +18,6 @@ import { checkAndApplyPenalties } from './logic/penalties';
 import { getCharacterBuild } from './data/stats';
 import { DEFAULT_STATE, initCloudSync, syncNow, loadState, STORAGE_KEY } from './data/store';
 import { isCanonicalSyncConfigured } from './services/canonicalSync';
-import { hasApiKey, getApiKey } from './services/aiAssistant';
 import { getLocalDateString } from './utils/dateUtils';
 import { pruneExpiredCustomQuests } from './logic/customQuests';
 
@@ -58,122 +57,6 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-// Diagnostic panel for troubleshooting
-function DiagnosticPanel({ syncStatus, onForceSync }) {
-  const [testResult, setTestResult] = useState(null);
-  const [testing, setTesting] = useState(false);
-  const [syncTestResult, setSyncTestResult] = useState(null);
-  const [syncTesting, setSyncTesting] = useState(false);
-
-  const runTest = async () => {
-    setTesting(true);
-    setTestResult(null);
-    try {
-      const useDirectKey = hasApiKey();
-      const response = await fetch(useDirectKey ? 'https://openrouter.ai/api/v1/chat/completions' : '/api/forge-master', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(useDirectKey ? {
-            'Authorization': `Bearer ${getApiKey()}`,
-            'HTTP-Referer': window.location.origin,
-            'X-Title': 'Solo Leveling System',
-          } : {}),
-        },
-        body: JSON.stringify({
-          model: 'openrouter/free',
-          messages: [{ role: 'user', content: 'ping' }],
-          temperature: 0.85,
-          max_tokens: 20,
-        }),
-      });
-      const data = await response.json();
-      if (response.ok && data.choices) {
-        setTestResult({ ok: true, msg: `OK - ${data.model} responded` });
-      } else {
-        setTestResult({ ok: false, msg: `Error ${response.status}: ${data.error?.message || JSON.stringify(data)}` });
-      }
-    } catch (err) {
-      setTestResult({ ok: false, msg: `Network error: ${err.message}` });
-    } finally {
-      setTesting(false);
-    }
-  };
-
-  const runSyncTest = async () => {
-    setSyncTesting(true);
-    setSyncTestResult(null);
-    try {
-      const secret = import.meta.env.VITE_SLS_SYNC_SECRET || '';
-      const response = await fetch('/api/sync-state', {
-        method: 'GET',
-        headers: {
-          'x-sls-sync-secret': secret,
-        },
-        cache: 'no-store',
-      });
-      if (response.status === 401) {
-        setSyncTestResult({ ok: false, msg: 'Sync secret mismatch. Check Vercel env vars.' });
-      } else if (response.ok) {
-        const data = await response.json();
-        const hasState = data?.state && typeof data.state === 'object';
-        setSyncTestResult({ ok: true, msg: hasState ? `Sync OK — cloud state exists` : 'Sync OK — no cloud state yet' });
-      } else {
-        const text = await response.text().catch(() => 'Unknown error');
-        setSyncTestResult({ ok: false, msg: `Sync error ${response.status}: ${text.slice(0, 100)}` });
-      }
-    } catch (err) {
-      setSyncTestResult({ ok: false, msg: `Sync network error: ${err.message}` });
-    } finally {
-      setSyncTesting(false);
-    }
-  };
-
-  return (
-    <div className="mt-2 pt-2 border-t border-cyan-900/20 space-y-2">
-      <button
-        onClick={runTest}
-        disabled={testing}
-        className="w-full bg-cyan-900/20 hover:bg-cyan-900/40 border border-cyan-700/40 text-cyan-300 py-2 rounded text-xs transition-colors"
-      >
-        {testing ? 'Testing connection...' : 'Test AI Connection'}
-      </button>
-      {testResult && (
-        <div className={`text-[10px] px-2 py-1 rounded ${testResult.ok ? 'bg-green-950/30 text-green-400' : 'bg-red-950/30 text-red-400'}`}>
-          {testResult.msg}
-        </div>
-      )}
-      <div className="text-[10px] text-cyan-600/50">
-        AI route: {hasApiKey() ? 'Custom browser key' : 'Private server proxy'}
-      </div>
-
-      <button
-        onClick={runSyncTest}
-        disabled={syncTesting}
-        className="w-full bg-cyan-900/20 hover:bg-cyan-900/40 border border-cyan-700/40 text-cyan-300 py-2 rounded text-xs transition-colors mt-2"
-      >
-        {syncTesting ? 'Testing sync...' : 'Test Cloud Sync'}
-      </button>
-      {syncTestResult && (
-        <div className={`text-[10px] px-2 py-1 rounded ${syncTestResult.ok ? 'bg-green-950/30 text-green-400' : 'bg-red-950/30 text-red-400'}`}>
-          {syncTestResult.msg}
-        </div>
-      )}
-      {onForceSync && (
-        <button
-          onClick={onForceSync}
-          disabled={syncStatus?.state === 'syncing' || !isCanonicalSyncConfigured()}
-          className="w-full bg-green-900/20 hover:bg-green-900/40 border border-green-700/40 text-green-300 py-2 rounded text-xs transition-colors mt-2"
-        >
-          {syncStatus?.state === 'syncing' ? 'Syncing...' : 'Force Sync Now'}
-        </button>
-      )}
-      <div className="text-[10px] text-cyan-600/50">
-        Sync: {syncStatus?.state || 'unknown'} {syncStatus?.error ? `— ${syncStatus.error}` : ''}
-      </div>
-    </div>
-  );
-}
 
 // Floating particle component
 function FloatingParticles() {
@@ -209,7 +92,6 @@ export default function App() {
   const { state, setState } = useStore();
   const { notification, dismiss } = useLevelUp(state);
   const [cloudReady, setCloudReady] = useState(() => !isCanonicalSyncConfigured());
-  const [syncStatus, setSyncStatus] = useState({ state: isCanonicalSyncConfigured() ? 'initializing' : 'disabled', error: null });
 
   // Check penalties on mount
   usePenaltyCheck(state, setState, cloudReady);
@@ -218,43 +100,21 @@ export default function App() {
   const stateRef = useRef(state);
   stateRef.current = state;
 
-  // Cloud init on mount — blocking, with visible errors
+  // Cloud init on mount — loads cloud state silently, syncs continuously afterward
   useEffect(() => {
     if (!isCanonicalSyncConfigured()) {
       setCloudReady(true);
-      setSyncStatus({ state: 'disabled', error: null });
       return;
     }
 
-    setSyncStatus({ state: 'initializing', error: null });
     initCloudSync().then((result) => {
       if (result?.success) {
         const fresh = loadState();
         setState({ ...fresh, __preserveLastUpdated: true });
-        setSyncStatus({ state: 'connected', error: null });
-      } else {
-        setSyncStatus({ state: 'local_only', error: result?.reason || 'sync_failed' });
       }
-    }).catch((err) => {
-      setSyncStatus({ state: 'error', error: err.message || 'Cloud sync failed' });
-    }).finally(() => setCloudReady(true));
+    }).catch(() => {}).finally(() => setCloudReady(true));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const handleForceSync = async () => {
-    if (!isCanonicalSyncConfigured()) return;
-    setSyncStatus(prev => ({ ...prev, state: 'syncing' }));
-    try {
-      const result = await syncNow(stateRef.current);
-      if (result?.success) {
-        setSyncStatus({ state: 'connected', error: null });
-      } else {
-        setSyncStatus({ state: 'error', error: result?.reason || 'sync_failed' });
-      }
-    } catch (err) {
-      setSyncStatus({ state: 'error', error: err.message || 'Force sync failed' });
-    }
-  };
 
   // Initialize weekly dungeons if needed
   useEffect(() => {
@@ -629,20 +489,6 @@ export default function App() {
               <div className="text-xs text-rose-500/60 pt-1">
                 Current Score: {((state.ummahBurden?.familySupported || 0) * 10 + (state.ummahBurden?.zakatPaid || 0) * 5 + (state.ummahBurden?.sadaqahJariyah || 0) * 3 + (state.ummahBurden?.muslimVentures || 0) * 20).toLocaleString()}
               </div>
-            </div>
-
-            {/* System Status */}
-            <div className="glass-panel p-3 sm:p-4 space-y-3 border border-cyan-700/30">
-              <div className="flex items-center gap-2 mb-2">
-                <Sparkles size={16} className="text-cyan-400" />
-                <span className="font-orbitron text-sm font-semibold text-cyan-300 tracking-wider">SYSTEM STATUS</span>
-              </div>
-              <div className="text-xs text-cyan-500/50 space-y-1">
-                <p>Forge-Master AI: <span className="text-green-400">Server proxy + fallback model</span></p>
-                <p>Cloud Sync: <span className={syncStatus.state === 'connected' ? 'text-green-400' : syncStatus.state === 'error' ? 'text-red-400' : 'text-yellow-400'}>{syncStatus.state === 'connected' ? 'Connected' : syncStatus.state === 'error' ? `Error: ${syncStatus.error}` : syncStatus.state === 'disabled' ? 'Disabled (no secret)' : syncStatus.state === 'syncing' ? 'Syncing...' : 'Initializing...'}</span></p>
-                <p>Storage: <span className="text-green-400">localStorage + cloud snapshot</span></p>
-              </div>
-              <DiagnosticPanel syncStatus={syncStatus} onForceSync={handleForceSync} />
             </div>
 
             <div className="glass-panel p-3 sm:p-4 space-y-3">
