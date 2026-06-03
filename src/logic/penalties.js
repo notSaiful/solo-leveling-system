@@ -125,11 +125,12 @@ function getRequiredDailyCompletions(rankKey) {
 }
 
 function getDailyCompletionCount(history, pillar, day) {
-  return (history || []).filter(h => {
+  const matches = (history || []).filter(h => {
     if (h.pillar !== pillar || !h.completed || h.type !== 'daily') return false;
     const hDate = h.date ? toLocalDateString(h.date) : '';
     return hDate === day;
-  }).length;
+  });
+  return matches.length;
 }
 
 /** Check if the previous week's dungeon was missed before it reset */
@@ -146,8 +147,8 @@ export function checkDungeonPenalty(state, daysToCheck) {
 
   if (!mondayShifted) return null;
 
-  // Check if all three dungeons were at least started/completed
-  const allClaimed = dungeons.deenCompleted && dungeons.bodyCompleted && dungeons.moneyCompleted;
+  // Check if all four dungeons were at least started/completed
+  const allClaimed = dungeons.deenCompleted && dungeons.bodyCompleted && dungeons.moneyCompleted && dungeons.ummahCompleted;
   if (allClaimed) return null;
 
   // At least one dungeon was missed
@@ -155,6 +156,7 @@ export function checkDungeonPenalty(state, daysToCheck) {
   if (!dungeons.deenCompleted) missedPillars.push('deen');
   if (!dungeons.bodyCompleted) missedPillars.push('body');
   if (!dungeons.moneyCompleted) missedPillars.push('money');
+  if (!dungeons.ummahCompleted) missedPillars.push('ummah');
 
   return {
     type: 'missedDungeon',
@@ -165,7 +167,12 @@ export function checkDungeonPenalty(state, daysToCheck) {
 
 export function checkAndApplyPenalties(state) {
   const today = getLocalDateString();
-  const lastCheck = state.lastPenaltyCheckDate || state.lastActiveDate || today;
+  let lastCheck = state.lastPenaltyCheckDate || state.lastActiveDate || today;
+
+  // Guard against future lastCheck (device clock changes, etc.)
+  if (lastCheck > today) {
+    lastCheck = today;
+  }
 
   // Days to check: from day after lastCheck up to (but not including) today
   const daysToCheck = getDaysBetween(lastCheck, today);

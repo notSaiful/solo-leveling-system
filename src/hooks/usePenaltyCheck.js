@@ -17,7 +17,9 @@ export function usePenaltyCheck(state, setState, enabled = true) {
       const today = getLocalDateString();
 
       // Skip if we already checked today
-      if (currentState.lastPenaltyCheckDate === today && hasChecked.current) return;
+      if (currentState.lastPenaltyCheckDate === today && hasChecked.current) {
+        return;
+      }
 
       const result = checkAndApplyPenalties(currentState);
 

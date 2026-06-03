@@ -22,7 +22,9 @@ import { isDebuffActive } from '../logic/penalties';
 import { getShadowBonuses } from '../data/shadows';
 import { autoAssignStatPoints } from '../data/stats';
 import { getLocalDateString, toLocalDateString } from '../utils/dateUtils';
-import { AlertTriangle, Skull, Zap, Coins, Sparkles, Activity, Swords, Shield, Crown } from 'lucide-react';
+import { completeGateStep } from '../data/jobChangeGates';
+import { AlertTriangle, Skull, Zap, Coins, Sparkles, Activity, Swords, Shield, Crown, Wrench, BookOpen, Lock, Star, Heart, CheckCircle2 } from 'lucide-react';
+import { calculateUmmahBurden, getCurrentMilestone } from '../data/ummah';
 
 const rankColorMap = {
   'text-gray-400': '#9ca3af',
@@ -339,6 +341,28 @@ export default function Dashboard({ state, setState, ready = true }) {
         </div>
       </div>
 
+      {/* Ummah Burden */}
+      {(() => {
+        const burdenScore = calculateUmmahBurden(state.ummahBurden);
+        const milestone = getCurrentMilestone(burdenScore);
+        if (burdenScore === 0) return null;
+        return (
+          <div className="glass-panel p-3 border border-rose-500/30 bg-rose-950/10">
+            <div className="flex items-center gap-2 text-rose-400 text-sm font-semibold mb-1">
+              <Heart size={16} /> UMMAH BURDEN
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="text-xs text-cyan-500/60">Score: {burdenScore.toLocaleString()}</div>
+              {milestone && (
+                <div className="text-[10px] px-2 py-0.5 rounded border" style={{ borderColor: milestone.color + '40', color: milestone.color, backgroundColor: milestone.color + '10' }}>
+                  {milestone.label}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Shadow Power */}
       {state.shadows?.length > 0 && (
         <div className="glass-panel p-3 border border-purple-500/30 bg-purple-950/10">
@@ -355,6 +379,159 @@ export default function Dashboard({ state, setState, ready = true }) {
           <div className="text-xs text-purple-500/50 mt-1">
             +{Math.round((shadowBonuses.allXp - 1) * 100)}% all XP from shadows
           </div>
+        </div>
+      )}
+
+      {/* Active Job Change Gate */}
+      {state.jobChangeGates?.some(g => !g.completed && !g.failed) && (
+        <div className="glass-panel p-3 border border-blue-500/30 bg-blue-950/10">
+          <div className="flex items-center gap-2 text-blue-400 text-sm font-semibold mb-2">
+            <Lock size={16} /> JOB CHANGE GATE
+          </div>
+          {state.jobChangeGates.filter(g => !g.completed && !g.failed).map(gate => {
+            const currentStepIndex = gate.steps.findIndex(s => !s.completed);
+            const currentStep = currentStepIndex === -1 ? gate.steps.length : currentStepIndex;
+            const stepData = gate.steps[currentStep];
+            return (
+              <div key={gate.gateId} className="space-y-2">
+                <div className="text-xs text-cyan-300">{gate.title} (Rank {gate.rank}) — Day {gate.day}/{gate.totalDays}</div>
+                <div className="text-xs text-cyan-500/60">{currentStep}/{gate.steps.length} steps completed</div>
+                <div className="w-full bg-cyan-900/30 rounded-full h-1.5">
+                  <div
+                    className="bg-blue-500 rounded-full h-1.5 transition-all"
+                    style={{ width: `${(currentStep / gate.steps.length) * 100}%` }}
+                  />
+                </div>
+                {stepData && (
+                  <div className="mt-2 rounded-lg border border-blue-700/30 bg-blue-950/10 p-2">
+                    <div className="text-xs text-blue-300 font-semibold">{stepData.title}</div>
+                    <div className="text-xs text-cyan-500/60">{stepData.description}</div>
+                    <button
+                      onClick={() => setState(prev => completeGateStep(prev, gate.gateId, currentStep))}
+                      className="mt-2 flex items-center gap-1 text-xs px-2 py-1 rounded bg-blue-900/30 border border-blue-500/40 text-blue-300 hover:bg-blue-800/40 transition-colors"
+                    >
+                      <CheckCircle2 size={12} /> Complete Step
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Active Seerah Chain */}
+      {state.seerahChains?.some(c => !c.completed && !c.failed) && (
+        <div className="glass-panel p-3 border border-amber-500/30 bg-amber-950/10">
+          <div className="flex items-center gap-2 text-amber-400 text-sm font-semibold mb-2">
+            <BookOpen size={16} /> SEERAH QUEST CHAIN
+          </div>
+          {state.seerahChains.filter(c => !c.completed && !c.failed).map(chain => (
+            <div key={chain.chainId} className="space-y-1">
+              <div className="text-xs text-cyan-300">{chain.traitName} — Day {chain.day}/{chain.totalDays}</div>
+              <div className="w-full bg-cyan-900/30 rounded-full h-1.5">
+                <div
+                  className="bg-amber-500 rounded-full h-1.5 transition-all"
+                  style={{ width: `${(chain.day / chain.totalDays) * 100}%` }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Monarch Trials */}
+      {state.monarchTrials?.active && (
+        <div className="glass-panel p-3 border border-yellow-500/30 bg-yellow-950/10">
+          <div className="flex items-center gap-2 text-yellow-400 text-sm font-semibold mb-2">
+            <Crown size={16} /> MONARCH TRIAL
+          </div>
+          {(() => {
+            const trial = state.monarchTrials;
+            const stageDef = [null,
+              { name: 'Financial Capacity', range: [76, 85] },
+              { name: 'Physical Capacity', range: [86, 95] },
+              { name: 'Knowledge Capacity', range: [96, 99] },
+              { name: 'The Final Trial', range: [100, 100] },
+            ][trial.stage];
+            if (!stageDef) return null;
+            const progress = trial.stage < 4
+              ? Math.max(0, Math.min(100, Math.floor(((state.user.overallLevel - stageDef.range[0]) / (stageDef.range[1] - stageDef.range[0])) * 100)))
+              : Math.max(0, Math.min(100, Math.floor(
+                  (Math.min(40, Math.floor((Date.now() - new Date(trial.startedAt).getTime()) / (24 * 60 * 60 * 1000))) / 40) * 100
+                )));
+            return (
+              <div className="space-y-1">
+                <div className="text-xs text-cyan-300">Stage {trial.stage}: {stageDef.name}</div>
+                <div className="text-xs text-cyan-500/60">{progress}% complete</div>
+                <div className="w-full bg-cyan-900/30 rounded-full h-1.5">
+                  <div
+                    className="bg-yellow-500 rounded-full h-1.5 transition-all"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+                {trial.stage === 4 && (
+                  <div className="text-[10px] text-yellow-500/60 mt-1">40 days of complete mastery. Zero misses across all 3 pillars.</div>
+                )}
+              </div>
+            );
+          })()}
+        </div>
+      )}
+
+      {/* Equipment Status */}
+      {state.equipment && Object.values(state.equipment).some(Boolean) && (
+        <div className="glass-panel p-3 border border-amber-500/30 bg-amber-950/10">
+          <div className="flex items-center gap-2 text-amber-400 text-sm font-semibold mb-2">
+            <Wrench size={16} /> EQUIPMENT
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {['weapon', 'armor', 'ring'].map(slot => {
+              const item = state.equipment?.[slot];
+              return (
+                <div key={slot} className={`rounded-lg p-2 border ${item ? 'bg-amber-950/20 border-amber-700/30' : 'bg-cyan-950/10 border-cyan-800/20'}`}>
+                  <div className="text-[10px] text-cyan-500/60 uppercase capitalize">{slot}</div>
+                  <div className="text-xs text-cyan-200 truncate">{item ? item.name : 'Empty'}</div>
+                  {item && (
+                    <div className="mt-1 w-full bg-cyan-900/30 rounded-full h-1">
+                      <div
+                        className={`rounded-full h-1 transition-all ${item.durability > item.maxDurability * 0.3 ? 'bg-green-500' : 'bg-red-500'}`}
+                        style={{ width: `${(item.durability / item.maxDurability) * 100}%` }}
+                      />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Active Skills */}
+      {state.skills?.length > 0 && (
+        <div className="glass-panel p-3 border border-purple-500/30 bg-purple-950/10">
+          <div className="flex items-center gap-2 text-purple-400 text-sm font-semibold mb-2">
+            <Star size={16} /> SKILLS
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {state.skills.map(skill => (
+              <span key={skill.id} className="text-[10px] px-2 py-1 rounded border border-purple-700/30 bg-purple-900/20 text-purple-300">
+                {skill.name} {skill.active && <span className="text-green-400">●</span>}
+              </span>
+            ))}
+          </div>
+          {state.skillPoints > 0 && (
+            <div className="text-xs text-purple-500/60 mt-1">{state.skillPoints} skill points available</div>
+          )}
+        </div>
+      )}
+
+      {/* Solo Clear Bonus */}
+      {state.weeklyStats?.soloClear && (
+        <div className="glass-panel p-3 border border-green-500/30 bg-green-950/10 flex items-center gap-2">
+          <Zap size={16} className="text-green-400" />
+          <div className="text-sm text-green-400 font-semibold">Solo Clear Bonus Active</div>
+          <div className="text-xs text-green-500/60">2x shadow extraction rate this week</div>
         </div>
       )}
 

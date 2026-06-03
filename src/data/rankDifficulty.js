@@ -74,7 +74,7 @@ function getPenaltyMessage(rankKey, penaltyType) {
 }
 
 // ─── REDEMPTION QUEST SCALING ───
-// Higher ranks must do MORE to recover from failure.
+// Higher ranks must do MORE to recover from failure. Aligned with Khalifate framing.
 export function getScaledRedemptionQuest(rankKey, pillar) {
   const idx = getRankIndex(rankKey);
   const tier = idx + 1;
@@ -85,11 +85,22 @@ export function getScaledRedemptionQuest(rankKey, pillar) {
   const requiresDungeonStep = tier >= 4; // B and above
   const requiresFullDungeon = tier >= 6; // S only
 
+  // Khalifate-framed titles by tier
+  const titleByTier = [
+    'The Exile: Return to Purpose',
+    'The Khalifate\'s Reckoning',
+    'The Builder\'s Trial',
+    'The Guardian\'s Atonement',
+    'The Strategist\'s War',
+    'The Khalifa\'s Dominion',
+  ];
+  const questTitle = titleByTier[idx] || titleByTier[0];
+
   let description = `Complete ${extraQuests > 0 ? 'ALL daily quests' : 'one daily quest'} for ${pillar}`;
   if (extraQuests > 0) description += ` plus ${extraQuests} additional ${pillar} quest${extraQuests > 1 ? 's' : ''}`;
-  if (requiresDungeonStep) description += ` and complete one dungeon step for ${pillar}`;
-  if (requiresFullDungeon) description += ` and complete the ENTIRE weekly dungeon for ${pillar}`;
-  description += ' to clear your debuff.';
+  if (requiresDungeonStep) description += ` and complete one ${pillar} dungeon step`;
+  if (requiresFullDungeon) description += ` and complete the ENTIRE ${pillar} weekly dungeon`;
+  description += ' to clear your debuff. The Khalifate does not stay exiled.';
 
   const baseXp = 50;
   const scaledXp = Math.floor(baseXp * (1 + (tier - 1) * 0.5));
@@ -97,7 +108,7 @@ export function getScaledRedemptionQuest(rankKey, pillar) {
   return {
     id: `redemption-${pillar}-${Date.now()}`,
     pillar,
-    title: `Redemption: ${pillar.charAt(0).toUpperCase() + pillar.slice(1)} Recovery (${rankKey}-Rank)`,
+    title: `${questTitle} (${rankKey}-Rank ${pillar.charAt(0).toUpperCase() + pillar.slice(1)})`,
     xp: scaledXp,
     isRedemption: true,
     createdAt: new Date().toISOString(),

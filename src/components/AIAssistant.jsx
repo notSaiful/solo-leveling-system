@@ -94,6 +94,16 @@ export default function AIAssistant({ state, setState }) {
     const text = overrideText || input.trim();
     if (!text || loading) return;
 
+    if (setState) {
+      setState(prev => ({
+        ...prev,
+        weeklyStats: {
+          ...prev.weeklyStats,
+          aiPromptsUsed: (prev.weeklyStats?.aiPromptsUsed || 0) + 1,
+        },
+      }));
+    }
+
     setInput('');
     setError(null);
     setLoading(true);
@@ -148,6 +158,16 @@ export default function AIAssistant({ state, setState }) {
     setQuickAction(action);
     setLoading(true);
     setError(null);
+
+    if (setState) {
+      setState(prev => ({
+        ...prev,
+        weeklyStats: {
+          ...prev.weeklyStats,
+          aiPromptsUsed: (prev.weeklyStats?.aiPromptsUsed || 0) + 1,
+        },
+      }));
+    }
 
     try {
       let rawReply;

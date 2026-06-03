@@ -4,7 +4,7 @@ import { getLocalDateString } from '../utils/dateUtils';
 import { pruneExpiredCustomQuests } from '../logic/customQuests';
 
 export const STORAGE_KEY = 'soloLevelingData';
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 const CLOUD_ENABLED_KEY = 'cloudSyncEnabled';
 
 export const DEFAULT_STATE = {
@@ -37,7 +37,7 @@ export const DEFAULT_STATE = {
   completedJobChanges: [],
   history: [],
   systemMessages: [],
-  weeklyDungeons: { weekId: null, deenCompleted: false, bodyCompleted: false, moneyCompleted: false, bonusClaimed: false },
+  weeklyDungeons: { weekId: null, deenCompleted: false, bodyCompleted: false, moneyCompleted: false, ummahCompleted: false, bonusClaimed: false },
   aiDungeons: [],
   aiChatHistory: [],
   aiChatUpdatedAt: 0,
@@ -45,6 +45,24 @@ export const DEFAULT_STATE = {
   lastPenaltyCheckDate: null,
   lastUpdated: 0,
   syncRevision: 0,
+  // v3 Ultimate Evolution fields
+  ummahBurden: {
+    score: 0,
+    familySupported: 0,
+    zakatPaid: 0,
+    sadaqahJariyah: 0,
+    muslimVentures: 0,
+  },
+  skills: [],
+  skillPoints: 0,
+  equipment: { weapon: null, armor: null, ring: null },
+  seerahChains: [],
+  nabawiTraits: [],
+  legacyShadows: [],
+  jobChangeGates: [],
+  monarchTrials: { active: false, stage: 0, startedAt: null, completedAt: null },
+  ummahCommand: { unlocked: false, linkedMembers: [] },
+  weeklyStats: { soloClear: false, aiPromptsUsed: 0, weekId: null },
 };
 
 function normalizeStateShape(state) {
@@ -71,6 +89,40 @@ function normalizeStateShape(state) {
   normalized.missionWeeklyReviews = state.missionWeeklyReviews || [];
   normalized.aiChatHistory = Array.isArray(state.aiChatHistory) ? state.aiChatHistory : [];
   normalized.aiChatUpdatedAt = state.aiChatUpdatedAt || 0;
+  // v3 Ultimate Evolution normalization
+  normalized.ummahBurden = {
+    score: state.ummahBurden?.score || 0,
+    familySupported: state.ummahBurden?.familySupported || 0,
+    zakatPaid: state.ummahBurden?.zakatPaid || 0,
+    sadaqahJariyah: state.ummahBurden?.sadaqahJariyah || 0,
+    muslimVentures: state.ummahBurden?.muslimVentures || 0,
+  };
+  normalized.skills = Array.isArray(state.skills) ? state.skills : [];
+  normalized.skillPoints = state.skillPoints || 0;
+  normalized.equipment = {
+    weapon: state.equipment?.weapon || null,
+    armor: state.equipment?.armor || null,
+    ring: state.equipment?.ring || null,
+  };
+  normalized.seerahChains = Array.isArray(state.seerahChains) ? state.seerahChains : [];
+  normalized.nabawiTraits = Array.isArray(state.nabawiTraits) ? state.nabawiTraits : [];
+  normalized.legacyShadows = Array.isArray(state.legacyShadows) ? state.legacyShadows : [];
+  normalized.jobChangeGates = Array.isArray(state.jobChangeGates) ? state.jobChangeGates : [];
+  normalized.monarchTrials = {
+    active: state.monarchTrials?.active || false,
+    stage: state.monarchTrials?.stage || 0,
+    startedAt: state.monarchTrials?.startedAt || null,
+    completedAt: state.monarchTrials?.completedAt || null,
+  };
+  normalized.ummahCommand = {
+    unlocked: state.ummahCommand?.unlocked || false,
+    linkedMembers: Array.isArray(state.ummahCommand?.linkedMembers) ? state.ummahCommand.linkedMembers : [],
+  };
+  normalized.weeklyStats = {
+    soloClear: state.weeklyStats?.soloClear || false,
+    aiPromptsUsed: state.weeklyStats?.aiPromptsUsed || 0,
+    weekId: state.weeklyStats?.weekId || null,
+  };
   return normalized;
 }
 

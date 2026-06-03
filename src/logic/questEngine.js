@@ -19,6 +19,13 @@ import { getLocalDateString } from '../utils/dateUtils';
 import { getScaledFlowConfig } from '../data/rankDifficulty';
 import { isDebuffActive } from './penalties';
 import { addMissionDailyQuests } from './missionQuestGenerator';
+import { getUnlockedShadows, extractShadow } from '../data/shadows';
+import { applyEquipmentBonuses, updateDurability, checkEnchant, dropEquipment } from '../data/equipment';
+import { applySkillEffects, isSkillActive } from '../data/skills';
+import { applyNabawiTraits, hasPenaltyImmunity, getDebuffDurationReduction } from '../data/seerahChains';
+import { initializeSeerahChain, advanceSeerahChain, failSeerahChain, getActiveSeerahChain, wasSeerahChainAdvancedOnDate, injectSeerahDailyQuests } from '../data/seerahChains';
+import { initializeJobChangeGate, completeGateStep, failJobChangeGate, getActiveJobChangeGate, getPendingGate } from '../data/jobChangeGates';
+import { initializeMonarchTrials, checkMonarchTrialProgress } from './monarchTrials';
 
 function createEventId(prefix) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -32,14 +39,36 @@ export function initializeDailyQuests(state) {
   // Only regenerate if date changed
   if (state.lastQuestDate === today) return state;
 
+  let nextState = { ...state };
+
+  // Check for missed seerah chains BEFORE generating new quests
+  const activeChain = getActiveSeerahChain(nextState);
+  if (activeChain && state.lastQuestDate) {
+    const wasAdvanced = wasSeerahChainAdvancedOnDate(nextState, activeChain.chainId, state.lastQuestDate);
+    if (!wasAdvanced) {
+      nextState = failSeerahChain(nextState, activeChain.chainId);
+    }
+  }
+
   const baseDailyQuests = getDailyQuestsForRank(rank.key, state.dailyQuests);
   const dailyQuests = addMissionDailyQuests(baseDailyQuests, rank.key, state.history || []);
 
-  return {
-    ...state,
+  nextState = {
+    ...nextState,
     dailyQuests,
     lastQuestDate: today,
   };
+
+  // Initialize new systems
+  nextState = initializeSeerahChain(nextState);
+  nextState = initializeJobChangeGate(nextState);
+  nextState = initializeMonarchTrials(nextState);
+  nextState = checkMonarchTrialProgress(nextState);
+
+  // Inject seerah daily quests for any active chain
+  nextState = injectSeerahDailyQuests(nextState);
+
+  return nextState;
 }
 
 export function initializeLevelQuest(state) {
@@ -96,10 +125,27 @@ export function completeDailyQuest(state, questUniqueId) {
   // Apply stat modifiers (Strength/Intelligence/Sense/Agility)
   const statModifiedXp = applyStatModifiers(baseXp, state.stats || {}, quest.pillar);
 
-  // Apply debuff if active
+  // Apply equipment bonuses
+  const equipmentModifiedXp = applyEquipmentBonuses(statModifiedXp, quest.pillar, state);
+
+  // Apply nabawi traits
+  const traitModifiedXp = applyNabawiTraits(equipmentModifiedXp, quest.pillar, state);
+
+  // Apply debuff if active (respect nabawi trait immunity/reduction)
   const pillar = state.pillars[quest.pillar];
-  const debuffMultiplier = isDebuffActive(pillar?.activeDebuff) ? (pillar.activeDebuff.multiplier || 1) : 1;
-  const finalXp = Math.floor(statModifiedXp * debuffMultiplier);
+  let debuffMultiplier = 1;
+  if (isDebuffActive(pillar?.activeDebuff)) {
+    const debuffType = pillar.activeDebuff.type;
+    if (hasPenaltyImmunity(state, debuffType)) {
+      debuffMultiplier = 1;
+    } else {
+      const baseMultiplier = pillar.activeDebuff.multiplier || 1;
+      const reduction = getDebuffDurationReduction(state);
+      // reduction applies to the loss portion: multiplier = 1 - (1 - baseMultiplier) * (1 - reduction)
+      debuffMultiplier = 1 - (1 - baseMultiplier) * (1 - reduction);
+    }
+  }
+  const finalXp = Math.floor(traitModifiedXp * debuffMultiplier);
 
   // Update pillar
   const newPillars = { ...state.pillars };
@@ -145,6 +191,7 @@ export function completeDailyQuest(state, questUniqueId) {
     tags: quest.tags || [],
     missionDuty: quest.missionDuty || null,
     source: quest.source || 'catalog',
+    chainId: quest.chainId || null,
     xp: finalXp,
     gold,
     date: new Date().toISOString(),
@@ -152,12 +199,28 @@ export function completeDailyQuest(state, questUniqueId) {
     completed: true,
   };
 
+  // Advance seerah chain if this was a seerah quest
+  let seerahState = state;
+  if (quest.source === 'seerah' && quest.chainId) {
+    seerahState = advanceSeerahChain(seerahState, quest.chainId);
+  }
+
+  // Apply skill effects (gold multiplier, etc.)
+  const skillEffects = applySkillEffects(0, gold, quest.pillar, seerahState);
+  const finalGold = skillEffects.gold;
+
+  // Update equipment durability (+5 for completion)
+  let durabilityState = updateDurability(seerahState, false, true);
+
+  // Check enchant from streak
+  let enchantState = checkEnchant(durabilityState, quest.pillar);
+
   const result = {
-    ...state,
+    ...enchantState,
     pillars: newPillars,
     dailyQuests: newDailyQuests,
-    gold: state.gold + gold,
-    history: [...state.history, historyEntry],
+    gold: enchantState.gold + finalGold,
+    history: [...enchantState.history, historyEntry],
   };
 
   if (autoStatResult) {
@@ -480,6 +543,10 @@ export function recalculateOverallLevel(state) {
   const currentRank = getRankByLevel(overall);
   const prevRank = getRankByLevel(state.user.overallLevel);
 
+  // Award skill points: 1 SP per 5 overall levels
+  const prevLevel = state.user.overallLevel;
+  const spEarned = Math.floor(overall / 5) - Math.floor(prevLevel / 5);
+
   let newState = {
     ...state,
     user: {
@@ -487,10 +554,11 @@ export function recalculateOverallLevel(state) {
       overallLevel: overall,
       currentRank: currentRank.key,
     },
+    skillPoints: (state.skillPoints || 0) + spEarned,
   };
 
   // Check for rank up
-  if (currentRank.key !== prevRank.key && overall > state.user.overallLevel) {
+  if (currentRank.key !== prevRank.key && overall > prevLevel) {
     newState.systemMessages = [
       ...newState.systemMessages,
       {
@@ -498,6 +566,18 @@ export function recalculateOverallLevel(state) {
         title: `RANK UP! ${currentRank.key}-Rank`,
         subtitle: `${currentRank.title}`,
         message: 'Your power has awakened. New quests and shadows are now available.',
+      },
+    ];
+  }
+
+  if (spEarned > 0) {
+    newState.systemMessages = [
+      ...newState.systemMessages,
+      {
+        type: 'reward',
+        title: 'SKILL POINTS AWARDED',
+        subtitle: `+${spEarned} SP`,
+        message: `Reached level ${overall}. You now have ${newState.skillPoints} skill points to unlock abilities.`,
       },
     ];
   }
@@ -569,29 +649,51 @@ export function completeWeeklyDungeon(state, pillar) {
   const rank = getRankByLevel(state.user.overallLevel);
   const baseXp = dungeon.xp || 200;
   const rankScaledXp = Math.floor(baseXp * (rank.xpMultiplier || 1));
-  const statModifiedXp = applyStatModifiers(rankScaledXp, state.stats || {}, pillar);
-  const scaledGold = Math.floor(rankScaledXp * 0.6);
+  // Ummah Service does not write to a specific pillar (it serves the whole mission).
+  // Stat/equipment/trait bonuses only apply to the 3 primary pillars.
+  const isUmmah = pillar === 'ummah';
+  const statModifiedXp = isUmmah ? rankScaledXp : applyStatModifiers(rankScaledXp, state.stats || {}, pillar);
 
-  // Update pillar XP
+  // Apply equipment bonuses
+  const equipmentModifiedXp = isUmmah ? statModifiedXp : applyEquipmentBonuses(statModifiedXp, pillar, state);
+
+  // Apply nabawi traits
+  const traitModifiedXp = isUmmah ? equipmentModifiedXp : applyNabawiTraits(equipmentModifiedXp, pillar, state);
+
+  // Solo Clear Bonus: 2x XP if no AI prompts used this week
+  let soloClearMultiplier = 1;
+  const isSoloClear = state.weeklyStats?.aiPromptsUsed === 0;
+  if (isSoloClear) {
+    soloClearMultiplier = 2;
+  }
+
+  const finalXp = Math.floor(traitModifiedXp * soloClearMultiplier);
+  const scaledGold = Math.floor(rankScaledXp * 0.6 * soloClearMultiplier);
+
+  // Update pillar XP — skip for ummah (no pillar backing)
   const newPillars = { ...state.pillars };
-  newPillars[pillar] = {
-    ...newPillars[pillar],
-    xp: newPillars[pillar].xp + statModifiedXp,
-    streak: newPillars[pillar].streak + 1,
-  };
+  if (!isUmmah) {
+    newPillars[pillar] = {
+      ...newPillars[pillar],
+      xp: newPillars[pillar].xp + finalXp,
+      streak: newPillars[pillar].streak + 1,
+    };
+  }
 
-  // Check pillar level up
+  // Check pillar level up — skip for ummah
   let statPointsAwarded = 0;
-  const pillarLevel = newPillars[pillar].level;
-  const pillarXp = newPillars[pillar].xp;
-  const needed = xpForNextLevel(pillarLevel);
   let autoStatResult = null;
-  if (pillarXp >= needed) {
-    newPillars[pillar].level = pillarLevel + 1;
-    newPillars[pillar].xp = pillarXp - needed;
-    const pillarRank = getRankByLevel(newPillars[pillar].level);
-    statPointsAwarded = pillarRank.statPointsPerLevel || 1;
-    autoStatResult = autoAssignStatPoints(state.stats || {}, pillar, statPointsAwarded);
+  if (!isUmmah) {
+    const pillarLevel = newPillars[pillar].level;
+    const pillarXp = newPillars[pillar].xp;
+    const needed = xpForNextLevel(pillarLevel);
+    if (pillarXp >= needed) {
+      newPillars[pillar].level = pillarLevel + 1;
+      newPillars[pillar].xp = pillarXp - needed;
+      const pillarRank = getRankByLevel(newPillars[pillar].level);
+      statPointsAwarded = pillarRank.statPointsPerLevel || 1;
+      autoStatResult = autoAssignStatPoints(state.stats || {}, pillar, statPointsAwarded);
+    }
   }
 
   // Mark dungeon pillar as completed
@@ -608,7 +710,7 @@ export function completeWeeklyDungeon(state, pillar) {
     title: dungeon.title,
     description: dungeon.description || '',
     tags: ['dungeon', pillar, ...(dungeon.tags || [])],
-    xp: statModifiedXp,
+    xp: finalXp,
     gold: scaledGold,
     date: new Date().toISOString(),
     localDate: getLocalDateString(),
@@ -635,6 +737,46 @@ export function completeWeeklyDungeon(state, pillar) {
         message: `SYSTEM auto-assigned: ${assignStr}. Performance determines growth.`,
       },
     ];
+  }
+
+  // Equipment drop: 15% base chance, guaranteed on Solo Clear
+  const dropRoll = Math.random();
+  const dropChance = isSoloClear ? 1.0 : 0.15;
+  if (dropRoll <= dropChance) {
+    const droppedItem = dropEquipment(rank.key, pillar);
+    if (droppedItem) {
+      const slot = droppedItem.slot;
+      nextState = {
+        ...nextState,
+        equipment: {
+          ...nextState.equipment,
+          [slot]: droppedItem,
+        },
+        systemMessages: [
+          ...(nextState.systemMessages || []),
+          {
+            type: 'reward',
+            title: 'EQUIPMENT DROP',
+            subtitle: droppedItem.name,
+            message: `+${Math.round(droppedItem.boost * 100)}% ${droppedItem.pillar === 'all' ? 'all' : droppedItem.pillar} XP boost. Durability: ${droppedItem.durability}/${droppedItem.maxDurability}.`,
+          },
+        ],
+      };
+    }
+  }
+
+  // Solo Clear Bonus: guaranteed shadow extraction if no AI used
+  if (isSoloClear) {
+    const available = getUnlockedShadows(nextState).filter(s => !s.extracted);
+    if (available.length > 0) {
+      const highest = available.sort((a, b) => b.passiveBonus - a.passiveBonus)[0];
+      nextState = extractShadow(nextState, highest.id);
+    }
+    // Mark solo clear as earned for the week
+    nextState.weeklyStats = {
+      ...nextState.weeklyStats,
+      soloClear: true,
+    };
   }
 
   // Recalculate overall level

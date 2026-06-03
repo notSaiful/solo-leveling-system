@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { LayoutDashboard, BarChart3, Swords, Settings, ShoppingBag, Sparkles, Coins, Zap, AlertTriangle } from 'lucide-react';
+import { LayoutDashboard, BarChart3, Swords, Settings, ShoppingBag, Sparkles, Coins, Zap, AlertTriangle, Users, Crown, Wrench, Play, Heart } from 'lucide-react';
+import { activateSkill, getSkillCooldownRemaining } from './data/skills';
+import { checkLegacyShadowExtraction, LEGACY_SHADOW_QUESTS, getConsecutiveDailyCompletions } from './data/legacyShadows';
 import { useStore } from './hooks/useStore';
 import { useLevelUp } from './hooks/useLevelUp';
 import { usePenaltyCheck } from './hooks/usePenaltyCheck';
@@ -11,14 +13,13 @@ import RewardStore from './components/RewardStore';
 import StatDistribution from './components/StatDistribution';
 import AIAssistant from './components/AIAssistant';
 import { getCurrentWeekId } from './logic/dungeons';
-import { getRankByLevel, getWeeklyDungeonForRank } from './data/questCatalog';
-import { getFlowStateDisplay } from './logic/questEngine';
+import { getFlowStateDisplay, initializeWeeklyDungeon } from './logic/questEngine';
+import { checkAndApplyPenalties } from './logic/penalties';
 import { getCharacterBuild } from './data/stats';
 import { DEFAULT_STATE, initCloudSync, syncNow, loadState, STORAGE_KEY } from './data/store';
 import { isCanonicalSyncConfigured } from './services/canonicalSync';
 import { hasApiKey, getApiKey } from './services/aiAssistant';
 import { getLocalDateString } from './utils/dateUtils';
-import { getScaledPenalty } from './data/rankDifficulty';
 import { pruneExpiredCustomQuests } from './logic/customQuests';
 
 // Error Boundary to catch runtime crashes and show reset UI
@@ -178,49 +179,35 @@ export default function App() {
     if (!cloudReady) return;
 
     if (state.weeklyDungeons.weekId !== getCurrentWeekId()) {
-      const rank = getRankByLevel(state.user.overallLevel);
-      const newDungeons = getWeeklyDungeonForRank(rank.key);
-      newDungeons.weekId = getCurrentWeekId();
-
-      // Check if previous week's dungeon was missed and apply penalties
-      const oldDungeons = state.weeklyDungeons;
-      const missedPillars = [];
-      if (!oldDungeons.deenCompleted) missedPillars.push('deen');
-      if (!oldDungeons.bodyCompleted) missedPillars.push('body');
-      if (!oldDungeons.moneyCompleted) missedPillars.push('money');
-
-      let newPillars = { ...state.pillars };
+      const currentWeek = getCurrentWeekId();
       const today = getLocalDateString();
-      const messages = [];
+      const hadPreviousWeek = Boolean(state.weeklyDungeons.weekId);
 
-      if (missedPillars.length > 0 && oldDungeons.weekId) {
-        const scaledDungeon = getScaledPenalty(rank.key, 'missedDungeon');
-        for (const pillar of missedPillars) {
-          newPillars[pillar] = {
-            ...newPillars[pillar],
-            activeDebuff: {
-              type: 'missedDungeon',
-              multiplier: scaledDungeon.multiplier,
-              duration: scaledDungeon.duration,
-              message: scaledDungeon.message,
-              appliedAt: Date.now(),
-            },
-          };
+      // Initialize new week's dungeons (resets deenCompleted/bodyCompleted/moneyCompleted/ummahCompleted)
+      let nextState = initializeWeeklyDungeon(state);
+
+      // If there was a previous week, run penalty check on it (covers daily + dungeon misses for all 4 pillars)
+      if (hadPreviousWeek) {
+        nextState = checkAndApplyPenalties(nextState);
+      }
+
+      // Strip transient _penaltyMeta from pillars before saving
+      const cleanPillars = {};
+      for (const p of ['deen', 'body', 'money']) {
+        if (nextState.pillars[p]) {
+          const { _penaltyMeta, ...rest } = nextState.pillars[p];
+          cleanPillars[p] = rest;
+        } else {
+          cleanPillars[p] = nextState.pillars[p];
         }
-        messages.push({
-          type: 'penalty',
-          title: '⚠️ DUNGEON PENALTY',
-          subtitle: 'Weekly dungeon missed',
-          message: `${scaledDungeon.message}\nAffected: ${missedPillars.join(', ')}.`,
-          date: today,
-        });
       }
 
       setState(prev => ({
         ...prev,
-        pillars: newPillars,
-        weeklyDungeons: newDungeons,
-        systemMessages: messages.length > 0 ? [...prev.systemMessages, ...messages] : prev.systemMessages,
+        pillars: cleanPillars,
+        weeklyDungeons: nextState.weeklyDungeons,
+        weeklyStats: { soloClear: false, aiPromptsUsed: 0, weekId: currentWeek },
+        lastPenaltyCheckDate: today,
       }));
     }
   }, [cloudReady, state.weeklyDungeons.weekId, state.user.overallLevel]);
@@ -272,9 +259,11 @@ export default function App() {
     { id: 'dashboard', label: 'Status', icon: LayoutDashboard },
     { id: 'stats', label: 'Stats', icon: BarChart3 },
     { id: 'dungeons', label: 'Dungeons', icon: Swords },
+    { id: 'legion', label: 'Legion', icon: Users },
     { id: 'store', label: 'Store', icon: ShoppingBag },
     { id: 'build', label: 'Build', icon: Sparkles },
     { id: 'settings', label: 'Settings', icon: Settings },
+    ...(state.ummahCommand?.unlocked ? [{ id: 'ummah', label: 'Ummah', icon: Crown }] : []),
   ];
 
   return (
@@ -311,6 +300,18 @@ export default function App() {
               <Sparkles size={12} />
               <span>{build.name}</span>
             </div>
+            {state.skillPoints > 0 && (
+              <div className="flex items-center gap-1 bg-purple-900/20 border border-purple-600/30 px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs">
+                <Zap size={12} className="text-purple-400" />
+                <span className="font-bold text-purple-400">{state.skillPoints} SP</span>
+              </div>
+            )}
+            {state.ummahCommand?.unlocked && (
+              <div className="flex items-center gap-1 bg-amber-900/20 border border-amber-600/30 px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs">
+                <Crown size={12} className="text-amber-400" />
+                <span className="font-bold text-amber-400 hidden sm:inline">Ummah</span>
+              </div>
+            )}
             <div className="flex items-center gap-1 bg-yellow-900/20 border border-yellow-600/30 px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs">
               <Coins size={12} className="text-yellow-400" />
               <span className="font-bold text-yellow-400">{state.gold.toLocaleString()}</span>
@@ -327,8 +328,172 @@ export default function App() {
         {activeTab === 'dashboard' && <Dashboard state={state} setState={setState} ready={cloudReady} />}
         {activeTab === 'stats' && <StatsPanel state={state} />}
         {activeTab === 'dungeons' && <WeeklyDungeon state={state} setState={setState} />}
+        {activeTab === 'legion' && (
+          <div className="max-w-2xl mx-auto p-2 sm:p-4 space-y-4">
+            <h2 className="font-orbitron text-xl font-bold text-cyan-400 tracking-wider">Shadow Legion</h2>
+            <div className="glass-panel p-4 space-y-3">
+              <div className="text-sm text-cyan-500/60">Extracted Shadows</div>
+              {(state.legacyShadows || []).length === 0 ? (
+                <div className="text-sm text-cyan-500/40 italic">No Manhood Forge shadows extracted yet.</div>
+              ) : (
+                <div className="space-y-2">
+                  {(state.legacyShadows || []).map((shadow, i) => (
+                    <div key={i} className="flex items-center gap-3 bg-cyan-950/20 border border-cyan-800/30 rounded-lg p-3">
+                      <div className="w-8 h-8 rounded-full bg-cyan-900/40 flex items-center justify-center">
+                        <Users size={16} className="text-cyan-400" />
+                      </div>
+                      <div>
+                        <div className="text-sm font-semibold text-cyan-200">{shadow.name}</div>
+                        <div className="text-xs text-cyan-500/60">+{shadow.boostValue} {shadow.boostType} for future children</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Legacy Shadow Extraction */}
+            <div className="glass-panel p-4 space-y-3 border border-cyan-700/30">
+              <div className="text-sm text-cyan-500/60">Manhood Forge — Extract Shadow</div>
+              <div className="space-y-2">
+                {LEGACY_SHADOW_QUESTS.map(template => {
+                  const alreadyExtracted = state.legacyShadows?.some(s => s.id === template.shadow.id);
+                  const progress = alreadyExtracted ? template.requiredDays : getConsecutiveDailyCompletions(state.history, template.pillar);
+                  const canExtract = progress >= template.requiredDays;
+                  return (
+                    <div key={template.id} className={`rounded-lg border p-3 ${alreadyExtracted ? 'bg-green-950/10 border-green-800/20' : 'bg-cyan-950/10 border-cyan-800/20'}`}>
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm text-cyan-200">{template.title}</div>
+                        {alreadyExtracted ? (
+                          <span className="text-[10px] text-green-400">Extracted ✓</span>
+                        ) : (
+                          <button
+                            onClick={() => setState(prev => checkLegacyShadowExtraction(prev, template.id))}
+                            disabled={!canExtract}
+                            className={`text-xs px-2 py-1 rounded border transition-colors ${
+                              canExtract
+                                ? 'bg-cyan-900/30 border-cyan-500/40 text-cyan-300 hover:bg-cyan-800/40'
+                                : 'bg-cyan-950/20 border-cyan-800/20 text-cyan-600 cursor-not-allowed'
+                            }`}
+                          >
+                            {canExtract ? 'Extract' : 'Locked'}
+                          </button>
+                        )}
+                      </div>
+                      <div className="text-xs text-cyan-500/60">{template.description}</div>
+                      <div className="mt-2">
+                        <div className="flex items-center justify-between text-[10px] text-cyan-500/40 mb-1">
+                          <span>Progress: {progress}/{template.requiredDays} days</span>
+                          <span>{Math.min(100, Math.round((progress / template.requiredDays) * 100))}%</span>
+                        </div>
+                        <div className="w-full bg-cyan-900/30 rounded-full h-1">
+                          <div
+                            className={`rounded-full h-1 transition-all ${alreadyExtracted ? 'bg-green-500' : 'bg-cyan-500'}`}
+                            style={{ width: `${Math.min(100, (progress / template.requiredDays) * 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                      <div className="text-[10px] text-cyan-500/40 mt-1">Reward: {template.shadow.name} (+{template.shadow.boostValue} {template.shadow.boostType})</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="glass-panel p-4 space-y-3">
+              <div className="text-sm text-cyan-500/60">Active Skills</div>
+              {(state.skills || []).length === 0 ? (
+                <div className="text-sm text-cyan-500/40 italic">No skills learned. Pass Job Change Gates to unlock skills.</div>
+              ) : (
+                <div className="space-y-2">
+                  {(state.skills || []).map((skill, i) => {
+                    const cdRemaining = getSkillCooldownRemaining(state, skill.id);
+                    const canActivate = cdRemaining === 0;
+                    return (
+                      <div key={i} className="flex items-center justify-between bg-cyan-950/20 border border-cyan-800/30 rounded-lg p-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-purple-900/40 flex items-center justify-center">
+                            <Zap size={16} className="text-purple-400" />
+                          </div>
+                          <div>
+                            <div className="text-sm font-semibold text-cyan-200">{skill.name}</div>
+                            <div className="text-xs text-cyan-500/60">{skill.description}</div>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => {
+                            if (!canActivate) return;
+                            setState(prev => activateSkill(prev, skill.id));
+                          }}
+                          disabled={!canActivate}
+                          className={`flex items-center gap-1 text-xs px-2 py-1 rounded border transition-colors ${
+                            canActivate
+                              ? 'bg-purple-900/30 border-purple-500/40 text-purple-300 hover:bg-purple-800/40'
+                              : 'bg-cyan-950/20 border-cyan-800/20 text-cyan-600 cursor-not-allowed'
+                          }`}
+                        >
+                          <Play size={12} />
+                          {canActivate ? 'Activate' : `${Math.ceil(cdRemaining / 3600000)}h`}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+            <div className="glass-panel p-4 space-y-3">
+              <div className="text-sm text-cyan-500/60">Equipment</div>
+              {['weapon', 'armor', 'ring'].map(slot => {
+                const item = state.equipment?.[slot];
+                return (
+                  <div key={slot} className="flex items-center gap-3 bg-cyan-950/20 border border-cyan-800/30 rounded-lg p-3">
+                    <div className="w-8 h-8 rounded-full bg-amber-900/40 flex items-center justify-center">
+                      <Wrench size={16} className="text-amber-400" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-sm font-semibold text-cyan-200 capitalize">{slot}: {item ? item.name : 'Empty'}</div>
+                      {item && (
+                        <div className="text-xs text-cyan-500/60">
+                          Durability: {item.durability}/{item.maxDurability} {item.enchantLevel > 0 && `| +${item.enchantLevel} Enchant`}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
         {activeTab === 'store' && <RewardStore state={state} setState={setState} />}
         {activeTab === 'build' && <StatDistribution state={state} setState={setState} />}
+        {activeTab === 'ummah' && (
+          <div className="max-w-2xl mx-auto p-2 sm:p-4 space-y-4">
+            <h2 className="font-orbitron text-xl font-bold text-amber-400 tracking-wider">Ummah Command</h2>
+            <div className="glass-panel p-4 space-y-3 border border-amber-700/30">
+              <div className="text-sm text-amber-400/80 font-semibold">Monarch Status: ACTIVE</div>
+              <div className="text-sm text-cyan-500/60">You have ascended to Monarch. The Ummah Command protocol is now unlocked.</div>
+              <div className="space-y-2 mt-3">
+                <div className="text-xs text-cyan-500/40 uppercase tracking-wider">Linked Members</div>
+                {(state.ummahCommand?.linkedMembers || []).length === 0 ? (
+                  <div className="text-sm text-cyan-500/40 italic">No linked members yet. This feature will allow you to share quests and track family progress.</div>
+                ) : (
+                  <div className="space-y-2">
+                    {(state.ummahCommand?.linkedMembers || []).map((member, i) => (
+                      <div key={i} className="flex items-center gap-3 bg-cyan-950/20 border border-cyan-800/30 rounded-lg p-3">
+                        <div className="w-8 h-8 rounded-full bg-amber-900/40 flex items-center justify-center">
+                          <Users size={16} className="text-amber-400" />
+                        </div>
+                        <div>
+                          <div className="text-sm font-semibold text-cyan-200">{member.name}</div>
+                          <div className="text-xs text-cyan-500/60">{member.role}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
         {activeTab === 'settings' && (
           <div className="max-w-2xl mx-auto p-2 sm:p-4 space-y-4">
             <h2 className="font-orbitron text-xl font-bold text-cyan-400 tracking-wider">System Settings</h2>
@@ -342,6 +507,45 @@ export default function App() {
                   onChange={(e) => setState(prev => ({ ...prev, user: { ...prev.user, name: e.target.value } }))}
                   className="w-full mt-1 bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-base text-cyan-100 focus:outline-none focus:border-cyan-500/50"
                 />
+              </div>
+            </div>
+
+            {/* Ummah Burden Tracker */}
+            <div className="glass-panel p-3 sm:p-4 space-y-3 border border-rose-700/30">
+              <div className="flex items-center gap-2 mb-2">
+                <Heart size={16} className="text-rose-400" />
+                <span className="font-orbitron text-sm font-semibold text-rose-300 tracking-wider">UMMAH BURDEN</span>
+              </div>
+              {[
+                { key: 'familySupported', label: 'Family Members Supported', step: 1 },
+                { key: 'zakatPaid', label: 'Zakat Payments (count)', step: 1 },
+                { key: 'sadaqahJariyah', label: 'Sadaqah Jariyah Projects', step: 1 },
+                { key: 'muslimVentures', label: 'Muslim Ventures Funded', step: 1 },
+              ].map(field => (
+                <div key={field.key}>
+                  <label className="text-sm text-cyan-500/60">{field.label}</label>
+                  <input
+                    type="number"
+                    min={0}
+                    step={field.step}
+                    value={state.ummahBurden?.[field.key] || 0}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value, 10) || 0;
+                      setState(prev => {
+                        const updated = {
+                          ...prev.ummahBurden,
+                          [field.key]: val,
+                        };
+                        updated.score = (updated.familySupported * 10) + (updated.zakatPaid * 5) + (updated.sadaqahJariyah * 3) + (updated.muslimVentures * 20);
+                        return { ...prev, ummahBurden: updated };
+                      });
+                    }}
+                    className="w-full mt-1 bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-base text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+                  />
+                </div>
+              ))}
+              <div className="text-xs text-rose-500/60 pt-1">
+                Current Score: {((state.ummahBurden?.familySupported || 0) * 10 + (state.ummahBurden?.zakatPaid || 0) * 5 + (state.ummahBurden?.sadaqahJariyah || 0) * 3 + (state.ummahBurden?.muslimVentures || 0) * 20).toLocaleString()}
               </div>
             </div>
 

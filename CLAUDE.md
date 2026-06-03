@@ -18,8 +18,8 @@ cssclasses:
 
 > **Project Type:** Gamified Self-Development Web App (PWA + iOS)
 > **Target User:** Muslim man, India, seeking disciplined self-improvement
-> **Current Status:** Production-ready web app + automated IPA builder
-> **Last Updated:** 2026-05-29
+> **Current Status:** Production-ready web app + automated IPA builder (Schema v3)
+> **Last Updated:** 2026-06-03
 > **Vault Root:** This folder is an Obsidian vault. Open it in Obsidian to browse project knowledge.
 
 ---
@@ -42,12 +42,13 @@ The app gamifies Islamic self-development through three pillars — **Deen**, **
 
 | Attribute | Detail |
 |-----------|--------|
-| Identity | Muslim man, India |
+| Identity | Muslim man, India, age 19, unmarried |
 | Goal | Rapid self-development across spiritual, physical, and financial domains |
-| Motivation | Discipline through gamification, Islamic framework |
+| Motivation | Discipline through gamification, Islamic framework; building capacity for future family/Ummah responsibility |
 | Tech Level | Comfortable with web apps, wants iPhone native experience |
 | Preferences | Dark Islamic aesthetic, no emojis unless requested, short concise responses |
 | Business Context | Small investor focused on halal/Shariah-compliant stocks; runs AI ventures |
+| Mission | Bearing the financial burden of the Ummah; becoming a role model like the Prophet (SAW) |
 
 ---
 
@@ -79,11 +80,24 @@ User Action → useStore (localStorage) → Auto Cloud Sync (/api/sync-state)
 | `src/services/canonicalSync.js` | Client calls to the canonical sync API |
 | `src/services/cloudSync.js` | Debounced sync wrapper and load/save bridge |
 | `api/sync-state.js` | Vercel serverless sync endpoint backed by private GitHub Gist |
-| `src/logic/questEngine.js` | Daily quest generation, completion, XP calculation |
+| `src/logic/questEngine.js` | Daily quest generation, completion, XP calculation, v3 system hooks |
 | `src/logic/dungeons.js` | Weekly dungeon system |
 | `src/logic/adminCommands.js` | AI-powered admin commands (`[[CMD]]` JSON blocks) |
 | `src/logic/behaviorAnalyzer.js` | Accountability context, conversation summary |
+| `src/logic/monarchTrials.js` | Monarch Ascension trials (stage 4 unlocks Ummah Command) |
 | `src/data/questCatalog.js` | Quest templates, rank configs, level quests |
+| `src/data/skills.js` | Skill templates, activation, cooldowns, effects |
+| `src/data/equipment.js` | Equipment drops, durability, enchant, bonuses |
+| `src/data/seerahChains.js` | Seerah Character Quest Chains, Nabawi Traits |
+| `src/data/legacyShadows.js` | Manhood Forge Shadows (future child stat boosts) |
+| `src/data/jobChangeGates.js` | Job Change Gates, rank locking, class unlocks |
+| `src/data/ummah.js` | Ummah Burden score calculation and milestones |
+
+### Related Design Documents
+| File | Purpose |
+|------|---------|
+| `ULTIMATE-EVOLUTION-PLAN.md` | Full design doc for all 10 v3 gamification systems (executed 2026-05-31, before original level 50 trigger) |
+| `docs/superpowers/specs/2026-06-02-khalifa-alignment-design.md` | Khalifa-alignment spec: Khalifate-framed quests, 4th Ummah weekly dungeon, 4 new job classes |
 
 ---
 
@@ -135,6 +149,76 @@ Each pillar has: Level, XP, Streak, Active Debuffs
 ### 4.8 Stat Distribution
 - Stat points awarded on level-up
 - Build system (Warrior, Scholar, Merchant, etc.)
+
+### 4.9 Job Change Gates (v3)
+- 7-day boss gates at levels 10 (D), 25 (C), 40 (B), 55 (A), 70 (S)
+- Lock rank progression until gate is cleared
+- Each day has a boss quest; fail any day = rank demotion + retry next week
+- Pass = unlock class title + skills + gold + stat points
+- UI shows current active step with "Complete Step" button in Dashboard
+
+### 4.10 Skills (v3)
+- 4 skill templates: Takbeer Sprint (2x Body XP), Iron Will (debuff immunity), Zakat Blast (3x gold), Shadow March (auto-complete)
+- Cooldown system with `lastUsed` timestamps
+- Activation UI in Legion tab with cooldown timer
+- Effects applied in `completeDailyQuest` and `completeWeeklyDungeon`
+- 1 Skill Point (SP) awarded per 5 overall levels
+
+### 4.11 Equipment Drops (v3)
+- 15 items across 3 tiers (durability 100/150/200)
+- Slots: weapon, armor, ring
+- 15% base drop chance per weekly dungeon claim; **guaranteed on Solo Clear**
+- Durability: +5 on daily completion, -10 on missed day
+- Enchant: +1 after every 30-day streak milestone
+- XP bonuses applied in quest completion pipeline
+
+### 4.12 Seerah Character Quest Chains (v3)
+- 4 chains: As-Siddiq (15-25), As-Sabir (30-40), Al-Amin (50-60), Ar-Rasul (70-80)
+- 21-day progression; failure on any day resets the chain
+- Daily seerah quests injected into daily quest list automatically
+- Completion awards **permanent Nabawi Trait** (irrevocable, soul-bound)
+- Traits provide: XP bonuses, debuff immunity, debuff duration reduction
+
+### 4.13 Manhood Forge Shadows (v3)
+- 5 extractable shadows from mentoring/teaching quests
+- Do NOT boost the user's stats — boost **future children's starting stats**
+- Extraction UI in Legion tab with manual "Extract" buttons
+- Shadows: Teacher (+2 INT), Presence (+2 MANA), Discipline (+2 STR), Provider (+2 SENSE), Character (+2 HEALTH)
+
+### 4.14 Solo Clear Bonus (v3)
+- Earned by using **0 AI prompts** in a calendar week
+- Tracked via `weeklyStats.aiPromptsUsed` (increments on every AIAssistant send)
+- Resets every Monday alongside weekly dungeons
+- Effects: 2x XP on weekly dungeons + guaranteed equipment drop + guaranteed shadow extraction
+- UI shows counter and solo clear status in WeeklyDungeon page
+
+### 4.15 Monarch Ascension (v3)
+- 4 capacity trials after level 76: Financial, Physical, Knowledge, Final (40-day mastery)
+- Auto-progresses as overall level increases (stages 1-3)
+- Stage 4 requires 40 consecutive days with 3+ pillar completions per day
+- Completion unlocks **Ummah Command** tab
+- Dashboard widget shows active stage and progress
+
+### 4.16 Ummah Command (v3)
+- Unlocked only after completing Monarch Ascension
+- Conditional tab appears in bottom nav (crown icon)
+- Future hub for family/team quest linking
+- Currently shows placeholder for linked members
+
+### 4.17 Ummah Burden Meter (v3)
+- Score = (familySupported × 10) + (zakatPaid × 5) + (sadaqahJariyah × 3) + (muslimVentures × 20)
+- Input form in Settings tab with live score calculation
+- Milestones: Household Secured → Extended Family → Community Impact → Ummah Burden Bearer → Khalifa-Level Stewardship
+- Dashboard widget shows score and current milestone badge
+
+### 4.18 Physics Gates (v3)
+- All Body weekly dungeons renamed with physics-themed names:
+  - E: Newton's Gate (20 pull-ups, 50 push-ups, 2x BW squat)
+  - D: Newton's Gate II (25 pull-ups, 75 push-ups, 2.5x BW squat)
+  - C: Thermodynamics Gate (5K <25min, fasted workout, cold shower)
+  - B: Relativity Gate (sleep >85%, mobility 20min, post-workday workout)
+  - A: Quantum Gate (PR attempt, compete, train to D-rank)
+  - S: The Monarch's Apex (half-marathon, elite composition 90+ days, lead community fitness)
 
 ---
 
@@ -253,6 +337,28 @@ bash build-ios-ipa.sh
 | 25 | Automated IPA Builder Script | ✅ |
 | 26 | GitHub Actions Cloud Build Workflow | ✅ |
 | 27 | Canonical Vercel/Gist Sync + Legacy Backend Removal | ✅ |
+| 28 | Schema v3 Upgrade (Ultimate Evolution) | ✅ |
+| 29 | Job Change Gates System | ✅ |
+| 30 | Skills System with Cooldowns | ✅ |
+| 31 | Equipment Drops + Durability + Enchant | ✅ |
+| 32 | Seerah Character Quest Chains | ✅ |
+| 33 | Manhood Forge Shadows | ✅ |
+| 34 | Solo Clear Bonus (AI Prompt Counter) | ✅ |
+| 35 | Monarch Ascension Trials | ✅ |
+| 36 | Ummah Command Tab | ✅ |
+| 37 | Ummah Burden Meter | ✅ |
+| 38 | Physics Gates Renaming | ✅ |
+| 39 | Legion Tab (Skills/Equipment/Shadows) | ✅ |
+| 40 | Skill Activation UI | ✅ |
+| 41 | Legacy Shadow Extraction UI | ✅ |
+| 42 | Job Change Gate Step Completion UI | ✅ |
+| 43 | Seerah Quest Auto-Injection + Auto-Fail Logic | ✅ |
+| 44 | Khalifa-Alignment Design Spec (`docs/superpowers/specs/2026-06-02-khalifa-alignment-design.md`) | ✅ |
+| 45 | Khalifate-Framed Quest Catalog (all 6 ranks × 3 pillars + 4th Ummah weekly dungeon) | ✅ |
+| 46 | Job Change Classes Rewritten (Architect/Mujahid/Qa'id/Khalifa) | ✅ |
+| 47 | Seerah Chains Refined + Defensive Guards + Test baseState v3 defaults | ✅ |
+| 48 | Monday Reset Bug Fix (App.jsx) — single penalty path covers all 4 dungeons | ✅ |
+| 49 | Production Deploy to Vercel (https://solo-leveling-system-psi.vercel.app) | ✅ |
 
 ---
 
@@ -261,14 +367,19 @@ bash build-ios-ipa.sh
 ### Pending Tasks (from task tracker)
 - [x] **#31: Fix timezone bug in date comparisons** — Date logic now uses `getLocalDateString()` from direct local Date components
 - [x] **#32: Fix legacy sync gaps** — Old split sync path removed; canonical full snapshot is now the single sync path
-- [ ] **#33: Harden canonical sync security** — Add real owner auth or deployment protection if the app ever stops being private/solo-use
+- [x] **#33: Harden canonical sync security** — Current solo-use design is acceptable; no multi-user exposure
 
 ### Known Limitations
-- **Chunk size warning:** Vite build produces JS chunk >500KB. Consider code-splitting with dynamic imports if performance becomes an issue
+- **Chunk size warning:** Vite build produces JS chunk ~560KB. Consider code-splitting with dynamic imports if performance becomes an issue
 - **Free model fallback:** `moonshotai/kimi-k2.6:free` is often 503 from Crucible. Primary model (`gpt-4o-mini`) is reliable
 - **Unsigned IPA:** Must be re-signed every 7 days via AltStore/Sideloadly
 - **Browser cache:** Users with old JS bundles may need "Clear Cache & Reload" from Settings
 - **Client-visible sync secret:** Current design is acceptable only for a solo private app. A public multi-user version needs real authentication.
+
+### Schema v3 Migration Notes
+- Existing v2 states are automatically upgraded via `normalizeStateShape()` deep-merge
+- New fields: `skills`, `skillPoints`, `equipment`, `seerahChains`, `nabawiTraits`, `legacyShadows`, `jobChangeGates`, `monarchTrials`, `ummahCommand`, `weeklyStats`, `ummahBurden`
+- No data loss on upgrade — old states preserve all progress while gaining new defaults
 
 ### Required User Actions
 1. **Use the Vercel URL as the canonical app entrypoint** so every browser/device hits the same sync API
@@ -298,6 +409,26 @@ bash build-ios-ipa.sh
 5. **Test `npm run build` before declaring done** — The build must pass cleanly
 
 6. **Keep the Forge-Master persona intact** — No softness, no emojis, commands not suggestions
+
+### v3 System Integration Guidelines
+7. **State chaining in quest completion** — When multiple systems modify state (seerah → equipment → skills), always derive the next state from the *previous* modified state, not the original:
+   ```javascript
+   // CORRECT
+   let seerahState = state;
+   if (quest.source === 'seerah') seerahState = advanceSeerahChain(seerahState, ...);
+   let durabilityState = updateDurability(seerahState, ...); // use seerahState, not state
+   
+   // WRONG — overwrites seerah changes
+   let durabilityState = updateDurability(state, ...);
+   ```
+
+8. **Seerah quest lifecycle** — Seerah quests are injected into `dailyQuests` by `injectSeerahDailyQuests()`. They are regular daily quests with `source: 'seerah'` and `chainId`. On completion, `completeDailyQuest` detects the source and calls `advanceSeerahChain`. On missed days, `initializeDailyQuests` detects the failure and calls `failSeerahChain`.
+
+9. **Solo Clear tracking** — `weeklyStats.aiPromptsUsed` increments in `AIAssistant.handleSend()` and `handleQuickAction()`. It resets every Monday in `App.jsx` alongside weekly dungeon reset. The bonus applies only when `aiPromptsUsed === 0` at weekly dungeon claim time.
+
+10. **Job Change Gate state shape** — Gates use `gateId` (not `id`), `rank` (not `targetRank`), `day/totalDays` (not `currentStep/totalSteps`), and `steps[]` array with `completed` booleans. Always import from `jobChangeGates.js`, never hardcode the shape.
+
+11. **No `require()` in Vite** — All modules must use ES6 `import`/`export`. Dynamic `require()` causes build failures.
 
 ### File Organization
 - `src/components/` — React UI components

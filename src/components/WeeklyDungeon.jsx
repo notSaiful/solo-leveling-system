@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Sword, Shield, Crown, CheckCircle2, Trophy, Star, Lock, Zap, Coins } from 'lucide-react';
+import { Sword, Shield, Crown, CheckCircle2, Trophy, Star, Lock, Zap, Coins, Users, Wrench } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { getRankByLevel, RANK_CONFIG } from '../data/questCatalog';
 import { completeWeeklyDungeon, getStreakBonus } from '../logic/questEngine';
@@ -14,8 +14,9 @@ export default function WeeklyDungeon({ state, setState }) {
 
   const pillarMeta = {
     deen: { icon: Shield, label: 'Deen', color: 'text-cyan-400', border: 'border-cyan-500/30', bg: 'bg-cyan-950/20', bar: 'bg-cyan-400' },
-    body: { icon: Sword, label: 'Body', color: 'text-rose-400', border: 'border-rose-500/30', bg: 'bg-rose-950/20', bar: 'bg-rose-400' },
+    body: { icon: Sword, label: 'Physics', color: 'text-rose-400', border: 'border-rose-500/30', bg: 'bg-rose-950/20', bar: 'bg-rose-400' },
     money: { icon: Crown, label: 'Money', color: 'text-yellow-400', border: 'border-yellow-500/30', bg: 'bg-yellow-950/20', bar: 'bg-yellow-400' },
+    ummah: { icon: Users, label: 'Ummah Service', color: 'text-emerald-400', border: 'border-emerald-500/30', bg: 'bg-emerald-950/20', bar: 'bg-emerald-400' },
   };
 
   // Difficulty stars based on rank
@@ -31,8 +32,9 @@ export default function WeeklyDungeon({ state, setState }) {
     setTimeout(() => setClaiming(null), 1000);
   };
 
-  const allComplete = ['deen', 'body', 'money'].every(p => dungeons?.[p]?.steps?.every(s => s.completed));
-  const allClaimed = dungeons?.deenCompleted && dungeons?.bodyCompleted && dungeons?.moneyCompleted;
+  const allDungeonPillars = ['deen', 'body', 'money', 'ummah'];
+  const allComplete = allDungeonPillars.every(p => dungeons?.[p]?.steps?.every(s => s.completed));
+  const allClaimed = dungeons?.deenCompleted && dungeons?.bodyCompleted && dungeons?.moneyCompleted && dungeons?.ummahCompleted;
   const bonusAvailable = allComplete && allClaimed && !dungeons?.bonusClaimed;
 
   const handleClaimBonus = () => {
@@ -47,7 +49,7 @@ export default function WeeklyDungeon({ state, setState }) {
           {
             type: 'reward',
             title: 'WEEKLY DUNGEON BONUS',
-            subtitle: `All 3 dungeons conquered!`,
+            subtitle: `All 4 dungeons conquered!`,
             message: `Bonus: ${bonusGold} Gold`,
           },
         ],
@@ -83,7 +85,7 @@ export default function WeeklyDungeon({ state, setState }) {
           <Sword size={24} className="text-cyan-400" />
           <div>
             <div className="font-orbitron font-bold text-cyan-200 tracking-wider">WEEKLY DUNGEONS</div>
-            <div className="text-[10px] text-cyan-500/50 tracking-widest uppercase">Conquer all 3 for bonus rewards</div>
+            <div className="text-[10px] text-cyan-500/50 tracking-widest uppercase">Conquer all 4 for bonus rewards</div>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -112,8 +114,36 @@ export default function WeeklyDungeon({ state, setState }) {
         </div>
       </div>
 
+      {/* Solo Clear & Drop Preview */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className={`glass-panel p-3 border ${state.weeklyStats?.soloClear ? 'border-green-500/30 bg-green-950/10' : 'border-cyan-800/30 bg-cyan-950/10'}`}>
+          <div className="flex items-center gap-2 text-sm font-semibold mb-1">
+            <Users size={16} className={state.weeklyStats?.soloClear ? 'text-green-400' : 'text-cyan-500/60'} />
+            <span className={state.weeklyStats?.soloClear ? 'text-green-400' : 'text-cyan-500/60'}>
+              Solo Clear {state.weeklyStats?.soloClear ? '✓' : ''}
+            </span>
+          </div>
+          <div className="text-xs text-cyan-500/50">
+            {state.weeklyStats?.soloClear
+              ? '2x shadow extraction rate active. No AI prompts used this week.'
+              : `${state.weeklyStats?.aiPromptsUsed || 0} AI prompts used. Use 0 to earn Solo Clear (2x extraction rate).`}
+          </div>
+        </div>
+        <div className="glass-panel p-3 border border-amber-700/30 bg-amber-950/10">
+          <div className="flex items-center gap-2 text-amber-400 text-sm font-semibold mb-1">
+            <Wrench size={16} />
+            Equipment Drop
+          </div>
+          <div className="text-xs text-cyan-500/50">
+            {state.weeklyStats?.soloClear
+              ? 'Guaranteed equipment drop on next dungeon claim!'
+              : '15% drop chance per claim. Solo Clear guarantees the drop.'}
+          </div>
+        </div>
+      </div>
+
       {/* Dungeon Cards */}
-      {['deen', 'body', 'money'].map(pillar => {
+      {allDungeonPillars.map(pillar => {
         const meta = pillarMeta[pillar];
         const Icon = meta.icon;
         const dungeon = dungeons?.[pillar];
@@ -148,7 +178,7 @@ export default function WeeklyDungeon({ state, setState }) {
                 <Icon size={20} className={meta.color} />
                 <div>
                   <div className="font-semibold text-cyan-200">{dungeon.title}</div>
-                  <div className="text-[10px] text-cyan-500/50 uppercase tracking-wider">{meta.label} Dungeon</div>
+                  <div className="text-[10px] text-cyan-500/50 uppercase tracking-wider">{meta.label} {pillar === 'body' ? 'Gate' : 'Dungeon'}</div>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -242,7 +272,7 @@ export default function WeeklyDungeon({ state, setState }) {
             WEEKLY BONUS UNLOCKED
           </div>
           <div className="text-xs text-cyan-400/50 mb-3">
-            All 3 dungeons conquered. Claim your mastery bonus.
+            All 4 dungeons conquered. Claim your mastery bonus.
           </div>
           <button
             onClick={handleClaimBonus}
