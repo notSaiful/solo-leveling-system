@@ -226,20 +226,13 @@ Each pillar has: Level, XP, Streak, Active Debuffs
 
 **Model Configuration:**
 ```javascript
-PRIMARY_MODEL   = 'deepseek/deepseek-chat:free'          // DeepSeek V3, 671B MoE, excellent reasoning
-FALLBACK_MODEL  = 'meta-llama/llama-3.3-70b-instruct:free' // Meta 70B, reliable backup
+PRIMARY_MODEL   = 'openrouter/free'          // OpenRouter free-tier router (rotates free models)
+FALLBACK_MODEL  = 'openai/gpt-4o-mini'       // Reliable small model fallback
 ```
 
-**Temperature by Call Type:**
-| Call Type | Temperature | Why |
-|-----------|-------------|-----|
-| Main chat (`sendMessage`) | 0.5 | Reliable command execution, less hallucination |
-| Custom quest (`forgeCustomQuest`) | 0.3 | Strict structured output (`[[FORGED_QUEST]]`) |
-| Extra quests (`generateExtraQuests`) | 0.3 | Strict `[[CMD]]` block compliance |
-| Daily motivation | 0.6 | Slightly creative for variety |
-| Progress analysis | 0.5 | Analytical, consistent depth |
+**Temperature:** Fixed at `0.85` for all calls (OpenRouter free router performs best with moderate temperature).
 
-**Why the upgrade:** The previous `openrouter/free` primary routed to random low-quality 7B-13B models that could not reliably follow the 300-line Forge-Master system prompt, parse `[[CMD]]` markers, or reason about rank-based XP scaling. `deepseek/deepseek-chat:free` is a 671B parameter MoE model with excellent instruction following and structured output. `llama-3.3-70b-instruct:free` serves as a reliable fallback. Both are free-tier on OpenRouter.
+**Why this configuration:** The `openrouter/free` endpoint routes to whatever free models are currently available on OpenRouter. While individual free models vary in quality, the fallback to `gpt-4o-mini` ensures reliability for critical structured output (quest forging, `[[CMD]]` parsing). `gpt-4o-mini` is extremely cost-efficient and serves as the safety net when the free router is overloaded or returning low-quality responses.
 
 **Key Behaviors:**
 - Embedded default API key in `DEFAULT_API_KEY_B64` (base64)
@@ -383,7 +376,7 @@ bash build-ios-ipa.sh
 
 ### Known Limitations
 - **Chunk size warning:** Vite build produces JS chunk ~560KB. Consider code-splitting with dynamic imports if performance becomes an issue
-- **Free model reliability:** `deepseek/deepseek-chat:free` and `llama-3.3-70b-instruct:free` are free-tier models. They may experience rate limits (429) or temporary unavailability (503). The fallback chain handles most failures, but occasional retries may be needed during peak hours.
+- **Free model reliability:** `openrouter/free` routes to whatever free models are currently available on OpenRouter. Quality varies by model. The fallback to `gpt-4o-mini` ensures reliability for critical operations. The free router may experience rate limits (429) or temporary unavailability (503).
 - **Unsigned IPA:** Must be re-signed every 7 days via AltStore/Sideloadly
 - **Browser cache:** Users with old JS bundles may need "Clear Cache & Reload" from Settings
 - **Client-visible sync secret:** Current design is acceptable only for a solo private app. A public multi-user version needs real authentication.
