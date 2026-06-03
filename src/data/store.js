@@ -195,6 +195,16 @@ export async function initCloudSync() {
   const cloudState = await loadStateFromCloud();
 
   if (cloudState) {
+    const localTime = localState?.lastUpdated || 0;
+    const cloudTime = cloudState?.lastUpdated || 0;
+    // If local is newer, push local to cloud instead of overwriting
+    if (localTime > cloudTime) {
+      const result = await syncStateToCloud(localState);
+      if (result.success) {
+        setCloudEnabled(true);
+        return { success: true, source: 'local_migrated' };
+      }
+    }
     const canonical = normalizeStateShape(cloudState);
     saveState(canonical);
     setCloudEnabled(true);
