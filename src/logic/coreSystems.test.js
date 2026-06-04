@@ -383,7 +383,7 @@ describe('mission doctrine and metrics', () => {
   it('adds mission quests for uncovered daily trusts', () => {
     const baseQuests = [
       { id: 'deen', title: 'Study tawheed', description: '', pillar: 'deen', tags: ['tauheed'] },
-      { id: 'body', title: 'Train strength', description: '', pillar: 'body', tags: ['strength'] },
+      { id: 'body', title: 'Explore terrain', description: '', pillar: 'body', tags: ['explore'] },
       { id: 'money', title: 'Budget review', description: '', pillar: 'money', tags: ['budget'] },
     ];
 

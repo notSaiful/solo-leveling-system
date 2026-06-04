@@ -122,7 +122,7 @@ export const DAILY_QUEST_POOLS = {
       { id: 'd-body-d-5', title: 'Balance Practice', description: 'Balance on one leg for 30 seconds each side, 3 rounds. Stability on uneven ground is a Khalifa skill.', baseXp: 15, pillar: 'body', estimatedMinutes: 10, tags: ['balance', 'stability'] },
       { id: 'd-body-d-6', title: '5,000 Step Exploration', description: 'Walk 5,000 steps through a new neighborhood, market, or trail. Map the land with your feet.', baseXp: 15, pillar: 'body', estimatedMinutes: 45, tags: ['explore', 'endurance'] },
       { id: 'd-body-d-7', title: 'Cold Water Exposure', description: 'End your shower with 30 seconds of cold water, or dip your face in cold water outside. The wilderness is not comfortable.', baseXp: 10, pillar: 'body', estimatedMinutes: 0, tags: ['discipline', 'resilience'] },
-      { id: 'd-body-d-8', title: 'Outdoor Bodyweight Circuit', description: '10 push-ups, 10 squats, 10 lunges each leg — outdoors. The ground is your gym.', baseXp: 15, pillar: 'body', estimatedMinutes: 10, tags: ['strength', 'outdoor'] },
+      { id: 'd-body-d-8', title: 'Outdoor Bodyweight Circuit', description: 'Bear crawl 20 meters, duck walk 20 meters, and crab walk 20 meters — outdoors. Move like an animal on the earth.', baseXp: 15, pillar: 'body', estimatedMinutes: 10, tags: ['strength', 'outdoor'] },
       { id: 'd-body-d-9', title: 'Night Sky 10 Min', description: 'Spend 10 minutes outside after Isha looking at the stars. The same sky watched the Sahaba.', baseXp: 15, pillar: 'body', estimatedMinutes: 10, tags: ['night', 'wonder'] },
     ],
     C: [
@@ -143,7 +143,7 @@ export const DAILY_QUEST_POOLS = {
       { id: 'd-body-b-5', title: 'Orienteering Walk', description: 'Walk 5km using only a compass and paper map — no GPS. The Khalifa finds his own way.', baseXp: 25, pillar: 'body', estimatedMinutes: 60, tags: ['navigate', 'compass'] },
       { id: 'd-body-b-6', title: 'Hill Sprint Repeats', description: 'Sprint up a hill 5 times. Walk down to recover. The earth fights back — fight harder.', baseXp: 25, pillar: 'body', estimatedMinutes: 30, tags: ['sprint', 'hill'] },
       { id: 'd-body-b-7', title: 'Wilderness Navigation', description: 'Navigate to a landmark 3km away using only cardinal directions and landmarks. No GPS. Trust your senses.', baseXp: 20, pillar: 'body', estimatedMinutes: 45, tags: ['navigate', 'wilderness'] },
-      { id: 'd-body-b-8', title: 'Outdoor Circuit Challenge', description: 'Push-ups, squats, lunges, and planks on uneven ground for 20 minutes. The ground is never flat in nature.', baseXp: 20, pillar: 'body', estimatedMinutes: 20, tags: ['circuit', 'outdoor'] },
+      { id: 'd-body-b-8', title: 'Outdoor Circuit Challenge', description: 'Climb, crawl, vault, and balance on uneven ground for 20 minutes. The ground is never flat in nature.', baseXp: 20, pillar: 'body', estimatedMinutes: 20, tags: ['circuit', 'outdoor'] },
     ],
     A: [
       { id: 'd-body-a-1', title: 'Half-Day Trek', description: 'Trek for 4+ hours on mountain, forest, or coastal trail. The expedition leader outlasts the terrain.', baseXp: 35, pillar: 'body', estimatedMinutes: 240, tags: ['trek', 'expedition'] },
@@ -239,7 +239,7 @@ export const LEVEL_QUESTS = [
   // ═══════════════════════════════════════
   {
     level: 1, rank: 'E', title: 'The Khalifa Awakens',
-    description: 'You have been chosen. The Khalifate begins with a single step: prayer, push-up, and a line of code.',
+    description: 'You have been chosen. The Khalifate begins with a single step: prayer, first steps on earth, and a line of code.',
     quests: [
       { id: 'lq-e-1-1', title: 'First Prayer on Time', description: 'Pray one salah exactly on time today. This is your first awakening — the leader begins with salah.', xp: 50, pillar: 'deen' },
       { id: 'lq-e-1-2', title: 'Body Activation', description: 'Walk 1,000 steps on a new route and spend 5 minutes barefoot on grass or soil. The adventurer\'s body begins with the earth.', xp: 30, pillar: 'body' },
@@ -420,7 +420,7 @@ export const LEVEL_QUESTS = [
     description: 'The best way to learn is to teach. Share what you have gained.',
     quests: [
       { id: 'lq-c-27-1', title: 'Teach Deen', description: 'Teach one Islamic concept to someone else. Record or write it.', xp: 250, pillar: 'deen' },
-      { id: 'lq-c-27-2', title: 'Teach Fitness', description: 'Take someone on an outdoor walk, hike, or exploration. Teach them to notice their surroundings.', xp: 220, pillar: 'body' },
+      { id: 'lq-c-27-2', title: 'Teach Outdoor Movement', description: 'Take someone on an outdoor walk, hike, or exploration. Teach them to notice their surroundings.', xp: 220, pillar: 'body' },
       { id: 'lq-c-27-3', title: 'Teach Finance', description: 'Explain one financial concept to a friend or family member.', xp: 220, pillar: 'money' },
     ],
     reward: { gold: 250, statPoints: 3, message: 'Teaching cements your knowledge.' },
@@ -558,7 +558,7 @@ export const LEVEL_QUESTS = [
     description: 'Leaders create other leaders. Your legacy is measured by those you elevate.',
     quests: [
       { id: 'lq-a-73-1', title: 'Mentorship Program', description: 'Formally mentor one person in Deen, Body, or Money for 30 days.', xp: 450, pillar: 'deen' },
-      { id: 'lq-a-73-2', title: 'Lead by Fitness', description: 'Lead a group outdoor expedition consistently for a month. The Khalifa walks first and checks on everyone behind him.', xp: 400, pillar: 'body' },
+      { id: 'lq-a-73-2', title: 'Lead by Outdoor Endurance', description: 'Lead a group outdoor expedition consistently for a month. The Khalifa walks first and checks on everyone behind him.', xp: 400, pillar: 'body' },
       { id: 'lq-a-73-3', title: 'Wealth Mentorship', description: 'Guide someone to their first investment or income stream.', xp: 400, pillar: 'money' },
     ],
     reward: { gold: 450, statPoints: 5, message: 'Leaders create leaders. This is your legacy.' },
@@ -598,7 +598,7 @@ export const LEVEL_QUESTS = [
     description: 'Nothing stops you. Not fear. Not fatigue. Not failure. You rise every time.',
     quests: [
       { id: 'lq-a-90-1', title: 'The 120-Day Legend', description: 'Complete ALL daily quests for 120 consecutive days.', xp: 600, pillar: 'deen' },
-      { id: 'lq-a-90-2', title: 'Legendary Fitness', description: 'Maintain legendary outdoor endurance for 1 year without major breaks. The wilderness is your training ground.', xp: 500, pillar: 'body' },
+      { id: 'lq-a-90-2', title: 'Legendary Endurance', description: 'Maintain legendary outdoor endurance for 1 year without major breaks. The wilderness is your training ground.', xp: 500, pillar: 'body' },
       { id: 'lq-a-90-3', title: 'Legendary Wealth', description: 'Achieve complete financial independence (passive income > expenses).', xp: 500, pillar: 'money' },
     ],
     reward: { gold: 600, statPoints: 7, message: 'You are unstoppable. The System bows to your will.' },
@@ -692,7 +692,7 @@ export const LEVEL_QUESTS = [
     description: 'Others burn out. You burn brighter. The flame is who you are.',
     quests: [
       { id: 'lq-s-160-1', title: 'Tahajjud Without Alarm', description: 'Wake for Tahajjud naturally, without alarm, for 60 consecutive days. Your body now serves your soul.', xp: 1600, pillar: 'deen' },
-      { id: 'lq-s-160-2', title: 'Lifetime Fitness', description: 'Design an outdoor movement protocol you can maintain until age 70 with minimal gear. Test it for 90 days.', xp: 1400, pillar: 'body' },
+      { id: 'lq-s-160-2', title: 'Lifetime Endurance', description: 'Design an outdoor movement protocol you can maintain until age 70 with minimal gear. Test it for 90 days.', xp: 1400, pillar: 'body' },
       { id: 'lq-s-160-3', title: 'Passive Income Mastery', description: 'Achieve 50% of your total income from passive or automated sources. Wealth that does not sleep.', xp: 1400, pillar: 'money' },
     ],
     reward: { gold: 1600, statPoints: 16, message: 'The Undying Flame warms the Ummah.' },
