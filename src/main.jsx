@@ -6,7 +6,7 @@ import './index.css'
 // ═══════════════════════════════════════════
 // NUCLEAR CACHE CLEAR — runs before React mounts
 // ═══════════════════════════════════════════
-const BUILD_VERSION = '2026-06-04-v3.4-adventure-nuclear';
+const BUILD_VERSION = '2026-06-04-v4.0-adventure-wipe';
 const storedVersion = localStorage.getItem('sls_app_version');
 
 async function nuclearClear() {
