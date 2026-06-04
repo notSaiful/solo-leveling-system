@@ -4,8 +4,8 @@ import { getLocalDateString } from '../utils/dateUtils';
 import { pruneExpiredCustomQuests } from '../logic/customQuests';
 
 export const STORAGE_KEY = 'soloLevelingData';
-const SCHEMA_VERSION = 6;
-const BUILD_VERSION = '2026-06-04-v4.0-adventure-wipe';
+const SCHEMA_VERSION = 7;
+const BUILD_VERSION = '2026-06-04-v4.1-safe';
 const CLOUD_ENABLED_KEY = 'cloudSyncEnabled';
 
 export const DEFAULT_STATE = {
