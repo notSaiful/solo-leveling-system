@@ -45,7 +45,7 @@ function sortMissingDutiesByNeed(missingDuties, history) {
   });
 }
 
-export function addMissionDailyQuests(baseQuests = [], rankKey = 'E', history = []) {
+export function addMissionDailyQuests(baseQuests = [], rankKey = 'E', history = [], level = 0) {
   const enrichedBaseQuests = baseQuests.map(quest => {
     const missionDuty = inferMissionDuty(quest);
     return missionDuty && !quest.missionDuty ? { ...quest, missionDuty } : quest;
@@ -62,7 +62,7 @@ export function addMissionDailyQuests(baseQuests = [], rankKey = 'E', history = 
     return {
       ...template,
       source: 'mission',
-      xp: getEffectiveXp(template.baseXp, rankKey),
+      xp: getEffectiveXp(template.baseXp, rankKey, level),
       uniqueId: `${template.id}-${createdAt}-${index}-${Math.random().toString(36).slice(2, 9)}`,
       completed: false,
       completedAt: null,

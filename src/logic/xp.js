@@ -21,6 +21,9 @@ export function addXp(pillarState, amount) {
 }
 
 export function calculateOverallLevel(pillars) {
-  const avg = (pillars.deen.level + pillars.body.level + pillars.money.level) / 3;
-  return Math.floor(avg);
+  const deen = pillars.deen.level || 0;
+  const body = pillars.body.level || 0;
+  const money = pillars.money.level || 0;
+  const weighted = Math.floor((deen * 0.5) + (body * 0.3) + (money * 0.2));
+  return Math.max(weighted, deen, body, money);
 }

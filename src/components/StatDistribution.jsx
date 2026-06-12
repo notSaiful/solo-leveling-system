@@ -85,7 +85,7 @@ export default function StatDistribution({ state }) {
       <div className="glass-panel p-4 text-sm text-cyan-300 space-y-2">
         <div className="font-semibold text-cyan-200 mb-2">Stat Effects</div>
         <ul className="space-y-1 text-xs">
-          <li>💪 <strong>Strength:</strong> +2% Body XP per point above 10</li>
+          <li>💪 <strong>Strength:</strong> +2% Adventure XP per point above 10</li>
           <li>🧠 <strong>Intelligence:</strong> +2% Deen XP per point above 10</li>
           <li>👁️ <strong>Sense:</strong> +2% Money XP per point above 10</li>
           <li>⚡ <strong>Agility:</strong> +0.5% all XP, enables Flow State faster</li>
@@ -93,7 +93,7 @@ export default function StatDistribution({ state }) {
           <li>✨ <strong>Mana:</strong> Reduces debuff duration (max 50%)</li>
         </ul>
         <div className="text-xs text-cyan-500/60 pt-2 border-t border-cyan-900/30 mt-2">
-          Stats grow automatically as you level up pillars. Body → Strength + Agility. Deen → Intelligence + Mana. Money → Sense + Agility.
+          Stats grow automatically as you level up pillars. Adventure → Strength + Agility. Deen → Intelligence + Mana. Money → Sense + Agility.
         </div>
       </div>
     </div>

@@ -8,9 +8,9 @@
 export const SKILL_TEMPLATES = {
   'takbeer-sprint': {
     id: 'takbeer-sprint',
-    name: 'Khilafa Sprint',
+    name: 'Trail Surge',
     pillar: 'body',
-    description: '2x Body XP for 24 hours. The body is an amanah. Train like the Khalifa you are becoming.',
+    description: '2x Adventure XP for 24 hours. Move through the earth like the Khalifa you are becoming.',
     cooldownHours: 72,
     durationHours: 24,
     effect: { type: 'xpMultiplier', pillar: 'body', multiplier: 2.0 },

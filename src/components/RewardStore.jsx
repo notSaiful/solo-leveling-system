@@ -8,9 +8,10 @@ export default function RewardStore({ state, setState }) {
   const [activeFilter, setActiveFilter] = useState('all');
   const userRank = state.user.currentRank;
 
-  const allItems = getStoreItemsForRank(userRank);
-  const featuredItems = getFeaturedItems(userRank);
-  const nextUnlock = getNextUnlockPreview(userRank);
+  const userLevel = state.user.overallLevel || 0;
+  const allItems = getStoreItemsForRank(userRank, userLevel);
+  const featuredItems = getFeaturedItems(userRank, userLevel);
+  const nextUnlock = getNextUnlockPreview(userRank, userLevel);
 
   const filteredItems = activeFilter === 'all'
     ? allItems

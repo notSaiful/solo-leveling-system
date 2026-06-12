@@ -34,7 +34,7 @@ export const SHADOW_TEMPLATES = {
   'basic-fitness': {
     id: 'basic-fitness',
     name: 'Shadow of Movement',
-    description: 'Daily outdoor movement becomes automatic. +5% Body XP.',
+    description: 'Daily outdoor movement becomes automatic. +5% Adventure XP.',
     grade: 'NORMAL',
     pillar: 'body',
     unlockLevel: 5,
@@ -69,7 +69,7 @@ export const SHADOW_TEMPLATES = {
   'warrior-body': {
     id: 'warrior-body',
     name: 'Shadow of the Warrior',
-    description: 'Outdoor expedition habits stack automatically. +10% Body XP.',
+    description: 'Outdoor expedition habits stack automatically. +10% Adventure XP.',
     grade: 'ELITE',
     pillar: 'body',
     unlockLevel: 14,
@@ -127,7 +127,7 @@ export const SHADOW_TEMPLATES = {
   'knight-strength': {
     id: 'knight-strength',
     name: 'Shadow of Deep Strength',
-    description: 'Advanced outdoor training becomes automatic. +15% Body XP.',
+    description: 'Advanced outdoor training becomes automatic. +15% Adventure XP.',
     grade: 'KNIGHT',
     pillar: 'body',
     unlockLevel: 35,

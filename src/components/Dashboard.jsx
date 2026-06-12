@@ -7,7 +7,9 @@ import {
   initializeDailyQuests,
   initializeLevelQuest,
   initializeWeeklyDungeon,
+  initializePenalties,
   completeDailyQuest,
+  completeCustomQuest,
   completeLevelQuest,
   completeRedemptionQuest,
   recalculateOverallLevel,
@@ -19,12 +21,16 @@ import {
 } from '../logic/questEngine';
 import { getRankByLevel, xpForNextLevel } from '../data/questCatalog';
 import { isDebuffActive } from '../logic/penalties';
+import { getExtremeModeSummary, getExtremePillarLabel } from '../logic/extremeMode';
+import { getItemTierLabel, getItemColorClass, getSetBonusStatus } from '../data/equipment';
+import { getActiveGate, getGateProgress, isGateComplete, completeKhalifateObjective, MISSION_GATES } from '../data/missionGates';
 import { getShadowBonuses } from '../data/shadows';
 import { autoAssignStatPoints } from '../data/stats';
 import { getLocalDateString, toLocalDateString } from '../utils/dateUtils';
 import { completeGateStep } from '../data/jobChangeGates';
-import { AlertTriangle, Skull, Zap, Coins, Sparkles, Activity, Swords, Shield, Crown, Wrench, BookOpen, Lock, Star, Heart, CheckCircle2 } from 'lucide-react';
+import { AlertTriangle, Skull, Zap, Coins, Sparkles, Activity, Swords, Shield, Crown, Wrench, BookOpen, Lock, Star, Heart, CheckCircle2, Flame } from 'lucide-react';
 import { calculateUmmahBurden, getCurrentMilestone } from '../data/ummah';
+import { PILLAR_LABELS, getPillarDisplayKey } from '../utils/pillarDisplay';
 
 const rankColorMap = {
   'text-gray-400': '#9ca3af',
@@ -45,6 +51,7 @@ export default function Dashboard({ state, setState, ready = true }) {
 
     setState(prev => {
       let s = prev;
+      s = initializePenalties(s);
       s = initializeDailyQuests(s);
       s = initializeLevelQuest(s);
       s = initializeWeeklyDungeon(s);
@@ -128,7 +135,7 @@ export default function Dashboard({ state, setState, ready = true }) {
                 ...(next.systemMessages || []),
                 {
                   type: 'levelUp',
-                  title: `${p.toUpperCase()} LEVEL UP!`,
+                  title: `${getPillarDisplayKey(p)} LEVEL UP!`,
                   subtitle: `Level ${newPillars[p].level}`,
                   message: `SYSTEM auto-assigned: ${assignStr}. Performance determines growth.`,
                 },
@@ -186,120 +193,113 @@ export default function Dashboard({ state, setState, ready = true }) {
 
   const handleCompleteCustom = (questUniqueId) => {
     setState(prev => {
-      const quest = prev.customQuests.find(q => q.uniqueId === questUniqueId);
-      if (!quest || quest.lastCompleted === today) return prev;
-      const questKey = quest.uniqueId || quest.id;
-      const alreadyDone = prev.history.some(h => {
-        const hDate = h.date ? toLocalDateString(h.date) : '';
-        return hDate === today && h.type === 'custom' && h.questId === questKey;
-      });
-      if (alreadyDone) return prev;
-
-      const baseXp = quest.xp || 20;
-      const gold = Math.floor(baseXp * 0.5);
-      const pillar = quest.pillar || 'deen';
-      const newPillars = { ...prev.pillars };
-      newPillars[pillar] = {
-        ...newPillars[pillar],
-        xp: newPillars[pillar].xp + baseXp,
-        streak: newPillars[pillar].streak + 1,
-      };
-      let next = {
-        ...prev,
-        customQuests: prev.customQuests.map(q => q.uniqueId === questUniqueId ? { ...q, id: q.id || q.uniqueId, lastCompleted: today, completedAt: new Date().toISOString() } : q),
-        pillars: newPillars,
-        gold: prev.gold + gold,
-        history: [...prev.history, {
-          eventId: `custom-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-          type: 'custom',
-          questId: questKey,
-          title: quest.title,
-          description: quest.description || '',
-          pillar,
-          tags: quest.tags || [],
-          missionDuty: quest.missionDuty || null,
-          source: quest.source || 'custom',
-          xp: baseXp,
-          gold,
-          date: new Date().toISOString(),
-          localDate: today,
-          completed: true,
-        }],
-      };
-      // Check pillar level-up
-      const needed = xpForNextLevel(newPillars[pillar].level);
-      if (newPillars[pillar].xp >= needed) {
-        newPillars[pillar].level += 1;
-        newPillars[pillar].xp -= needed;
-        const pillarRank = getRankByLevel(newPillars[pillar].level);
-        const spAwarded = pillarRank.statPointsPerLevel || 1;
-        const autoStatResult = autoAssignStatPoints(next.stats || {}, pillar, spAwarded);
-        if (autoStatResult) {
-          next.stats = autoStatResult.stats;
-          const assignStr = autoStatResult.assignments.map(a => `${a.stat.toUpperCase()} +${a.points}`).join(', ');
-          next.systemMessages = [
-            ...(next.systemMessages || []),
-            {
-              type: 'levelUp',
-              title: `${pillar.toUpperCase()} LEVEL UP!`,
-              subtitle: `Level ${newPillars[pillar].level}`,
-              message: `SYSTEM auto-assigned: ${assignStr}. Performance determines growth.`,
-            },
-          ];
-        }
-        next = { ...next, pillars: newPillars };
-      }
+      let next = completeCustomQuest(prev, questUniqueId, today);
+      if (next === prev) return prev;
       next = recalculateOverallLevel(next);
       next = { ...next, flowState: checkFlowState(next.history || [], rank.key) };
       return next;
     });
   };
 
-  const pillarLabels = { deen: 'Deen', body: 'Body', money: 'Money' };
-  const pillarColors = { deen: '#22d3ee', body: '#f43f5e', money: '#fbbf24' };
+  const pillarLabels = PILLAR_LABELS;
+  const pillarColors = { deen: '#3B82F6', body: '#F59E0B', money: '#EAB308' };
   const pillarIcons = { deen: Shield, body: Swords, money: Crown };
 
   return (
     <div className="max-w-2xl md:max-w-3xl lg:max-w-4xl mx-auto p-2 sm:p-4 space-y-4 sm:space-y-6 relative z-10">
-      {/* Status Window - RPG Style */}
-      <div className="glass-panel-strong p-6 relative">
-        <div className="absolute top-3 left-3 w-4 h-4 border-l-2 border-t-2 border-cyan-400/40" />
-        <div className="absolute top-3 right-3 w-4 h-4 border-r-2 border-t-2 border-cyan-400/40" />
-        <div className="absolute bottom-3 left-3 w-4 h-4 border-l-2 border-b-2 border-cyan-400/40" />
-        <div className="absolute bottom-3 right-3 w-4 h-4 border-r-2 border-b-2 border-cyan-400/40" />
+      {/* Status Window - Khalifa Monarch Style */}
+      <div className="glass-panel-khalifa p-6 relative overflow-hidden">
+        {/* Decorative Corner Brackets */}
+        <div className="absolute top-3 left-3 w-6 h-6 border-l-2 border-t-2 border-khalifa-gold/50" />
+        <div className="absolute top-3 right-3 w-6 h-6 border-r-2 border-t-2 border-khalifa-gold/50" />
+        <div className="absolute bottom-3 left-3 w-6 h-6 border-l-2 border-b-2 border-khalifa-gold/50" />
+        <div className="absolute bottom-3 right-3 w-6 h-6 border-r-2 border-b-2 border-khalifa-gold/50" />
 
-        <div className="flex items-center gap-6">
+        {/* Background Decorative Star */}
+        <div className="absolute -right-20 -bottom-20 w-64 h-64 opacity-[0.03] pointer-events-none">
+          <svg viewBox="0 0 100 100" fill="currentColor" className="text-khalifa-gold">
+            <path d="M50 0l11.756 36.18h38.244L69.065 58.541l11.756 36.18L50 72.18l-30.821 22.541 11.756-36.18L0 36.18h38.244z" />
+          </svg>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-center gap-8">
           <RankBadge level={state.user.overallLevel} />
-          <div className="flex-1 space-y-3">
+          <div className="flex-1 w-full space-y-4">
             <div className="flex items-center justify-between mb-2">
-              <div className="system-header">Player Status</div>
-              <div className="text-xs text-cyan-500/40">{new Date().toLocaleDateString()}</div>
+              <div className="system-header text-glow-khalifa text-khalifa-gold/80">Monarch Status</div>
+              <div className="font-orbitron text-[10px] text-khalifa-steel tracking-widest">{new Date().toLocaleDateString('en-CA')}</div>
             </div>
 
             <XpBar
               current={state.pillars.deen.xp + state.pillars.body.xp + state.pillars.money.xp}
               max={xpForNextLevel(state.user.overallLevel) * 3}
-              color={rankColorMap[rank.color] || '#22d3ee'}
-              label="Overall"
+              color="#EAB308"
+              label="OVERALL POWER"
               level={state.user.overallLevel}
             />
-            <XpBar current={state.pillars.deen.xp} max={xpForNextLevel(state.pillars.deen.level)} color="#22d3ee" label="Deen" level={state.pillars.deen.level} />
-            <XpBar current={state.pillars.body.xp} max={xpForNextLevel(state.pillars.body.level)} color="#f43f5e" label="Body" level={state.pillars.body.level} />
-            <XpBar current={state.pillars.money.xp} max={xpForNextLevel(state.pillars.money.level)} color="#fbbf24" label="Money" level={state.pillars.money.level} />
+
+            <div className="grid grid-cols-1 gap-3 mt-4">
+              <XpBar current={state.pillars.deen.xp} max={xpForNextLevel(state.pillars.deen.level)} color="#3B82F6" label="DEEN" level={state.pillars.deen.level} />
+              <XpBar current={state.pillars.body.xp} max={xpForNextLevel(state.pillars.body.level)} color="#F59E0B" label="BODY" level={state.pillars.body.level} />
+              <XpBar current={state.pillars.money.xp} max={xpForNextLevel(state.pillars.money.level)} color="#EAB308" label="MONEY" level={state.pillars.money.level} />
+            </div>
           </div>
         </div>
 
         {/* Stats row */}
         {state.stats && (
-          <div className="grid grid-cols-6 gap-2 mt-4 pt-4 border-t border-cyan-900/30">
+          <div className="grid grid-cols-6 gap-2 mt-6 pt-6 border-t border-khalifa-gold/10">
             {Object.entries(state.stats).map(([key, val]) => (
-              <div key={key} className="text-center">
-                <div className="text-[10px] text-cyan-500/50 uppercase tracking-wider">{key.slice(0, 3)}</div>
-                <div className="text-sm font-bold text-cyan-300">{val}</div>
+              <div key={key} className="text-center group">
+                <div className="text-[9px] text-khalifa-steel group-hover:text-khalifa-gold/60 transition-colors uppercase tracking-[0.2em]">{key.slice(0, 3)}</div>
+                <div className="text-sm font-orbitron font-bold text-khalifa-gold/90">{val}</div>
               </div>
             ))}
           </div>
         )}
+      </div>
+
+      {/* Weekly Pillar Focus Selector */}
+      <div className="glass-panel p-3 border border-yellow-500/30 bg-yellow-950/10">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2 text-yellow-400 text-sm font-semibold">
+            <Star size={16} /> WEEKLY FOCUS
+          </div>
+          {state.weeklyFocus && (
+            <button
+              onClick={() => setState(prev => ({ ...prev, weeklyFocus: null }))}
+              className="text-[10px] text-yellow-600 hover:text-yellow-400 uppercase tracking-wider px-2 py-1 rounded hover:bg-yellow-900/20 transition-colors"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+        <div className="text-[10px] text-yellow-500/60 mb-2 uppercase tracking-wider">
+          {state.weeklyFocus
+            ? `${pillarLabels[state.weeklyFocus] || state.weeklyFocus} quests earn +50% XP this week`
+            : 'Select a pillar to focus this week for +50% XP'}
+        </div>
+        <div className="flex gap-2">
+          {['deen', 'body', 'money'].map(p => {
+            const active = state.weeklyFocus === p;
+            const Icon = pillarIcons[p];
+            return (
+              <button
+                key={p}
+                onClick={() => setState(prev => ({ ...prev, weeklyFocus: p }))}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border transition-colors ${
+                  active
+                    ? 'bg-yellow-700/40 border-yellow-500/50 text-yellow-200'
+                    : 'bg-yellow-950/20 border-yellow-800/30 text-yellow-500/60 hover:text-yellow-300 hover:border-yellow-700/40'
+                }`}
+                style={active ? { borderColor: pillarColors[p] } : {}}
+              >
+                <Icon size={14} style={{ color: active ? pillarColors[p] : undefined }} />
+                {pillarLabels[p]}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Flow State Banner */}
@@ -450,7 +450,7 @@ export default function Dashboard({ state, setState, ready = true }) {
             const trial = state.monarchTrials;
             const stageDef = [null,
               { name: 'Financial Capacity', range: [76, 85] },
-              { name: 'Physical Capacity', range: [86, 95] },
+              { name: 'Adventure Capacity', range: [86, 95] },
               { name: 'Knowledge Capacity', range: [96, 99] },
               { name: 'The Final Trial', range: [100, 100] },
             ][trial.stage];
@@ -479,11 +479,83 @@ export default function Dashboard({ state, setState, ready = true }) {
         </div>
       )}
 
+      {/* Khalifate Mission Objectives */}
+      {(() => {
+        const activeGate = getActiveGate(state);
+        if (!activeGate) return null;
+        const progress = getGateProgress(state, activeGate);
+        const allObjectives = activeGate.objectives.map(obj => {
+          const userObj = (state.khalifateObjectives || []).find(o => o.id === obj.id);
+          return { ...obj, completed: userObj?.completed || false, completedAt: userObj?.completedAt || null };
+        });
+        return (
+          <div className="glass-panel p-3 border border-emerald-500/30 bg-emerald-950/10">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2 text-emerald-400 text-sm font-semibold">
+                <Crown size={16} /> KHALIFATE OBJECTIVES
+              </div>
+              <div className="text-[10px] px-2 py-0.5 rounded border border-emerald-500/30 bg-emerald-900/20 text-emerald-300">
+                {progress.completed}/{progress.required} complete
+              </div>
+            </div>
+            <div className="text-xs text-emerald-500/70 mb-2">
+              {activeGate.subtitle}
+            </div>
+            <div className="w-full bg-cyan-900/30 rounded-full h-1.5 mb-3">
+              <div
+                className="bg-emerald-500 rounded-full h-1.5 transition-all"
+                style={{ width: `${progress.percent}%` }}
+              />
+            </div>
+            <div className="space-y-2">
+              {allObjectives.map(obj => (
+                <div key={obj.id} className={`flex items-start gap-2 rounded-lg border p-2 ${obj.completed ? 'border-emerald-700/30 bg-emerald-950/10' : 'border-cyan-800/20 bg-cyan-950/10'}`}>
+                  <button
+                    onClick={() => {
+                      if (obj.completed) return;
+                      setState(prev => completeKhalifateObjective(prev, obj.id));
+                    }}
+                    className={`mt-0.5 flex-shrink-0 w-4 h-4 rounded border flex items-center justify-center transition-colors ${obj.completed ? 'bg-emerald-500 border-emerald-500' : 'border-cyan-600 hover:border-emerald-400'}`}
+                  >
+                    {obj.completed && <CheckCircle2 size={12} className="text-black" />}
+                  </button>
+                  <div className="flex-1 min-w-0">
+                    <div className={`text-xs font-semibold ${obj.completed ? 'text-emerald-400 line-through opacity-60' : 'text-cyan-300'}`}>{obj.label}</div>
+                    <div className="text-[10px] text-cyan-500/60 leading-tight">{obj.description}</div>
+                    {obj.completed && obj.completedAt && (
+                      <div className="text-[9px] text-emerald-500/50 mt-0.5">Completed {new Date(obj.completedAt).toLocaleDateString()}</div>
+                    )}
+                  </div>
+                  <span className={`text-[9px] px-1.5 py-0.5 rounded border flex-shrink-0 ${obj.pillar === 'deen' ? 'border-cyan-700/30 text-cyan-400' : obj.pillar === 'money' ? 'border-yellow-700/30 text-yellow-400' : obj.pillar === 'body' ? 'border-rose-700/30 text-rose-400' : 'border-purple-700/30 text-purple-400'}`}>
+                    {obj.pillar}
+                  </span>
+                </div>
+              ))}
+            </div>
+            {progress.percent >= 100 && (
+              <div className="mt-2 text-xs text-emerald-400 font-semibold text-center">
+                🚪 Gate Open. Level ascension unlocked.
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
       {/* Equipment Status */}
       {state.equipment && Object.values(state.equipment).some(Boolean) && (
         <div className="glass-panel p-3 border border-amber-500/30 bg-amber-950/10">
-          <div className="flex items-center gap-2 text-amber-400 text-sm font-semibold mb-2">
-            <Wrench size={16} /> EQUIPMENT
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2 text-amber-400 text-sm font-semibold">
+              <Wrench size={16} /> EQUIPMENT
+            </div>
+            {(() => {
+              const setBonus = getSetBonusStatus(state);
+              return setBonus.active ? (
+                <div className="text-[10px] px-2 py-0.5 rounded-full border border-amber-500/30 bg-amber-900/20 text-amber-300">
+                  {setBonus.label} +10%
+                </div>
+              ) : null;
+            })()}
           </div>
           <div className="grid grid-cols-3 gap-2">
             {['weapon', 'armor', 'ring'].map(slot => {
@@ -491,14 +563,24 @@ export default function Dashboard({ state, setState, ready = true }) {
               return (
                 <div key={slot} className={`rounded-lg p-2 border ${item ? 'bg-amber-950/20 border-amber-700/30' : 'bg-cyan-950/10 border-cyan-800/20'}`}>
                   <div className="text-[10px] text-cyan-500/60 uppercase capitalize">{slot}</div>
-                  <div className="text-xs text-cyan-200 truncate">{item ? item.name : 'Empty'}</div>
+                  <div className={`text-xs truncate ${item ? getItemColorClass(item) : 'text-cyan-200'}`}>
+                    {item ? item.name : 'Empty'}
+                  </div>
                   {item && (
-                    <div className="mt-1 w-full bg-cyan-900/30 rounded-full h-1">
-                      <div
-                        className={`rounded-full h-1 transition-all ${item.durability > item.maxDurability * 0.3 ? 'bg-green-500' : 'bg-red-500'}`}
-                        style={{ width: `${(item.durability / item.maxDurability) * 100}%` }}
-                      />
-                    </div>
+                    <>
+                      <div className="flex items-center justify-between mt-0.5">
+                        <span className="text-[9px] text-cyan-500/50">{getItemTierLabel(item)}</span>
+                        {item.enchantLevel > 0 && (
+                          <span className="text-[9px] text-purple-400">+{item.enchantLevel}</span>
+                        )}
+                      </div>
+                      <div className="mt-1 w-full bg-cyan-900/30 rounded-full h-1">
+                        <div
+                          className={`rounded-full h-1 transition-all ${item.durability > item.maxDurability * 0.3 ? 'bg-green-500' : 'bg-red-500'}`}
+                          style={{ width: `${(item.durability / item.maxDurability) * 100}%` }}
+                        />
+                      </div>
+                    </>
                   )}
                 </div>
               );
@@ -544,11 +626,33 @@ export default function Dashboard({ state, setState, ready = true }) {
           {Object.entries(state.pillars).filter(([_, p]) => isDebuffActive(p.activeDebuff)).map(([pillar, p]) => (
             <div key={pillar} className="text-sm text-red-300/70 flex items-center gap-2">
               <AlertTriangle size={14} />
-              {pillar.toUpperCase()}: {p.activeDebuff.message} (-{Math.round((1 - p.activeDebuff.multiplier) * 100)}% XP)
+              {getPillarDisplayKey(pillar)}: {p.activeDebuff.message} (-{Math.round((1 - p.activeDebuff.multiplier) * 100)}% XP)
             </div>
           ))}
         </div>
       )}
+
+      {/* Extreme Mode Warning */}
+      {(() => {
+        const extremePillars = getExtremeModeSummary(state);
+        if (extremePillars.length === 0) return null;
+        return (
+          <div className="glass-panel p-4 border border-orange-500/30 bg-orange-950/10">
+            <div className="flex items-center gap-2 text-orange-400 font-semibold mb-2 text-sm tracking-wider">
+              <Flame size={18} /> EXTREME MODE
+            </div>
+            {extremePillars.map(({ pillar, streak, severity }) => (
+              <div key={pillar} className={`text-sm flex items-center gap-2 ${severity === 'critical' ? 'text-red-300' : severity === 'severe' ? 'text-orange-300' : 'text-orange-300/70'}`}>
+                <AlertTriangle size={14} className={severity === 'critical' ? 'text-red-400' : 'text-orange-400'} />
+                {getPillarDisplayKey(pillar)}: {getExtremePillarLabel(streak)} — {streak} days of silence
+                <span className="text-[10px] ml-auto border border-orange-700/30 bg-orange-900/20 px-1.5 py-0.5 rounded">
+                  Complete to break
+                </span>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
 
       {/* Redemption Quests */}
       {state.redemptionQuests.length > 0 && (
@@ -623,6 +727,11 @@ export default function Dashboard({ state, setState, ready = true }) {
                 {state.pillars[pillar].streak > 0 && (
                   <span className="text-[10px] ml-1 opacity-60">🔥 {state.pillars[pillar].streak}</span>
                 )}
+                {state.streakFrozen?.[pillar] && (
+                  <span className="text-[10px] ml-1 text-yellow-400 font-semibold" title="Streak frozen — complete a quest today to save it. Miss today and it resets.">
+                    ⚠ FROZEN
+                  </span>
+                )}
               </div>
               {quests.map(quest => (
                 <QuestCard
@@ -643,17 +752,23 @@ export default function Dashboard({ state, setState, ready = true }) {
         {state.customQuests.length > 0 && (
           <div className="space-y-2">
             <div className="text-xs text-cyan-500/40 font-semibold uppercase tracking-widest">Custom</div>
-            {state.customQuests.map(quest => (
+            {state.customQuests.map(quest => {
+              const questKey = quest.uniqueId || quest.id;
+              const completedToday = quest.lastCompleted === today ||
+                (quest.completedAt && toLocalDateString(quest.completedAt) === today);
+              return (
               <QuestCard
-                key={quest.uniqueId}
+                key={questKey}
                 quest={{
                   ...quest,
-                  completedToday: quest.lastCompleted === today,
+                  uniqueId: questKey,
+                  completedToday,
                 }}
-                onComplete={() => handleCompleteCustom(quest.uniqueId)}
+                onComplete={() => handleCompleteCustom(questKey)}
                 rank={rank.key}
               />
-            ))}
+              );
+            })}
           </div>
         )}
 

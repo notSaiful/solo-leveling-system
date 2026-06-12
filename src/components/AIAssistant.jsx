@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, X, Send, Bot, User, Sparkles, AlertTriangle, Loader2, CheckCircle2, Swords } from 'lucide-react';
-import { sendMessage, getDailyMotivation, analyzeProgress, generateExtraQuests } from '../services/aiAssistant';
+import { MessageSquare, X, Send, Bot, User, Sparkles, AlertTriangle, Loader2, CheckCircle2, Swords, Zap } from 'lucide-react';
+import { sendMessage, getDailyMotivation, analyzeProgress, generateExtraQuests, getEveningCheckin } from '../services/aiAssistant';
 import { parseAdminCommands, stripCommandBlocks, executeAdminCommands, describeAdminCommands } from '../logic/adminCommands';
 
 const WELCOME_CONTENT = 'The Forge is hot. I do not coddle. I do not comfort. I forge weak men into warriors. Speak only if you are ready to be hammered.';
@@ -94,15 +94,8 @@ export default function AIAssistant({ state, setState }) {
     const text = overrideText || input.trim();
     if (!text || loading) return;
 
-    if (setState) {
-      setState(prev => ({
-        ...prev,
-        weeklyStats: {
-          ...prev.weeklyStats,
-          aiPromptsUsed: (prev.weeklyStats?.aiPromptsUsed || 0) + 1,
-        },
-      }));
-    }
+    // NOTE: Free-text chat is genuine conversation and does NOT cost Solo Clear.
+    // Only active AI features (quick actions, command execution) deduct the bonus.
 
     setInput('');
     setError(null);
@@ -137,7 +130,15 @@ export default function AIAssistant({ state, setState }) {
     setState(prevState => {
       const result = executeAdminCommands(prevState, pendingCommands.commands);
       cmdReports = result.reports;
-      return result.modified ? result.state : prevState;
+      const modifiedState = result.modified ? result.state : prevState;
+      // Command execution is an active AI feature — it costs Solo Clear
+      return {
+        ...modifiedState,
+        weeklyStats: {
+          ...modifiedState.weeklyStats,
+          aiPromptsUsed: (modifiedState.weeklyStats?.aiPromptsUsed || 0) + 1,
+        },
+      };
     });
     if (cmdReports.length > 0) {
       setMessages(prev => [...prev, createChatMessage({
@@ -159,7 +160,8 @@ export default function AIAssistant({ state, setState }) {
     setLoading(true);
     setError(null);
 
-    if (setState) {
+    // Forge 3 and Evening Check-in are self-work — they do NOT cost Solo Clear
+    if (setState && action !== 'forge3' && action !== 'checkin') {
       setState(prev => ({
         ...prev,
         weeklyStats: {
@@ -184,6 +186,9 @@ export default function AIAssistant({ state, setState }) {
       } else if (action === 'forge3') {
         rawReply = await generateExtraQuests(state, null);
         userPrompt = 'Forge 3 new quests for me';
+      } else if (action === 'checkin') {
+        rawReply = await getEveningCheckin(state);
+        userPrompt = 'Evening check-in. Report my day.';
       }
 
       const commands = parseAdminCommands(rawReply);
@@ -211,10 +216,18 @@ export default function AIAssistant({ state, setState }) {
     }
   };
 
-  const clearChat = () => {
+  const clearChat = useCallback((e) => {
+    e?.stopPropagation?.();
+    e?.preventDefault?.();
     localStorage.removeItem('system_chat_history');
-    setMessages([getWelcomeMessage()]);
-  };
+    if (!setState) return;
+    // Reset to empty array — useMemo will show welcome message
+    setState(prev => ({
+      ...prev,
+      aiChatHistory: [],
+      aiChatUpdatedAt: Date.now(),
+    }));
+  }, [setState]);
 
   return (
     <>
@@ -268,8 +281,19 @@ export default function AIAssistant({ state, setState }) {
                   <div className="text-[10px] text-red-500/50 uppercase tracking-widest">Zero Excuses Mode</div>
                 </div>
               </div>
-              <button onClick={clearChat} className="text-[10px] text-red-600 hover:text-red-400 uppercase tracking-wider">Clear</button>
+              <button type="button" onClick={clearChat} className="text-[10px] text-red-600 hover:text-red-400 uppercase tracking-wider px-2 py-1 rounded hover:bg-red-900/20 transition-colors">Clear</button>
             </div>
+
+            {/* Solo Clear Warning — only active AI features cost the bonus */}
+            {(state.weeklyStats?.aiPromptsUsed || 0) === 0 && (
+              <div className="px-3 py-2 bg-green-950/20 border-b border-green-800/30 flex items-center gap-2">
+                <Zap size={14} className="text-green-400 shrink-0" />
+                <div className="text-[11px] text-green-300/80 leading-snug">
+                  <span className="font-semibold text-green-300">Solo Clear bonus active.</span>{' '}
+                  Chat, Forge & Check-in are free. Orders, Audit, Accountability & Commands cost your 2× extraction rate.
+                </div>
+              </div>
+            )}
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-3 space-y-3 min-h-[200px] max-h-[50vh] sm:max-h-[450px]">
@@ -343,34 +367,33 @@ export default function AIAssistant({ state, setState }) {
 
             {/* Quick Actions */}
             <div className="flex gap-2 px-3 py-2 border-t border-red-900/30 overflow-x-auto">
-              <button
-                onClick={() => handleQuickAction('motivation')}
-                disabled={loading || pendingCommands}
-                className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-full bg-red-950/40 border border-red-800/30 text-red-400 hover:bg-red-900/30 whitespace-nowrap disabled:opacity-40"
-              >
-                <Sparkles size={10} /> Orders
-              </button>
-              <button
-                onClick={() => handleQuickAction('analyze')}
-                disabled={loading || pendingCommands}
-                className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-full bg-red-950/40 border border-red-800/30 text-red-400 hover:bg-red-900/30 whitespace-nowrap disabled:opacity-40"
-              >
-                <Bot size={10} /> Audit
-              </button>
-              <button
-                onClick={() => handleQuickAction('accountability')}
-                disabled={loading || pendingCommands}
-                className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-full bg-red-950/40 border border-red-800/30 text-red-400 hover:bg-red-900/30 whitespace-nowrap disabled:opacity-40"
-              >
-                <AlertTriangle size={10} /> Hold Me Accountable
-              </button>
-              <button
-                onClick={() => handleQuickAction('forge3')}
-                disabled={loading || pendingCommands}
-                className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-full bg-red-950/40 border border-red-800/30 text-red-400 hover:bg-red-900/30 whitespace-nowrap disabled:opacity-40"
-              >
-                <Swords size={10} /> Forge 3
-              </button>
+              {[
+                { key: 'motivation', icon: Sparkles, label: 'Orders', cost: 'motivation' },
+                { key: 'analyze', icon: Bot, label: 'Audit', cost: 'progress analysis' },
+                { key: 'accountability', icon: AlertTriangle, label: 'Hold Me Accountable', cost: 'accountability scan' },
+                { key: 'forge3', icon: Swords, label: 'Forge 3', cost: 'self-challenge — FREE' },
+                { key: 'checkin', icon: CheckCircle2, label: 'Check-in', cost: 'evening reflection — FREE' },
+              ].map(({ key, icon: Icon, label, cost }) => {
+                const willCostSoloClear = (state.weeklyStats?.aiPromptsUsed || 0) === 0;
+                const isFree = key === 'forge3' || key === 'checkin';
+                return (
+                  <button
+                    key={key}
+                    onClick={() => handleQuickAction(key)}
+                    disabled={loading || pendingCommands}
+                    title={isFree ? `FREE — ${cost}` : willCostSoloClear ? `Costs Solo Clear bonus: ${cost}. Chat & Forge are free.` : `Free — Solo Clear already used`}
+                    className={`flex items-center gap-1 text-[10px] px-2 py-1 rounded-full whitespace-nowrap disabled:opacity-40 transition-colors ${
+                      willCostSoloClear && !isFree
+                        ? 'bg-red-950/40 border border-green-600/40 text-red-400 hover:bg-red-900/30'
+                        : 'bg-red-950/40 border border-red-800/30 text-red-400 hover:bg-red-900/30'
+                    }`}
+                  >
+                    <Icon size={10} />
+                    {label}
+                    {willCostSoloClear && !isFree && <Zap size={10} className="text-green-400" />}
+                  </button>
+                );
+              })}
             </div>
 
             {/* Input */}
@@ -382,7 +405,7 @@ export default function AIAssistant({ state, setState }) {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                  placeholder="Report your actions. No excuses."
+                  placeholder="Ask follow-ups — free chat. Only buttons cost Solo Clear."
                   disabled={loading || pendingCommands}
                   className="flex-1 bg-red-950/20 border border-red-800/40 rounded-lg px-3 py-2 text-sm text-red-100 focus:outline-none focus:border-red-500/50 placeholder-red-800/50 disabled:opacity-30"
                 />

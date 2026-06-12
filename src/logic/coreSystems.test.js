@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { getLocalDateString, getDaysBetween } from '../utils/dateUtils';
 import { mergeStatesForSync } from './stateMerge';
-import { completeDailyQuest, completeRedemptionQuest, getRedemptionProgress, initializeDailyQuests } from './questEngine';
+import { completeCustomQuest, completeDailyQuest, completeRedemptionQuest, getRedemptionProgress, initializeDailyQuests } from './questEngine';
 import { isDebuffActive } from './penalties';
 import { executeAdminCommands } from './adminCommands';
 import { pruneExpiredCustomQuests } from './customQuests';
@@ -17,6 +17,7 @@ import { addFamilyCovenantEntryToState, containsFamilyHarmIntent, getFamilyCoven
 import { addLivelihoodEntryToState, getLivelihoodMetrics } from './livelihoodPipeline';
 import { addReadinessEntryToState, containsUnsafeReadinessIntent, getReadinessMetrics } from './readinessProtocol';
 import { getForgeMasterSystemPromptForTest } from '../services/aiAssistant';
+import { upgradeStateForCurrentBuild } from '../data/store';
 
 function baseState(overrides = {}) {
   return {
@@ -72,6 +73,45 @@ describe('date utilities', () => {
 });
 
 describe('sync conflict merge', () => {
+  it('upgrades old build snapshots without wiping earned progress', () => {
+    const oldState = baseState({
+      version: 1,
+      buildVersion: '2026-05-29-old-body-build',
+      gold: 77,
+      pillars: {
+        ...baseState().pillars,
+        body: { level: 4, xp: 55, streak: 3, activeDebuff: null },
+      },
+      dailyQuests: [{ id: 'old-body-training', title: 'Old Training Quest', pillar: 'body' }],
+      levelQuests: [{ id: 'old-level-quest' }],
+      redemptionQuests: [{ id: 'old-redemption' }],
+      weeklyDungeons: { weekId: 'old-week', bodyCompleted: true },
+      history: [{
+        eventId: 'earned-progress',
+        type: 'daily',
+        pillar: 'body',
+        xp: 55,
+        gold: 20,
+        completed: true,
+        localDate: '2026-06-01',
+      }],
+    });
+
+    const upgraded = upgradeStateForCurrentBuild(oldState, { resetGeneratedContent: true });
+
+    expect(upgraded.gold).toBe(77);
+    expect(upgraded.pillars.body.level).toBe(4);
+    expect(upgraded.pillars.body.xp).toBe(55);
+    expect(upgraded.history.map(entry => entry.eventId)).toEqual(['earned-progress']);
+    expect(upgraded.dailyQuests).toEqual([]);
+    expect(upgraded.levelQuests).toEqual([]);
+    expect(upgraded.redemptionQuests).toEqual([]);
+    expect(upgraded.lastQuestDate).toBeNull();
+    expect(upgraded.weeklyDungeons.weekId).toBe('old-week');
+    expect(upgraded.weeklyDungeons.bodyCompleted).toBe(true);
+    expect(upgraded.buildVersion).not.toBe('2026-05-29-old-body-build');
+  });
+
   it('preserves different quest completions from two devices', () => {
     const current = baseState({
       gold: 5,
@@ -341,8 +381,8 @@ describe('mission doctrine and metrics', () => {
     const metrics = getMissionMetrics([
       {
         type: 'daily',
-        title: 'Generic Body Quest',
-        description: 'Recovery block after training.',
+        title: 'Generic Adventure Quest',
+        description: 'Recovery block after route scouting.',
         pillar: 'body',
         tags: ['sleep', 'nutrition'],
         completed: true,
@@ -510,7 +550,7 @@ describe('mission doctrine and metrics', () => {
 
     expect(review.weeklyCoverage).toBe(40);
     expect(review.weakestDuty.id).toBe('readiness');
-    expect(review.command).toContain('Train strength');
+    expect(review.command).toContain('Adventure readiness');
   });
 
   it('creates and replaces a sealed weekly mission review note', () => {
@@ -580,6 +620,53 @@ describe('mission doctrine and metrics', () => {
     expect(quests.find(quest => quest.missionDuty === 'readiness').pillar).toBe('body');
     expect(next.customQuests).toHaveLength(3);
     expect(noDuplicate.customQuests).toHaveLength(3);
+  });
+
+  it('completes custom quests with legacy ids and adventure pillar aliases', () => {
+    const state = baseState({
+      customQuests: [{
+        id: 'legacy-custom-1',
+        title: 'Outdoor proof',
+        description: 'Complete the hike.',
+        pillar: 'adventure',
+        xp: 30,
+        lastCompleted: null,
+      }],
+      failureStreaks: { deen: 0, body: 3, money: 0 },
+    });
+
+    const next = completeCustomQuest(state, 'legacy-custom-1', '2026-06-01');
+    const completed = next.customQuests[0];
+    const history = next.history.at(-1);
+
+    expect(completed.uniqueId).toBe('legacy-custom-1');
+    expect(completed.lastCompleted).toBe('2026-06-01');
+    expect(next.pillars.body.xp).toBe(30);
+    expect(next.pillars.body.streak).toBe(1);
+    expect(next.failureStreaks.body).toBe(0);
+    expect(history.type).toBe('custom');
+    expect(history.questId).toBe('legacy-custom-1');
+    expect(history.pillar).toBe('body');
+  });
+
+  it('does not double-complete a custom quest on the same day', () => {
+    const state = baseState({
+      customQuests: [{
+        id: 'custom-1',
+        uniqueId: 'custom-1',
+        title: 'Read',
+        pillar: 'deen',
+        xp: 20,
+        lastCompleted: null,
+      }],
+    });
+
+    const first = completeCustomQuest(state, 'custom-1', '2026-06-01');
+    const second = completeCustomQuest(first, 'custom-1', '2026-06-01');
+
+    expect(second.history).toHaveLength(1);
+    expect(second.pillars.deen.xp).toBe(20);
+    expect(second.gold).toBe(10);
   });
 
   it('logs Ummah financial impact as mission evidence', () => {

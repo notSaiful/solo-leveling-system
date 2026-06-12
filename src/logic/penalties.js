@@ -2,6 +2,11 @@ import { getLocalDateString, getDaysBetween, toLocalDateString } from '../utils/
 import { getHealthDebuffReduction, getManaDebuffReduction } from '../data/stats';
 import { getScaledPenalty, getScaledRedemptionQuest } from '../data/rankDifficulty';
 import { getRankByLevel, RANK_CONFIG } from '../data/questCatalog';
+import {
+  getFailureStreak,
+  incrementFailureStreak,
+  applyExtremePenalty,
+} from './extremeMode';
 
 /** ============================================================
  *  PENALTY SYSTEM — Brutal Accountability
@@ -183,7 +188,8 @@ export function checkAndApplyPenalties(state) {
 
   const penalties = [];
   const redemptionQuests = [];
-  const updatedPillars = { ...state.pillars };
+  let updatedPillars = { ...state.pillars };
+  let updatedFailureStreaks = { ...(state.failureStreaks || {}) };
   const joinedDate = state.user?.joinedDate
     ? toLocalDateString(state.user.joinedDate)
     : today;
@@ -214,15 +220,29 @@ export function checkAndApplyPenalties(state) {
 
     // Count missed days for this pillar (days with no daily quest completion)
     let missedCount = 0;
+    let consecutiveMissedAtEnd = 0;
     for (const day of daysToCheck) {
-      // Don't penalize days before account creation
       if (day < joinedDate) continue;
-
       const completionCount = getDailyCompletionCount(state.history, pillar, day);
       if (completionCount < requiredDailyCompletions) {
         missedCount++;
       }
     }
+    // Count consecutive missed days at the END of the window (most recent first)
+    for (let i = daysToCheck.length - 1; i >= 0; i--) {
+      const day = daysToCheck[i];
+      if (day < joinedDate) break;
+      const completionCount = getDailyCompletionCount(state.history, pillar, day);
+      if (completionCount < requiredDailyCompletions) {
+        consecutiveMissedAtEnd++;
+      } else {
+        break;
+      }
+    }
+
+    // Update failure streak: consecutive missed days at the end
+    const prevStreak = getFailureStreak(state, pillar);
+    let newStreak = consecutiveMissedAtEnd > 0 ? prevStreak + consecutiveMissedAtEnd : 0;
 
     if (missedCount === 0) {
       // Update tracking date to the most recent checked day that had completions
@@ -271,8 +291,44 @@ export function checkAndApplyPenalties(state) {
       });
     }
 
-    // Reset streak on any miss
-    updatedPillars[pillar] = { ...updatedPillars[pillar], streak: 0 };
+    // Update failure streak
+    updatedFailureStreaks[pillar] = newStreak;
+
+    // Apply Extreme Mode penalty if failure streak >= 3
+    if (newStreak >= 3) {
+      const extremeResult = applyExtremePenalty(
+        { ...state, pillars: updatedPillars, failureStreaks: updatedFailureStreaks },
+        pillar,
+        rankKey
+      );
+      if (extremeResult.message) {
+        updatedPillars = extremeResult.state.pillars;
+        updatedFailureStreaks = { ...extremeResult.state.failureStreaks };
+        penalties.push({
+          pillar,
+          type: 'extreme',
+          days: newStreak,
+          xpLoss: extremeResult.xpLossExtra,
+          message: extremeResult.message,
+        });
+      }
+    }
+
+    // ─── NEVER MISS TWICE STREAK PROTECTION ───
+    // One missed day = streak frozen (warning, streak value preserved).
+    // Two consecutive missed days = streak reset to 0.
+    const wasFrozen = state.streakFrozen?.[pillar] || false;
+    if (consecutiveMissedAtEnd >= 2 || wasFrozen) {
+      // Second consecutive miss (or already frozen + another miss): reset streak
+      updatedPillars[pillar] = { ...updatedPillars[pillar], streak: 0 };
+      updatedPillars[pillar]._streakReset = true;
+      updatedPillars[pillar]._streakFrozen = false;
+    } else if (consecutiveMissedAtEnd === 1) {
+      // First miss: freeze streak, do NOT reset
+      updatedPillars[pillar] = { ...updatedPillars[pillar], streak: updatedPillars[pillar].streak };
+      updatedPillars[pillar]._streakFrozen = true;
+      updatedPillars[pillar]._streakReset = false;
+    }
   }
 
   // Check dungeon penalty
@@ -300,10 +356,20 @@ export function checkAndApplyPenalties(state) {
     }
   }
 
+  // Build updated streakFrozen from pillar metadata
+  const updatedStreakFrozen = { ...(state.streakFrozen || {}) };
+  for (const pillar of ['deen', 'body', 'money']) {
+    if (updatedPillars[pillar]?._streakFrozen !== undefined) {
+      updatedStreakFrozen[pillar] = updatedPillars[pillar]._streakFrozen;
+    }
+  }
+
   return {
     penalties,
     redemptionQuests,
     updatedPillars,
+    updatedFailureStreaks,
+    updatedStreakFrozen,
     dungeonPenalty,
     lastPenaltyCheckDate: today,
   };

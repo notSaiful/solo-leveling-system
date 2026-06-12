@@ -4,7 +4,7 @@ import { getLocalDateString, parseLocalDate } from '../utils/dateUtils';
 const DUTY_COMMANDS = {
   tauheed: 'Teach one source-backed lesson or write one tawheed action step.',
   wealth: 'Move money or earning capacity today: give, invest, build, sell, or train someone to earn.',
-  readiness: 'Train strength with restraint: include recovery, de-escalation, or lawful protection practice.',
+  readiness: 'Build Adventure readiness with restraint: include route scouting, navigation, first aid, recovery, or de-escalation.',
   service: 'Serve one Muslim through relief, advocacy, mentorship, livelihood, or direct help.',
   family: 'Lead your home through worship, mercy, repair, provision, presence, or example.',
 };
@@ -21,30 +21,55 @@ const CORRECTIVE_TEMPLATES = {
   tauheed: {
     title: 'Corrective: Teach Tawheed',
     description: 'Teach or write one source-backed tawheed lesson and define one action it demands today.',
+    steps: [
+      'Open Quran, a hadith book, or a seerah source. Pick one verse or narration about tawheed.',
+      'Write 2-3 sentences explaining it in your own words.',
+      'Write one exact action you will do today because of this proof.',
+    ],
     xp: 35,
     tags: ['tauheed', 'teaching', 'correction', 'knowledge'],
   },
   wealth: {
     title: 'Corrective: Wealth Amanah Action',
     description: 'Do one halal wealth action: give, invest, ship, sell, budget, or help one Muslim earn.',
+    steps: [
+      'Pick one exact action: send 50 rupees to savings, list one product for sale, message one potential client, review one stock, or give 10 rupees sadaqah.',
+      'Complete it using your phone, bank app, notebook, or marketplace.',
+      'Log one sentence: what you did and the next step.',
+    ],
     xp: 35,
     tags: ['wealth', 'halal', 'income', 'sadaqah', 'correction'],
   },
   readiness: {
-    title: 'Corrective: Readiness With Restraint',
-    description: 'Train strength or conditioning, then log one restraint or de-escalation lesson.',
+    title: 'Corrective: Adventure Readiness',
+    description: 'Complete one outdoor readiness action, then log one restraint or de-escalation lesson.',
+    steps: [
+      'Pick one action: walk 10 minutes outside, do 20 squats, stretch hips and back for 5 minutes, check your shoes/kit, or scout one safe route near home.',
+      'Complete it now.',
+      'Log one sentence: what you did and one safety or restraint rule you followed.',
+    ],
     xp: 35,
-    tags: ['readiness', 'training', 'restraint', 'lawful', 'correction'],
+    tags: ['readiness', 'adventure', 'navigation', 'outdoor', 'restraint', 'lawful', 'correction'],
   },
   service: {
     title: 'Corrective: Serve One Muslim',
     description: 'Serve one Muslim through relief, mentorship, lawful advocacy, education, or direct help.',
+    steps: [
+      'Pick one Muslim you can reach today.',
+      'Pick one action: answer one question, share one useful resource, make one intro, give one sincere advice, or do one small task for them.',
+      'Do it now. Write one sentence: who, what, and the result.',
+    ],
     xp: 35,
     tags: ['service', 'ummah', 'mentorship', 'relief', 'correction'],
   },
   family: {
     title: 'Corrective: Lead The Home',
     description: 'Lead one family action through worship, mercy, repair, provision, presence, or example.',
+    steps: [
+      'Pick one exact action: ask a family member what they need, buy one household item, lead one prayer together, apologize for one recent mistake, teach one verse to a sibling, or fix one broken thing.',
+      'Do it now. No delay.',
+      'Write one sentence: what you did and for whom.',
+    ],
     xp: 35,
     tags: ['family', 'leadership', 'mercy', 'home', 'correction'],
   },

@@ -200,10 +200,17 @@ function clampNumber(value, min, max, fallback) {
 }
 
 function applyOverallFromPillars(newState) {
-  const overall = Math.floor(
+  const weightedOverall = Math.floor(
     (newState.pillars.deen.level * 0.5) +
     (newState.pillars.body.level * 0.3) +
     (newState.pillars.money.level * 0.2)
+  );
+  const overall = Math.max(
+    newState.user?.overallLevel || 0,
+    weightedOverall,
+    newState.pillars.deen.level,
+    newState.pillars.body.level,
+    newState.pillars.money.level
   );
   const rank = getRankByLevel(overall);
   newState.user = {

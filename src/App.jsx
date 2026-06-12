@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { LayoutDashboard, BarChart3, Swords, Settings, ShoppingBag, Sparkles, Coins, Zap, AlertTriangle, Users, Crown, Wrench, Play, Heart } from 'lucide-react';
 import { activateSkill, getSkillCooldownRemaining } from './data/skills';
 import { checkLegacyShadowExtraction, LEGACY_SHADOW_QUESTS, getLegacyShadowProgress, logLegacyShadowDay } from './data/legacyShadows';
@@ -16,6 +16,7 @@ import { getCurrentWeekId } from './logic/dungeons';
 import { getFlowStateDisplay, initializeWeeklyDungeon } from './logic/questEngine';
 import { checkAndApplyPenalties } from './logic/penalties';
 import { getCharacterBuild } from './data/stats';
+import { getItemTierLabel, getItemColorClass } from './data/equipment';
 import { DEFAULT_STATE, initCloudSync, syncNow, loadState, STORAGE_KEY } from './data/store';
 import { isCanonicalSyncConfigured } from './services/canonicalSync';
 import { getLocalDateString } from './utils/dateUtils';
@@ -33,21 +34,21 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-black text-cyan-400 p-6">
-          <div className="glass-panel-strong p-8 max-w-md w-full text-center space-y-4">
-            <AlertTriangle size={48} className="mx-auto text-red-400" />
-            <h2 className="font-orbitron text-xl font-bold tracking-wider">SYSTEM ERROR</h2>
-            <p className="text-sm text-cyan-500/70">
-              Corrupted data detected. Reset to restore the System.
+        <div className="min-h-screen flex items-center justify-center bg-khalifa-void text-khalifa-gold p-6">
+          <div className="glass-panel-khalifa p-8 max-w-md w-full text-center space-y-4 border-red-500/30 bg-red-950/10">
+            <Skull size={48} className="mx-auto text-red-500 animate-pulse" />
+            <h2 className="font-playfair text-xl font-bold tracking-tight">SYSTEM COLLAPSE</h2>
+            <p className="text-sm text-khalifa-steel">
+              Dimensional instability detected. The Monarch's resolve must be restored.
             </p>
             <button
               onClick={() => {
                 localStorage.removeItem(STORAGE_KEY);
                 window.location.reload();
               }}
-              className="w-full bg-red-900/30 hover:bg-red-900/50 border border-red-500/40 text-red-300 py-3 rounded-lg font-semibold transition-colors"
+              className="w-full bg-red-900/40 hover:bg-red-800/60 border border-red-500/50 text-red-100 py-3 rounded-lg font-bold transition-all uppercase tracking-widest font-orbitron"
             >
-              Reset System
+              Initialize System Rebirth
             </button>
           </div>
         </div>
@@ -61,12 +62,13 @@ class ErrorBoundary extends React.Component {
 // Floating particle component
 function FloatingParticles() {
   const particles = useMemo(() => (
-    [...Array(20)].map((_, i) => ({
+    [...Array(25)].map((_, i) => ({
       id: i,
       left: `${Math.random() * 100}%`,
       top: `${Math.random() * 100}%`,
+      color: Math.random() > 0.5 ? '#3B82F6' : '#EAB308',
       animationDelay: `${Math.random() * 6}s`,
-      animationDuration: `${6 + Math.random() * 4}s`,
+      animationDuration: `${8 + Math.random() * 10}s`,
     }))
   ), []);
 
@@ -75,10 +77,12 @@ function FloatingParticles() {
       {particles.map(particle => (
         <div
           key={particle.id}
-          className="absolute w-1 h-1 bg-cyan-400/20 rounded-full animate-float"
+          className="absolute w-1 h-1 rounded-full animate-float opacity-20"
           style={{
             left: particle.left,
             top: particle.top,
+            backgroundColor: particle.color,
+            boxShadow: `0 0 8px ${particle.color}`,
             animationDelay: particle.animationDelay,
             animationDuration: particle.animationDuration,
           }}
@@ -97,8 +101,6 @@ export default function App() {
   usePenaltyCheck(state, setState, cloudReady);
 
   const [activeTab, setActiveTab] = useState('dashboard');
-  const stateRef = useRef(state);
-  stateRef.current = state;
 
   // Cloud init on mount — loads cloud state silently, syncs continuously afterward
   useEffect(() => {
@@ -110,7 +112,7 @@ export default function App() {
     initCloudSync().then((result) => {
       if (result?.success) {
         const fresh = loadState();
-        setState({ ...fresh, __preserveLastUpdated: true });
+        setState({ ...fresh, __preserveLastUpdated: true, __skipCloudSync: true });
       }
     }).catch(() => {}).finally(() => setCloudReady(true));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -149,6 +151,7 @@ export default function App() {
         pillars: cleanPillars,
         weeklyDungeons: nextState.weeklyDungeons,
         weeklyStats: { soloClear: false, aiPromptsUsed: 0, weekId: currentWeek },
+        weeklyFocus: null,
         lastPenaltyCheckDate: today,
       }));
     }
@@ -174,25 +177,6 @@ export default function App() {
       }));
     }
   }, [cloudReady, state.customQuests, state.flowState?.active, state.flowState?.expiresAt]);
-
-  // Force cloud sync before app goes to background / closes
-  useEffect(() => {
-    const forceSync = () => {
-      if (cloudReady && isCanonicalSyncConfigured()) {
-        syncNow(state).catch(() => {});
-      }
-    };
-    const handleVisibility = () => {
-      if (document.visibilityState === 'hidden') forceSync();
-    };
-    const handleUnload = () => forceSync();
-    document.addEventListener('visibilitychange', handleVisibility);
-    window.addEventListener('beforeunload', handleUnload);
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibility);
-      window.removeEventListener('beforeunload', handleUnload);
-    };
-  }, [cloudReady, state]);
 
   const flowDisplay = getFlowStateDisplay(state.flowState);
   const build = getCharacterBuild(state.stats || {});
@@ -220,17 +204,17 @@ export default function App() {
       <SystemMessage notification={notification} onDismiss={dismiss} />
 
       {/* Header */}
-      <header className="relative z-10 p-3 sm:p-4 border-b border-cyan-900/50 bg-black/80">
+      <header className="relative z-10 p-3 sm:p-4 border-b border-khalifa-gold/10 bg-khalifa-void/90 backdrop-blur-md">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2 sm:gap-3">
             <div className="relative">
-              <h1 className="font-orbitron text-base sm:text-lg font-bold text-cyan-400 tracking-widest text-glow-cyan">
-                SYSTEM
+              <h1 className="font-playfair text-lg sm:text-xl font-bold text-khalifa-gold tracking-tight text-glow-khalifa">
+                KHALIFA
               </h1>
-              <div className="absolute -bottom-1 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent" />
+              <div className="absolute -bottom-1 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-khalifa-gold/40 to-transparent" />
             </div>
             {flowDisplay && (
-              <div className="flex items-center gap-1 bg-cyan-900/30 border border-cyan-500/30 px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs text-cyan-400 animate-pulse">
+              <div className="flex items-center gap-1 bg-khalifa-blue/10 border border-khalifa-blue/30 px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs text-khalifa-blue animate-pulse">
                 <Zap size={10} className="sm:w-3 sm:h-3" />
                 <span className="hidden sm:inline">FLOW</span>
               </div>
@@ -238,28 +222,25 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className="flex items-center gap-1 text-[10px] sm:text-xs text-cyan-500/60 hidden sm:flex">
-              <Sparkles size={12} />
+            <div className="flex items-center gap-1 text-[10px] sm:text-xs text-khalifa-steel hidden sm:flex uppercase tracking-widest font-orbitron">
+              <Sparkles size={12} className="text-khalifa-gold/40" />
               <span>{build.name}</span>
             </div>
             {state.skillPoints > 0 && (
-              <div className="flex items-center gap-1 bg-purple-900/20 border border-purple-600/30 px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs">
-                <Zap size={12} className="text-purple-400" />
-                <span className="font-bold text-purple-400">{state.skillPoints} SP</span>
+              <div className="flex items-center gap-1 bg-khalifa-purple/10 border border-khalifa-purple/30 px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs">
+                <Zap size={12} className="text-khalifa-purple" />
+                <span className="font-bold text-khalifa-purple font-orbitron">{state.skillPoints} SP</span>
               </div>
             )}
             {state.ummahCommand?.unlocked && (
-              <div className="flex items-center gap-1 bg-amber-900/20 border border-amber-600/30 px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs">
-                <Crown size={12} className="text-amber-400" />
-                <span className="font-bold text-amber-400 hidden sm:inline">Ummah</span>
+              <div className="flex items-center gap-1 bg-khalifa-gold/10 border border-khalifa-gold/30 px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs">
+                <Crown size={12} className="text-khalifa-gold" />
+                <span className="font-bold text-khalifa-gold hidden sm:inline uppercase tracking-widest font-orbitron">Ummah</span>
               </div>
             )}
-            <div className="flex items-center gap-1 bg-yellow-900/20 border border-yellow-600/30 px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs">
-              <Coins size={12} className="text-yellow-400" />
-              <span className="font-bold text-yellow-400">{state.gold.toLocaleString()}</span>
-            </div>
-            <div className="text-[10px] sm:text-xs text-cyan-500/40 hidden sm:block">
-              {state.user.name}
+            <div className="flex items-center gap-1 bg-khalifa-amber/10 border border-khalifa-amber/30 px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs">
+              <Coins size={12} className="text-khalifa-amber" />
+              <span className="font-bold text-khalifa-amber font-orbitron">{state.gold.toLocaleString()}</span>
             </div>
           </div>
         </div>
@@ -271,109 +252,140 @@ export default function App() {
         {activeTab === 'stats' && <StatsPanel state={state} />}
         {activeTab === 'dungeons' && <WeeklyDungeon state={state} setState={setState} />}
         {activeTab === 'legion' && (
-          <div className="max-w-2xl mx-auto p-2 sm:p-4 space-y-4">
-            <h2 className="font-orbitron text-xl font-bold text-cyan-400 tracking-wider">Shadow Legion</h2>
-            <div className="glass-panel p-4 space-y-3">
-              <div className="text-sm text-cyan-500/60">Extracted Shadows</div>
+          <div className="max-w-2xl mx-auto p-2 sm:p-4 space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="font-playfair text-2xl font-bold text-khalifa-gold tracking-tight text-glow-khalifa">Shadow Legion</h2>
+              <div className="text-[10px] font-orbitron text-khalifa-steel tracking-widest uppercase bg-khalifa-gold/5 px-2 py-1 rounded border border-khalifa-gold/20">
+                Level {state.user.overallLevel} Command
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {(state.legacyShadows || []).length === 0 ? (
-                <div className="text-sm text-cyan-500/40 italic">No Manhood Forge shadows extracted yet.</div>
+                <div className="col-span-full glass-panel p-8 text-center border-dashed border-khalifa-gold/20">
+                  <Skull size={32} className="mx-auto text-khalifa-steel/30 mb-2" />
+                  <div className="text-sm text-khalifa-steel italic">No Manhood Forge shadows extracted yet.</div>
+                </div>
               ) : (
-                <div className="space-y-2">
-                  {(state.legacyShadows || []).map((shadow, i) => (
-                    <div key={i} className="flex items-center gap-3 bg-cyan-950/20 border border-cyan-800/30 rounded-lg p-3">
-                      <div className="w-8 h-8 rounded-full bg-cyan-900/40 flex items-center justify-center">
-                        <Users size={16} className="text-cyan-400" />
+                (state.legacyShadows || []).map((shadow, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                    className="glass-panel-khalifa p-4 relative overflow-hidden group"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-khalifa-purple/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="flex items-center gap-4 relative z-10">
+                      <div className="w-12 h-12 rounded-lg bg-khalifa-purple/20 border border-khalifa-purple/30 flex items-center justify-center shadow-[0_0_15px_rgba(124,58,237,0.2)]">
+                        <Users size={24} className="text-khalifa-purple" />
                       </div>
                       <div>
-                        <div className="text-sm font-semibold text-cyan-200">{shadow.name}</div>
-                        <div className="text-xs text-cyan-500/60">+{shadow.boostValue} {shadow.boostType} for future children</div>
+                        <div className="text-base font-bold text-gray-100 font-playfair tracking-wide">{shadow.name}</div>
+                        <div className="text-[10px] text-khalifa-purple/80 uppercase tracking-widest font-orbitron">Legacy Shadow</div>
                       </div>
                     </div>
-                  ))}
-                </div>
+                    <div className="mt-4 pt-3 border-t border-khalifa-purple/10">
+                      <div className="text-xs text-khalifa-steel">
+                        Inheritance: <span className="text-khalifa-purple">+{shadow.boostValue} {shadow.boostType}</span>
+                      </div>
+                      <div className="text-[10px] text-khalifa-steel/50 mt-1 uppercase tracking-tighter">Secured for future generations</div>
+                    </div>
+                  </motion.div>
+                ))
               )}
             </div>
 
-            {/* Legacy Shadow Extraction */}
-            <div className="glass-panel p-4 space-y-3 border border-cyan-700/30">
-              <div className="text-sm text-cyan-500/60">Manhood Forge — Extract Shadow</div>
-              <div className="text-[11px] text-cyan-500/40">Log each day manually. Streaks break if you miss a day. No auto-counting.</div>
-              <div className="space-y-2">
+            {/* Manhood Forge Extraction UI */}
+            <div className="space-y-4">
+              <h3 className="font-orbitron text-xs font-bold text-khalifa-gold tracking-[0.3em] uppercase opacity-60">The Manhood Forge</h3>
+              <div className="grid grid-cols-1 gap-3">
                 {LEGACY_SHADOW_QUESTS.map(template => {
                   const alreadyExtracted = state.legacyShadows?.some(s => s.id === template.shadow.id);
                   const { currentStreak, canLogToday } = getLegacyShadowProgress(state, template.id);
                   const progress = alreadyExtracted ? template.requiredDays : currentStreak;
                   const canExtract = progress >= template.requiredDays;
+                  const percent = Math.min(100, Math.round((progress / template.requiredDays) * 100));
+
                   return (
-                    <div key={template.id} className={`rounded-lg border p-3 ${alreadyExtracted ? 'bg-green-950/10 border-green-800/20' : 'bg-cyan-950/10 border-cyan-800/20'}`}>
-                      <div className="flex items-center justify-between">
-                        <div className="text-sm text-cyan-200">{template.title}</div>
-                        {alreadyExtracted ? (
-                          <span className="text-[10px] text-green-400">Extracted ✓</span>
-                        ) : (
+                    <div key={template.id} className={`glass-panel p-4 relative overflow-hidden ${alreadyExtracted ? 'border-green-500/20 bg-green-950/5' : 'border-khalifa-gold/10'}`}>
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className={`text-sm font-bold font-playfair ${alreadyExtracted ? 'text-green-400' : 'text-gray-200'}`}>{template.title}</span>
+                            {alreadyExtracted && <span className="text-[9px] text-green-500/60 uppercase tracking-widest bg-green-500/10 px-1.5 rounded">Extracted</span>}
+                          </div>
+                          <p className="text-xs text-khalifa-steel mt-1 leading-relaxed">{template.description}</p>
+                        </div>
+
+                        {!alreadyExtracted && (
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => setState(prev => logLegacyShadowDay(prev, template.id))}
                               disabled={!canLogToday}
-                              className={`text-xs px-2 py-1 rounded border transition-colors ${
+                              className={`text-[10px] px-3 py-1.5 rounded-lg border font-bold uppercase tracking-wider transition-all ${
                                 canLogToday
-                                  ? 'bg-cyan-900/30 border-cyan-500/40 text-cyan-300 hover:bg-cyan-800/40'
-                                  : 'bg-green-950/20 border-green-700/30 text-green-400 cursor-default'
+                                  ? 'bg-khalifa-gold/10 border-khalifa-gold/30 text-khalifa-gold hover:bg-khalifa-gold/20'
+                                  : 'bg-green-500/10 border-green-500/30 text-green-400 cursor-default'
                               }`}
                             >
-                              {canLogToday ? 'Log Today' : 'Logged ✓'}
+                              {canLogToday ? 'Log' : 'Logged'}
                             </button>
                             <button
                               onClick={() => setState(prev => checkLegacyShadowExtraction(prev, template.id))}
                               disabled={!canExtract}
-                              className={`text-xs px-2 py-1 rounded border transition-colors ${
+                              className={`text-[10px] px-3 py-1.5 rounded-lg border font-bold uppercase tracking-wider transition-all ${
                                 canExtract
-                                  ? 'bg-purple-900/30 border-purple-500/40 text-purple-300 hover:bg-purple-800/40'
-                                  : 'bg-cyan-950/20 border-cyan-800/20 text-cyan-600 cursor-not-allowed'
+                                  ? 'bg-khalifa-purple/20 border-khalifa-purple/40 text-khalifa-purple shadow-[0_0_10px_rgba(124,58,237,0.3)] hover:bg-khalifa-purple/30'
+                                  : 'bg-khalifa-void border-khalifa-steel/20 text-khalifa-steel cursor-not-allowed'
                               }`}
                             >
-                              {canExtract ? 'Extract' : 'Locked'}
+                              Extract
                             </button>
                           </div>
                         )}
                       </div>
-                      <div className="text-xs text-cyan-500/60">{template.description}</div>
-                      <div className="mt-2">
-                        <div className="flex items-center justify-between text-[10px] text-cyan-500/40 mb-1">
-                          <span>Streak: {progress}/{template.requiredDays} days</span>
-                          <span>{Math.min(100, Math.round((progress / template.requiredDays) * 100))}%</span>
+
+                      <div className="mt-4">
+                        <div className="flex items-center justify-between text-[9px] font-orbitron text-khalifa-steel/50 mb-1.5 uppercase tracking-widest">
+                          <span>Progress: {progress}/{template.requiredDays} Days</span>
+                          <span className={alreadyExtracted ? 'text-green-500' : 'text-khalifa-gold'}>{percent}%</span>
                         </div>
-                        <div className="w-full bg-cyan-900/30 rounded-full h-1">
+                        <div className="w-full bg-khalifa-void rounded-full h-1 relative">
                           <div
-                            className={`rounded-full h-1 transition-all ${alreadyExtracted ? 'bg-green-500' : 'bg-cyan-500'}`}
-                            style={{ width: `${Math.min(100, (progress / template.requiredDays) * 100)}%` }}
+                            className={`rounded-full h-1 transition-all duration-1000 ${alreadyExtracted ? 'bg-green-500' : 'bg-khalifa-gold'}`}
+                            style={{ width: `${percent}%`, boxShadow: `0 0 10px ${alreadyExtracted ? 'rgba(34,197,94,0.3)' : 'rgba(234,179,8,0.3)'}` }}
                           />
                         </div>
                       </div>
-                      <div className="text-[10px] text-cyan-500/40 mt-1">Reward: {template.shadow.name} (+{template.shadow.boostValue} {template.shadow.boostType})</div>
                     </div>
                   );
                 })}
               </div>
             </div>
-            <div className="glass-panel p-4 space-y-3">
-              <div className="text-sm text-cyan-500/60">Active Skills</div>
-              {(state.skills || []).length === 0 ? (
-                <div className="text-sm text-cyan-500/40 italic">No skills learned. Pass Job Change Gates to unlock skills.</div>
-              ) : (
-                <div className="space-y-2">
-                  {(state.skills || []).map((skill, i) => {
+
+            {/* Active Skills */}
+            <div className="space-y-4">
+              <h3 className="font-orbitron text-xs font-bold text-khalifa-purple tracking-[0.3em] uppercase opacity-60">Awakened Skills</h3>
+              <div className="grid grid-cols-1 gap-3">
+                {(state.skills || []).length === 0 ? (
+                  <div className="glass-panel p-6 text-center border-dashed border-khalifa-purple/20">
+                    <Zap size={24} className="mx-auto text-khalifa-steel/30 mb-2" />
+                    <div className="text-sm text-khalifa-steel italic">Pass Job Change Gates to unlock skills.</div>
+                  </div>
+                ) : (
+                  (state.skills || []).map((skill, i) => {
                     const cdRemaining = getSkillCooldownRemaining(state, skill.id);
                     const canActivate = cdRemaining === 0;
                     return (
-                      <div key={i} className="flex items-center justify-between bg-cyan-950/20 border border-cyan-800/30 rounded-lg p-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-purple-900/40 flex items-center justify-center">
-                            <Zap size={16} className="text-purple-400" />
+                      <div key={i} className="glass-panel p-4 flex items-center justify-between gap-4 border-khalifa-purple/20 bg-khalifa-purple/5">
+                        <div className="flex items-center gap-4">
+                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center border ${skill.active ? 'bg-khalifa-purple border-khalifa-purple shadow-[0_0_15px_rgba(124,58,237,0.5)]' : 'bg-khalifa-purple/10 border-khalifa-purple/30'}`}>
+                            <Zap size={20} className={skill.active ? 'text-white' : 'text-khalifa-purple'} />
                           </div>
                           <div>
-                            <div className="text-sm font-semibold text-cyan-200">{skill.name}</div>
-                            <div className="text-xs text-cyan-500/60">{skill.description}</div>
+                            <div className="text-sm font-bold text-gray-100">{skill.name}</div>
+                            <div className="text-[10px] text-khalifa-steel mt-0.5">{skill.description}</div>
                           </div>
                         </div>
                         <button
@@ -382,41 +394,58 @@ export default function App() {
                             setState(prev => activateSkill(prev, skill.id));
                           }}
                           disabled={!canActivate}
-                          className={`flex items-center gap-1 text-xs px-2 py-1 rounded border transition-colors ${
+                          className={`text-[10px] px-3 py-1.5 rounded-lg border font-bold uppercase tracking-wider transition-all ${
                             canActivate
-                              ? 'bg-purple-900/30 border-purple-500/40 text-purple-300 hover:bg-purple-800/40'
-                              : 'bg-cyan-950/20 border-cyan-800/20 text-cyan-600 cursor-not-allowed'
+                              ? 'bg-khalifa-purple/20 border-khalifa-purple/40 text-khalifa-purple hover:bg-khalifa-purple/30'
+                              : 'bg-khalifa-void border-khalifa-steel/20 text-khalifa-steel cursor-not-allowed'
                           }`}
                         >
-                          <Play size={12} />
                           {canActivate ? 'Activate' : `${Math.ceil(cdRemaining / 3600000)}h`}
                         </button>
                       </div>
                     );
-                  })}
-                </div>
-              )}
+                  })
+                )}
+              </div>
             </div>
-            <div className="glass-panel p-4 space-y-3">
-              <div className="text-sm text-cyan-500/60">Equipment</div>
-              {['weapon', 'armor', 'ring'].map(slot => {
-                const item = state.equipment?.[slot];
-                return (
-                  <div key={slot} className="flex items-center gap-3 bg-cyan-950/20 border border-cyan-800/30 rounded-lg p-3">
-                    <div className="w-8 h-8 rounded-full bg-amber-900/40 flex items-center justify-center">
-                      <Wrench size={16} className="text-amber-400" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="text-sm font-semibold text-cyan-200 capitalize">{slot}: {item ? item.name : 'Empty'}</div>
-                      {item && (
-                        <div className="text-xs text-cyan-500/60">
-                          Durability: {item.durability}/{item.maxDurability} {item.enchantLevel > 0 && `| +${item.enchantLevel} Enchant`}
+
+            <div className="space-y-4 pb-4">
+              <h3 className="font-orbitron text-xs font-bold text-khalifa-amber tracking-[0.3em] uppercase opacity-60">Monarch's Regalia</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {['weapon', 'armor', 'ring'].map(slot => {
+                  const item = state.equipment?.[slot];
+                  return (
+                    <div key={slot} className="glass-panel p-4 flex flex-col items-center text-center gap-2 border-khalifa-amber/20 bg-khalifa-amber/5">
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center border ${item ? 'bg-khalifa-amber/20 border-khalifa-amber/40 shadow-[0_0_15px_rgba(245,158,11,0.2)]' : 'bg-khalifa-void border-khalifa-steel/20'}`}>
+                        <Wrench size={24} className={item ? 'text-khalifa-amber' : 'text-khalifa-steel/30'} />
+                      </div>
+                      <div className="w-full">
+                        <div className="text-[10px] text-khalifa-steel uppercase tracking-widest mb-1">{slot}</div>
+                        <div className={`text-sm font-bold truncate ${item ? getItemColorClass(item) : 'text-khalifa-steel/50'}`}>
+                          {item ? item.name : 'Empty'}
                         </div>
-                      )}
+                        {item && (
+                          <div className="mt-2 space-y-1">
+                            <div className="flex items-center justify-between text-[9px] text-khalifa-steel/60 px-1">
+                              <span>Durability</span>
+                              <span>{Math.round((item.durability / item.maxDurability) * 100)}%</span>
+                            </div>
+                            <div className="w-full bg-khalifa-void rounded-full h-1">
+                              <div
+                                className={`rounded-full h-1 transition-all ${item.durability > item.maxDurability * 0.3 ? 'bg-khalifa-amber' : 'bg-red-500'}`}
+                                style={{ width: `${(item.durability / item.maxDurability) * 100}%` }}
+                              />
+                            </div>
+                            <div className="text-[9px] text-khalifa-amber/80 font-bold uppercase tracking-tighter pt-1">
+                              {getItemTierLabel(item)} {item.enchantLevel > 0 && `(+${item.enchantLevel})`}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           </div>
         )}
@@ -545,7 +574,7 @@ export default function App() {
       <AIAssistant state={state} setState={setState} />
 
       {/* Bottom Nav */}
-      <nav className="fixed bottom-0 left-0 right-0 z-20 bg-black/90 border-t border-cyan-900/50 pb-safe">
+      <nav className="fixed bottom-0 left-0 right-0 z-20 bg-khalifa-void/95 border-t border-khalifa-gold/10 pb-safe backdrop-blur-lg">
         <div className="max-w-2xl mx-auto flex justify-around items-center p-1 sm:p-2">
           {tabs.map(tab => {
             const Icon = tab.icon;
@@ -553,14 +582,14 @@ export default function App() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex flex-col items-center justify-center gap-1 px-2 sm:px-3 py-2 sm:py-2.5 rounded-lg transition-all min-w-[44px] min-h-[44px] sm:min-w-[56px] ${
+                className={`flex flex-col items-center justify-center gap-1 px-2 sm:px-3 py-2 sm:py-2.5 rounded-xl transition-all min-w-[44px] min-h-[44px] sm:min-w-[56px] ${
                   activeTab === tab.id
-                    ? 'text-cyan-400 bg-cyan-900/30 border border-cyan-500/30'
-                    : 'text-cyan-600/50 hover:text-cyan-400/70'
+                    ? 'text-khalifa-gold bg-khalifa-gold/10 border border-khalifa-gold/20 shadow-[0_0_15px_rgba(234,179,8,0.1)]'
+                    : 'text-khalifa-steel hover:text-khalifa-gold/50'
                 }`}
               >
                 <Icon size={20} className="shrink-0" />
-                <span className="text-[10px] sm:text-xs tracking-wider uppercase hidden sm:inline">{tab.label}</span>
+                <span className="text-[10px] font-orbitron tracking-tighter uppercase hidden sm:inline">{tab.label}</span>
               </button>
             );
           })}

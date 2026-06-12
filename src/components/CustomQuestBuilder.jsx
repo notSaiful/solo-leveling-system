@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Plus, Check, X, Bot, Loader2, Skull } from 'lucide-react';
 import { forgeCustomQuest } from '../services/aiAssistant';
+import { PILLAR_LABELS } from '../utils/pillarDisplay';
 
 /**
  * CustomQuestBuilder — Forge-Master Edition
@@ -41,7 +42,7 @@ function parseForgedQuest(rawText) {
 
 const pillarMeta = {
   deen: { label: 'Deen', color: '#22d3ee', bg: 'bg-cyan-900/40', border: 'border-cyan-600/40', activeBg: 'bg-cyan-700/50' },
-  body: { label: 'Body', color: '#f43f5e', bg: 'bg-rose-900/40', border: 'border-rose-600/40', activeBg: 'bg-rose-700/50' },
+  body: { label: PILLAR_LABELS.body, color: '#f43f5e', bg: 'bg-rose-900/40', border: 'border-rose-600/40', activeBg: 'bg-rose-700/50' },
   money: { label: 'Money', color: '#fbbf24', bg: 'bg-yellow-900/40', border: 'border-yellow-600/40', activeBg: 'bg-yellow-700/50' },
 };
 
@@ -168,7 +169,7 @@ export default function CustomQuestBuilder({ onAdd, state }) {
           </div>
 
           <textarea
-            placeholder="What do you want to do? Example: '50 pushups' or 'Study seerah for 30 minutes'"
+            placeholder="What do you want to do? Example: '5km hike' or 'Study seerah for 30 minutes'"
             value={rawIdea}
             onChange={(e) => setRawIdea(e.target.value)}
             className="w-full bg-cyan-950/30 border border-cyan-800/50 rounded-lg px-3 py-2 text-base text-cyan-100 focus:outline-none focus:border-cyan-500/50 h-20 resize-none placeholder-cyan-700/50"

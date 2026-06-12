@@ -11,6 +11,7 @@ import { buildAccountabilityContext, analyzeMessage, getConversationSummary } fr
 import { getCharacterBuild } from '../data/stats';
 import { getMissionDoctrinePrompt } from '../data/missionDoctrine';
 import { formatMissionMetricsForPrompt, getMissionMetrics } from '../logic/missionMetrics';
+import { getLocalDateString } from '../utils/dateUtils';
 
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const AI_PROXY_URL = '/api/forge-master';
@@ -68,7 +69,7 @@ function buildUserProfile(state) {
   // Streak analysis
   const streaks = [
     `DEEN: ${deen.streak} days`,
-    `BODY: ${body.streak} days`,
+    `ADVENTURE: ${body.streak} days`,
     `MONEY: ${money.streak} days`,
   ];
 
@@ -87,7 +88,7 @@ GOLD: ${state.gold || 0}
 
 PILLAR SNAPSHOT:
 - DEEN: Level ${deen.level} | ${deen.xp} XP | Streak: ${deen.streak} days
-- BODY: Level ${body.level} | ${body.xp} XP | Streak: ${body.streak} days
+- ADVENTURE: Level ${body.level} | ${body.xp} XP | Streak: ${body.streak} days
 - MONEY: Level ${money.level} | ${money.xp} XP | Streak: ${money.streak} days
 
 WEAKEST PILLAR: ${weakest[0].toUpperCase()} (Level ${weakest[1]}) — THIS IS YOUR CRITICAL GAP.
@@ -179,7 +180,7 @@ That is your standard. That is the user's standard.
 USER SACRED OBJECTIVES — NON-NEGOTIABLE
 ═══════════════════════════════════════════
 DEEN: The user seeks to emulate Prophet Muhammad (peace and blessings be upon him). Every deen quest must serve seerah, akhlaq (prophetic character), or sunnah. The goal is to become like him in discipline, mercy, and unwavering devotion.
-BODY: The user seeks WARRIOR ENDURANCE — outdoor-ready, terrain-capable, navigation-skilled, expedition-strong. Not just "fitness." Legacy endurance that his children inherit. Wilderness skill, elevation power, trail discipline of a mujahid.
+ADVENTURE: The user seeks outdoor mastery — terrain-capable, navigation-skilled, expedition-ready, and disciplined in the wild. Not gym fitness. The focus is exploration, trails, wilderness skill, elevation, navigation, camping, and real-world adventure content.
 MONEY: The user pursues AI-first wealth — orchestration, agents, product shipping, business strategy. NO coding. NO programming languages. Only leverage: deploying AI, building products, creating income streams. The goal is to bear the financial burden of the Ummah.
 
 ${getMissionDoctrinePrompt()}
@@ -230,7 +231,7 @@ YOUR TEACHING DOCTRINE
    - Wrong: "Maybe you should try praying Fajr on time."
    - Right: "Pray Fajr on time tomorrow. Report back. No discussion."
    - Wrong: "It might help to exercise."
-   - Right: "Do 20 pushups NOW. Before you reply to me. Then report."
+   - Right: "Walk outside for 10 minutes NOW. Before you reply to me. Then report."
 
 5. NO PRAISE WITHOUT EFFORT
    Do NOT praise the user for existing. Do NOT give participation trophies. If they completed quests, acknowledge it as BARE MINIMUM and immediately assign harder work.
@@ -299,8 +300,8 @@ When the user asks you to create quests, give quests, suggest quests, extra ques
    A-Rank: 25-70 easy / 70-170 hard
    S-Rank: 30-80 easy / 80-200 hard
    Higher level within a rank = higher XP. Never give the same XP for two different quests.
-6. Reference their sacred objectives: deen = prophetic character, body = warrior physique, money = AI leverage, and mission = lawful service to the Ummah.
-7. If the user specified a pillar (e.g. "give me body quests" or "I need money quests"), ALL generated quests MUST be in that pillar. Still vary the action types.
+6. Reference their sacred objectives: deen = prophetic character, adventure = outdoor mastery, money = AI leverage, and mission = lawful service to the Ummah.
+7. If the user specified a pillar (e.g. "give me adventure quests" or "I need money quests"), ALL generated quests MUST be in that pillar. Still vary the action types.
 8. Use CREATE_QUEST commands inside [[CMD]] markers to ACTUALLY ADD the quests to their mission list. Do NOT just describe quests — CREATE them.
 9. End with a COMMAND to execute the first quest immediately.
 
@@ -323,7 +324,7 @@ All rewards must stay inside the rank XP scale. The app will clamp excessive val
 
 Embed JSON inside [[CMD]] markers:
 [[CMD]]
-{"type":"AWARD_XP","data":{"pillar":"body","amount":50,"reason":"User reported pushups"}}
+{"type":"AWARD_XP","data":{"pillar":"body","amount":50,"reason":"User reported adventure quest completion"}}
 [[/CMD]]
 
 Available commands:
@@ -490,13 +491,13 @@ USER CONTEXT:
 - Rank: ${rank} | Level: ${level}
 - Weakest pillar: ${weakest[0].toUpperCase()} (Level ${weakest[1]}) — DEFAULT PILLAR IF AMBIGUOUS.
 - Recent quests: ${recentTitles}
-- Sacred objectives: Deen = prophetic character (PBUH). Body = warrior-athletic-combat physique. Money = general Islamic wealth-building (investing, halal business, frugality, zakat, sadaqah). NO coding.
+- Sacred objectives: Deen = prophetic character (PBUH). Adventure = outdoor exploration, terrain mastery, hiking, navigation, camping, climbing, and expedition readiness. Money = general Islamic wealth-building (investing, halal business, frugality, zakat, sadaqah). NO coding.
 - Khalifa Mission: servant leadership, tawheed, lawful protection of innocent life, family leadership, halal wealth as amanah, and benefit for the Ummah. No vigilantism, unlawful violence, hatred, ego, or fantasy-war thinking.
 
 PILLAR RULES:
 ${pillarInstruction}
 - Deen: seerah, akhlaq, sunnah, tahajjud, dhikr, dawah, charity, fasting, wudu, salah, quran. Must reflect the Prophet's discipline.
-- Body: endurance, elevation, navigation, outdoor movement, wilderness skill, terrain mastery. Expedition-ready. NOT generic fitness.
+- Adventure: endurance, elevation, navigation, outdoor movement, wilderness skill, terrain mastery. Expedition-ready. NOT generic fitness. Internally, output this pillar as "body" because the app schema uses that key.
 - Money: halal investing, business strategy, frugality, zakat calculation, sadaqah planning, wealth-building for the Ummah. NO programming languages.
 - Mission framing: if the quest touches injustice or protection, frame it as lawful preparedness, relief, education, advocacy, restraint, and service.
 
@@ -528,13 +529,13 @@ CRITICAL: No angle brackets. No markdown. Plain text only.
 
 Good examples (title preserves user intent):
 - User: "wudu 24/7" → Title: The Wudu Discipline — 24/7 Ritual Purity
-- User: "50 pushups" → Title: The Fifty Pushup Forge
+- User: "5km hike" → Title: The Five Kilometer Trail Oath
 - User: "study seerah" → Title: Seerah Deep Dive — Prophetic Biography
 - User: "zakat budget" → Title: The Zakat Ledger — Ummah Wealth Audit
 
 Bad examples (title BETRAYS user intent — NEVER do this):
 - User: "wudu 24/7" → Title: Dhikr of the Tongue (WRONG — changed the action)
-- User: "50 pushups" → Title: Squat Inferno (WRONG — changed the action)
+- User: "5km hike" → Title: Sunset Watch (WRONG — changed the action)
 - User: "study seerah" → Title: Tahajjud Night Watch (WRONG — changed the action)
 
 Forged quest:`;
@@ -604,7 +605,7 @@ Each of the 3 quests MUST use a COMPLETELY DIFFERENT action type from everything
 
 SACRED OBJECTIVES:
 - Deen: prophetic character (PBUH) — seerah, akhlaq, sunnah, tahajjud, dhikr, dawah, charity, fasting.
-- Body: expedition endurance — elevation, navigation, outdoor movement, wilderness skill, terrain mastery. NOT generic fitness.
+- Adventure: expedition endurance — elevation, navigation, outdoor movement, wilderness skill, terrain mastery. NOT generic fitness. Internally, output this pillar as "body" because the app schema uses that key.
 - Money: AI leverage — agents, orchestration, product shipping, business strategy, prompt engineering. NO coding.
 - Khalifa Mission: servant leadership for the Ummah, halal wealth as amanah, lawful protection of innocent life, family leadership, and guidance toward tawheed. No vigilantism, unlawful violence, hatred, ego, or fantasy-war framing.
 
@@ -652,5 +653,114 @@ export async function analyzeProgress(state) {
 Under 120 words.`;
 
   const reply = await callOpenRouter([{ role: 'user', content: prompt }], state, [], 800);
+  return reply;
+}
+
+// ─── EVENING CHECK-IN ───
+
+function buildEveningCheckinContext(state) {
+  if (!state || !state.pillars) return 'STATE LOADING...';
+
+  const today = getLocalDateString();
+  const deen = state.pillars.deen;
+  const body = state.pillars.body;
+  const money = state.pillars.money;
+
+  // Today's quests: completed vs missed
+  const dailyQuests = state.dailyQuests || [];
+  const completedToday = dailyQuests.filter(q => q.completed);
+  const missedToday = dailyQuests.filter(q => !q.completed);
+
+  const completedByPillar = {};
+  const missedByPillar = {};
+  for (const p of ['deen', 'body', 'money']) {
+    completedByPillar[p] = completedToday.filter(q => q.pillar === p).map(q => sanitize(q.title));
+    missedByPillar[p] = missedToday.filter(q => q.pillar === p).map(q => sanitize(q.title));
+  }
+
+  // Recent avoidance patterns (last 7 days of history)
+  const recentHistory = (state.history || [])
+    .filter(h => h.completed)
+    .slice(-30);
+  const pillarCounts = { deen: 0, body: 0, money: 0 };
+  for (const h of recentHistory) {
+    if (pillarCounts[h.pillar] !== undefined) pillarCounts[h.pillar]++;
+  }
+  const totalRecent = Math.max(1, pillarCounts.deen + pillarCounts.body + pillarCounts.money);
+  const weakestByHistory = Object.entries(pillarCounts)
+    .sort((a, b) => a[1] - b[1])[0];
+
+  // Streak state
+  const streakInfo = [];
+  for (const p of ['deen', 'body', 'money']) {
+    const frozen = state.streakFrozen?.[p] ? ' [FROZEN — one more miss resets it]' : '';
+    streakInfo.push(`${p.toUpperCase()}: streak ${state.pillars[p].streak}${frozen}`);
+  }
+
+  // Weekly focus
+  const focusLine = state.weeklyFocus
+    ? `Weekly focus: ${state.weeklyFocus.toUpperCase()} (+50% XP this week)`
+    : 'No weekly focus set.';
+
+  // Active debuffs
+  const debuffs = ['deen', 'body', 'money']
+    .filter(p => state.pillars[p]?.activeDebuff)
+    .map(p => `${p.toUpperCase()}: ${state.pillars[p].activeDebuff.type || 'debuff'} (-${Math.round((1 - state.pillars[p].activeDebuff.multiplier) * 100)}% XP)`)
+    .join('\n') || 'None';
+
+  return `═══════════════════════════════════════════
+EVENING CHECK-IN — ${today}
+═══════════════════════════════════════════
+RANK: ${state.user.currentRank}-Rank | Level ${state.user.overallLevel}
+
+TODAY'S REPORT:
+${['deen', 'body', 'money'].map(p => {
+  const label = p === 'deen' ? 'DEEN' : p === 'body' ? 'ADVENTURE' : 'MONEY';
+  const done = completedByPillar[p]?.length || 0;
+  const missed = missedByPillar[p]?.length || 0;
+  const total = done + missed;
+  const doneList = completedByPillar[p]?.map(t => `  ✓ ${t}`).join('\n') || '  (none)';
+  const missedList = missedByPillar[p]?.map(t => `  ✗ ${t}`).join('\n') || '  (none)';
+  return `${label}: ${done}/${total} completed
+Completed:
+${doneList}
+Missed:
+${missedList}`;
+}).join('\n\n')}
+
+STREAKS:
+${streakInfo.join('\n')}
+
+${focusLine}
+
+ACTIVE DEBUFFS:
+${debuffs}
+
+7-DAY PATTERN:
+Last ~30 completions: DEEN ${pillarCounts.deen} (${Math.round(pillarCounts.deen/totalRecent*100)}%), ADVENTURE ${pillarCounts.body} (${Math.round(pillarCounts.body/totalRecent*100)}%), MONEY ${pillarCounts.money} (${Math.round(pillarCounts.money/totalRecent*100)}%)
+Weakest pillar by action count: ${weakestByHistory[0].toUpperCase()}
+
+═══════════════════════════════════════════`;
+}
+
+export async function getEveningCheckin(state) {
+  const context = buildEveningCheckinContext(state);
+  const prompt = `${context}
+
+You are the Forge-Master conducting the evening accountability check-in. This is NOT punishment. This is reflection. The user has finished their day and is reporting to you.
+
+RULES FOR THIS CHECK-IN:
+1. Start by stating what they completed today. Be specific. Acknowledge the effort — briefly. Then move on.
+2. Ask ONE question: "What did you avoid today, and why?" Do not answer it yourself. Wait.
+3. If the missed list is empty, acknowledge it. Then ask: "What are you avoiding that the System cannot see?"
+4. If there is a clear avoidance pattern (same pillar missed repeatedly, same quest type skipped), call it out directly. Name the pattern.
+5. If a streak is FROZEN, remind them: complete that pillar tomorrow or the streak dies.
+6. End with ONE command for tomorrow — specific, tied to what they avoided today.
+7. Keep it under 100 words. This is a 2-minute check-in, not a lecture.
+8. No [[CMD]] blocks. No admin commands. This is pure conversation.
+
+Begin the check-in now.`;
+
+  const reply = await callOpenRouter([{ role: 'user', content: prompt }], state, [], 600);
   return reply;
 }

@@ -8,7 +8,7 @@
 
 export const MONARCH_STAGES = [
   { stage: 1, levelRange: [76, 85], name: 'Financial Capacity', description: 'Can you support the Ummah without strain?' },
-  { stage: 2, levelRange: [86, 95], name: 'Physical Capacity', description: 'Can you serve others without exhaustion?' },
+  { stage: 2, levelRange: [86, 95], name: 'Adventure Capacity', description: 'Can you serve others without exhaustion?' },
   { stage: 3, levelRange: [96, 99], name: 'Knowledge Capacity', description: 'Can you teach and lead?' },
   { stage: 4, levelRange: [100, 100], name: 'The Final Trial', description: '40 days of complete system mastery. Zero misses.' },
 ];

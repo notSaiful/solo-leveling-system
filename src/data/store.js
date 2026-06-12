@@ -5,8 +5,17 @@ import { pruneExpiredCustomQuests } from '../logic/customQuests';
 
 export const STORAGE_KEY = 'soloLevelingData';
 const SCHEMA_VERSION = 7;
-const BUILD_VERSION = '2026-06-04-v4.1-safe';
+const BUILD_VERSION = '2026-06-04-v4.8-cache-bust-1749069000';
 const CLOUD_ENABLED_KEY = 'cloudSyncEnabled';
+const STALE_ADVENTURE_DAILY_TITLES = new Set([
+  'Combat Mobility 5 Min',
+  'Sprint Drills',
+  'Outdoor Sprints',
+  'Outdoor Sprint Intervals',
+  'Hill Sprint Repeats',
+  'Outdoor Movement Circuit',
+  'Outdoor Circuit Challenge',
+]);
 
 export const DEFAULT_STATE = {
   version: SCHEMA_VERSION,
@@ -65,6 +74,10 @@ export const DEFAULT_STATE = {
   monarchTrials: { active: false, stage: 0, startedAt: null, completedAt: null },
   ummahCommand: { unlocked: false, linkedMembers: [] },
   weeklyStats: { soloClear: false, aiPromptsUsed: 0, weekId: null },
+  failureStreaks: { deen: 0, body: 0, money: 0 },
+  streakFrozen: { deen: false, body: false, money: false },
+  weeklyFocus: null,
+  khalifateObjectives: [],
   buildVersion: BUILD_VERSION,
 };
 
@@ -127,8 +140,51 @@ function normalizeStateShape(state) {
     aiPromptsUsed: state.weeklyStats?.aiPromptsUsed || 0,
     weekId: state.weeklyStats?.weekId || null,
   };
+  normalized.failureStreaks = {
+    deen: state.failureStreaks?.deen || 0,
+    body: state.failureStreaks?.body || 0,
+    money: state.failureStreaks?.money || 0,
+  };
+  normalized.streakFrozen = {
+    deen: state.streakFrozen?.deen || false,
+    body: state.streakFrozen?.body || false,
+    money: state.streakFrozen?.money || false,
+  };
+  normalized.weeklyFocus = state.weeklyFocus || null;
+  normalized.khalifateObjectives = Array.isArray(state.khalifateObjectives) ? state.khalifateObjectives : [];
   normalized.buildVersion = state.buildVersion || BUILD_VERSION;
   return normalized;
+}
+
+export function upgradeStateForCurrentBuild(state, { resetGeneratedContent = false } = {}) {
+  const upgraded = normalizeStateShape(state || DEFAULT_STATE);
+  upgraded.version = SCHEMA_VERSION;
+  upgraded.buildVersion = BUILD_VERSION;
+
+  if (resetGeneratedContent) {
+    // Quest catalogs are code-owned. Regenerate them after content migrations
+    // while preserving earned progress, ledgers, history, and profile data.
+    upgraded.dailyQuests = [];
+    upgraded.levelQuests = [];
+    upgraded.redemptionQuests = [];
+    upgraded.customQuests = pruneExpiredCustomQuests(upgraded.customQuests || []);
+    upgraded.lastQuestDate = null;
+    // NOTE: weeklyDungeons is NOT reset here. The dungeon templates are code-owned,
+    // but user step completions and week progress must survive build upgrades.
+    // initializeWeeklyDungeon() will refresh templates naturally on Monday.
+  }
+
+  return upgraded;
+}
+
+function needsBuildUpgrade(state = {}) {
+  return state.version !== SCHEMA_VERSION || state.buildVersion !== BUILD_VERSION;
+}
+
+function hasStaleGeneratedQuestContent(state = {}) {
+  return (state.dailyQuests || []).some(quest =>
+    quest?.pillar === 'body' && STALE_ADVENTURE_DAILY_TITLES.has(quest.title)
+  );
 }
 
 // ─── localStorage helpers ───
@@ -138,19 +194,9 @@ export function loadState() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return DEFAULT_STATE;
     const parsed = JSON.parse(raw);
-    const buildMismatch = parsed.buildVersion && parsed.buildVersion !== BUILD_VERSION;
-    if (parsed.version !== SCHEMA_VERSION || buildMismatch) {
+    if (needsBuildUpgrade(parsed) || hasStaleGeneratedQuestContent(parsed)) {
       // Upgrade: normalize old state with new defaults instead of wiping
-      const upgraded = normalizeStateShape(parsed);
-      upgraded.version = SCHEMA_VERSION;
-      upgraded.buildVersion = BUILD_VERSION;
-      // Force regeneration of quests from updated catalog
-      upgraded.dailyQuests = [];
-      upgraded.levelQuests = [];
-      upgraded.redemptionQuests = [];
-      upgraded.customQuests = [];
-      upgraded.lastQuestDate = null;
-      upgraded.weeklyDungeons = { ...DEFAULT_STATE.weeklyDungeons };
+      const upgraded = upgradeStateForCurrentBuild(parsed, { resetGeneratedContent: true });
       saveState(upgraded);
       return upgraded;
     }
@@ -209,31 +255,28 @@ export async function initCloudSync() {
   const cloudState = await loadStateFromCloud();
 
   if (cloudState) {
-    // If cloud state is from an old build, discard it — quest catalog may have changed
-    const cloudBuild = cloudState.buildVersion || 'unknown';
-    if (cloudBuild !== BUILD_VERSION) {
-      // Push fresh local state to cloud, overwriting stale cloud data
-      const result = await syncStateToCloud(localState);
-      if (result.success) {
-        setCloudEnabled(true);
-        return { success: true, source: 'local_upgraded', reason: 'build_mismatch' };
-      }
-    }
+    const cloudNeedsUpgrade = needsBuildUpgrade(cloudState) || hasStaleGeneratedQuestContent(cloudState);
+    const canonicalCloud = upgradeStateForCurrentBuild(cloudState, { resetGeneratedContent: cloudNeedsUpgrade });
 
     const localTime = localState?.lastUpdated || 0;
-    const cloudTime = cloudState?.lastUpdated || 0;
+    const cloudTime = canonicalCloud?.lastUpdated || 0;
     // If local is newer, push local to cloud instead of overwriting
     if (localTime > cloudTime) {
       const result = await syncStateToCloud(localState);
       if (result.success) {
+        const merged = result.state ? upgradeStateForCurrentBuild(result.state) : localState;
+        saveState(merged);
         setCloudEnabled(true);
         return { success: true, source: 'local_migrated' };
       }
     }
-    const canonical = normalizeStateShape(cloudState);
+
+    const canonical = cloudNeedsUpgrade
+      ? (await syncStateToCloud(canonicalCloud)).state || canonicalCloud
+      : canonicalCloud;
     saveState(canonical);
     setCloudEnabled(true);
-    return { success: true, source: 'cloud' };
+    return { success: true, source: 'cloud', upgraded: cloudNeedsUpgrade };
   }
 
   // No cloud data — migrate local up
@@ -252,20 +295,12 @@ export async function reinitCloudSyncAfterLogin() {
   const cloudState = await loadStateFromCloud();
   if (!cloudState) return { success: false, reason: 'no_cloud_data' };
 
-  const cloudBuild = cloudState.buildVersion || 'unknown';
-  if (cloudBuild !== BUILD_VERSION) {
-    // Cloud state is stale — start fresh and push clean state
-    const fresh = normalizeStateShape(DEFAULT_STATE);
-    saveState(fresh);
-    await syncStateToCloud(fresh);
-    setCloudEnabled(true);
-    return { success: true, source: 'fresh', reason: 'build_mismatch' };
-  }
-
-  const canonical = normalizeStateShape(cloudState);
+  const cloudNeedsUpgrade = needsBuildUpgrade(cloudState) || hasStaleGeneratedQuestContent(cloudState);
+  const canonical = upgradeStateForCurrentBuild(cloudState, { resetGeneratedContent: cloudNeedsUpgrade });
   saveState(canonical);
+  if (cloudNeedsUpgrade) await syncStateToCloud(canonical);
   setCloudEnabled(true);
-  return { success: true, source: 'cloud' };
+  return { success: true, source: 'cloud', upgraded: cloudNeedsUpgrade };
 }
 
 export async function fullCloudReset() {

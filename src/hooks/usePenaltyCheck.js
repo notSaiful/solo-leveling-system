@@ -1,6 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { checkAndApplyPenalties } from '../logic/penalties';
 import { getLocalDateString } from '../utils/dateUtils';
+import { getPillarDisplayKey } from '../utils/pillarDisplay';
+import { updateDurability } from '../data/equipment';
 
 export function usePenaltyCheck(state, setState, enabled = true) {
   const hasChecked = useRef(false);
@@ -34,8 +36,14 @@ export function usePenaltyCheck(state, setState, enabled = true) {
         for (const p of result.penalties) {
           const isSevere = p.type === 'missedThreeDays';
           const isDungeon = p.type === 'missedDungeon';
-          const pillarName = p.pillar.toUpperCase();
+          const isExtreme = p.type === 'extreme';
+          const pillarName = getPillarDisplayKey(p.pillar);
           const scaled = p.scaled || {};
+
+          if (isExtreme && p.message) {
+            messages.push(p.message);
+            continue;
+          }
 
           let title = isSevere
             ? '🔥 SEVERE PENALTY EXECUTED'
@@ -102,19 +110,29 @@ export function usePenaltyCheck(state, setState, enabled = true) {
         }
       }
 
+      const hasMissedDaily = result.penalties.some(p => p.type === 'missedDaily' || p.type === 'missedThreeDays');
+
       if (result.penalties.length > 0 || result.dungeonPenalty || cleanedRedemptionQuests.length !== currentState.redemptionQuests.length) {
-        setState(prev => ({
-          ...prev,
-          pillars: cleanPillars,
-          redemptionQuests: [...cleanedRedemptionQuests, ...result.redemptionQuests],
-          systemMessages: [...prev.systemMessages, ...messages.map(m => ({ ...m, date: today }))],
-          lastPenaltyCheckDate: result.lastPenaltyCheckDate || today,
-        }));
+        setState(prev => {
+          const durState = hasMissedDaily ? updateDurability(prev, true, false) : prev;
+          return {
+            ...durState,
+            pillars: cleanPillars,
+            failureStreaks: result.updatedFailureStreaks || durState.failureStreaks,
+            redemptionQuests: [...cleanedRedemptionQuests, ...result.redemptionQuests],
+            systemMessages: [...durState.systemMessages, ...messages.map(m => ({ ...m, date: today }))],
+            lastPenaltyCheckDate: result.lastPenaltyCheckDate || today,
+          };
+        });
       } else {
-        setState(prev => ({
-          ...prev,
-          lastPenaltyCheckDate: result.lastPenaltyCheckDate || today,
-        }));
+        setState(prev => {
+          const durState = hasMissedDaily ? updateDurability(prev, true, false) : prev;
+          return {
+            ...durState,
+            failureStreaks: result.updatedFailureStreaks || durState.failureStreaks,
+            lastPenaltyCheckDate: result.lastPenaltyCheckDate || today,
+          };
+        });
       }
     };
 

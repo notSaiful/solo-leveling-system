@@ -1,9 +1,27 @@
 import { pruneExpiredCustomQuests } from './customQuests.js';
 
 const PILLARS = ['deen', 'body', 'money'];
+const STALE_ADVENTURE_DAILY_TITLES = new Set([
+  'Combat Mobility 5 Min',
+  'Sprint Drills',
+  'Outdoor Sprints',
+  'Outdoor Sprint Intervals',
+  'Hill Sprint Repeats',
+  'Outdoor Movement Circuit',
+  'Outdoor Circuit Challenge',
+]);
 
 function xpForNextLevel(level) {
-  return Math.floor(100 * Math.pow(1.12, level));
+  if (level <= 99) {
+    return Math.floor(100 * Math.pow(1.12, level));
+  }
+  if (level <= 299) {
+    return 100000 + (level - 100) * 2000;
+  }
+  if (level <= 599) {
+    return 500000 + (level - 300) * 5000;
+  }
+  return 2000000 + (level - 600) * 10000;
 }
 
 function getRankKey(level) {
@@ -15,11 +33,17 @@ function getRankKey(level) {
   return 'E';
 }
 
+function calculateOverallFromPillars(pillars = {}, previousOverall = 0) {
+  const deen = pillars.deen?.level || 0;
+  const body = pillars.body?.level || 0;
+  const money = pillars.money?.level || 0;
+  const weighted = Math.floor((deen * 0.5) + (body * 0.3) + (money * 0.2));
+  const highestPillar = Math.max(deen, body, money);
+  return Math.max(previousOverall || 0, weighted, highestPillar);
+}
+
 function recalculateOverall(state) {
-  const deen = state.pillars?.deen?.level || 0;
-  const body = state.pillars?.body?.level || 0;
-  const money = state.pillars?.money?.level || 0;
-  const overallLevel = Math.floor((deen * 0.5) + (body * 0.3) + (money * 0.2));
+  const overallLevel = calculateOverallFromPillars(state.pillars, state.user?.overallLevel || 0);
   return {
     ...state,
     user: {
@@ -92,6 +116,16 @@ function mergeDailyQuests(currentState = {}, incomingState = {}) {
   if (!(currentState.dailyQuests || []).length) return incomingState.dailyQuests || [];
   if (!(incomingState.dailyQuests || []).length) return currentState.dailyQuests || [];
 
+  const currentHasStaleAdventure = (currentState.dailyQuests || []).some(quest =>
+    quest?.pillar === 'body' && STALE_ADVENTURE_DAILY_TITLES.has(quest.title)
+  );
+  const incomingHasFreshAdventure = (incomingState.dailyQuests || []).some(quest =>
+    quest?.pillar === 'body' && !STALE_ADVENTURE_DAILY_TITLES.has(quest.title)
+  );
+  if (currentHasStaleAdventure && incomingHasFreshAdventure) {
+    return incomingState.dailyQuests || [];
+  }
+
   const incomingByKey = new Map((incomingState.dailyQuests || []).map(quest => [
     quest.uniqueId || quest.id || quest.title,
     quest,
@@ -117,27 +151,55 @@ function isDebuffNewer(candidate, current) {
   return (candidateTime || 0) > (currentTime || 0);
 }
 
-function mergePillars(base = {}, other = {}) {
+function mergePillars(base = {}, other = {}, { preserveProgress = true } = {}) {
   const pillars = {};
   PILLARS.forEach((pillar) => {
     const a = base[pillar] || {};
     const b = other[pillar] || {};
+    const aLevel = a.level || 0;
+    const bLevel = b.level || 0;
+    const level = preserveProgress ? Math.max(aLevel, bLevel) : aLevel;
+    // When levels are equal, trust the BASE state (newer by timestamp).
+    // Math.max would silently undo penalties — a major bug.
+    const xp = preserveProgress
+      ? aLevel > bLevel
+        ? (a.xp || 0)
+        : bLevel > aLevel
+          ? (b.xp || 0)
+          : (a.xp || 0)
+      : (a.xp || 0);
     pillars[pillar] = {
       ...a,
       ...b,
-      level: a.level || 0,
-      xp: a.xp || 0,
+      level,
+      xp,
       streak: Math.max(a.streak || 0, b.streak || 0),
       shadowsUnlocked: mergeUniqueBy(a.shadowsUnlocked || [], b.shadowsUnlocked || [], x => String(x)),
       activeDebuff: isDebuffNewer(b.activeDebuff, a.activeDebuff) ? b.activeDebuff : a.activeDebuff,
+      lastDailyQuestCompletionDate: [a.lastDailyQuestCompletionDate, b.lastDailyQuestCompletionDate].filter(Boolean).sort().pop(),
     };
   });
   return pillars;
 }
 
+function isIntentionalReset(candidate = {}, previous = {}) {
+  if ((candidate.lastUpdated || 0) < (previous.lastUpdated || 0)) return false;
+  const hasNoProgress = PILLARS.every(pillar => (candidate.pillars?.[pillar]?.level || 0) === 0 && (candidate.pillars?.[pillar]?.xp || 0) === 0);
+  return hasNoProgress &&
+    (candidate.gold || 0) === 0 &&
+    (candidate.history || []).length === 0 &&
+    (candidate.purchasedRewards || []).length === 0 &&
+    (candidate.syncRevision || 0) <= 1;
+}
+
 function applyHistoryReward(state, event) {
   if (!event?.completed || !PILLARS.includes(event.pillar)) return state;
   if (!['daily', 'custom', 'dungeon', 'redemption'].includes(event.type)) return state;
+
+  // ─── CRITICAL GUARD: never re-add XP for an event already in history ───
+  const eventKey = getHistoryEventKey(event);
+  const alreadyProcessed = (state.history || []).some(h => getHistoryEventKey(h) === eventKey);
+  if (alreadyProcessed) return state;
 
   const pillar = event.pillar;
   const xp = Math.max(0, Number(event.xp) || 0);
@@ -176,6 +238,7 @@ export function mergeStatesForSync(currentState, incomingState) {
     };
   }
   if (!incomingState) return currentState;
+  if (isIntentionalReset(incomingState, currentState)) return incomingState;
 
   const currentTime = currentState.lastUpdated || 0;
   const incomingTime = incomingState.lastUpdated || 0;
@@ -183,19 +246,45 @@ export function mergeStatesForSync(currentState, incomingState) {
   const other = base === incomingState ? currentState : incomingState;
   const baseHistoryKeys = new Set((base.history || []).map(getHistoryEventKey));
   const missingHistory = (other.history || []).filter(event => !baseHistoryKeys.has(getHistoryEventKey(event)));
+  const preserveProgress = missingHistory.length === 0;
+  const mergedPillars = mergePillars(base.pillars, other.pillars, { preserveProgress });
+  const mergedPurchasedRewards = mergeUniqueBy(base.purchasedRewards, other.purchasedRewards, item => item.purchaseId || item.id || `${item.name}|${item.purchasedAt}`);
+  const baseHasNewPurchase = (base.purchasedRewards || []).length > (other.purchasedRewards || []).length;
+  const otherHasNewPurchase = (other.purchasedRewards || []).length > (base.purchasedRewards || []).length;
+  const preservedOverallLevel = calculateOverallFromPillars(
+    mergedPillars,
+    Math.max(base.user?.overallLevel || 0, other.user?.overallLevel || 0)
+  );
 
   let merged = {
     ...base,
     version: Math.max(base.version || 2, other.version || 2),
-    user: { ...(other.user || {}), ...(base.user || {}) },
-    pillars: mergePillars(base.pillars, other.pillars),
+    user: {
+      ...(other.user || {}),
+      ...(base.user || {}),
+      overallLevel: preservedOverallLevel,
+      currentRank: getRankKey(preservedOverallLevel),
+    },
+    pillars: mergedPillars,
     stats: { ...(other.stats || {}), ...(base.stats || {}) },
-    gold: base.gold || 0,
+    gold: missingHistory.length > 0
+      ? (base.gold || 0)
+      : otherHasNewPurchase
+        ? (other.gold || 0)
+        : baseHasNewPurchase
+          ? (base.gold || 0)
+          // When both sides have same purchases but different gold, the lower gold heals
+          // previously corrupted cloud states (purchases only reduce gold).
+          : (base.purchasedRewards || []).length === (other.purchasedRewards || []).length && (base.purchasedRewards || []).length > 0
+            ? Math.min(base.gold || 0, other.gold || 0)
+            // Default: trust the newer state (base). Math.max would allow gold to only
+            // increase during sync, silently undoing any deductions or healing corruption.
+            : (base.gold || 0),
     dailyQuests: mergeDailyQuests(currentState, incomingState),
     customQuests: pruneExpiredCustomQuests(mergeUniqueBy(base.customQuests, other.customQuests)),
     levelQuests: mergeUniqueBy(base.levelQuests, other.levelQuests),
     redemptionQuests: mergeUniqueBy(base.redemptionQuests, other.redemptionQuests),
-    purchasedRewards: mergeUniqueBy(base.purchasedRewards, other.purchasedRewards, item => item.purchaseId || item.id || `${item.name}|${item.purchasedAt}`),
+    purchasedRewards: mergedPurchasedRewards,
     ummahImpactLedger: mergeUniqueBy(base.ummahImpactLedger, other.ummahImpactLedger),
     justiceResponseLedger: mergeUniqueBy(base.justiceResponseLedger, other.justiceResponseLedger),
     teachingPipelineLedger: mergeUniqueBy(base.teachingPipelineLedger, other.teachingPipelineLedger),

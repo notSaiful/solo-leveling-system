@@ -1,0 +1,25 @@
+{
+  "brand_name": "Solo Leveling System (SLS)",
+  "aesthetic": "Khalifa-Solo Leveling",
+  "colors": {
+    "void_black": "#0B0B0F",
+    "monarch_blue": "#3B82F6",
+    "khalifa_gold": "#EAB308",
+    "shadow_purple": "#7C3AED",
+    "amber_light": "#F59E0B"
+  },
+  "typography": {
+    "headers": "Orbitron, Playfair Display",
+    "body": "Inter"
+  },
+  "style_keywords": [
+    "High-stakes",
+    "Shadowy depth",
+    "Divine radiance",
+    "Islamic geometry",
+    "Anime-style",
+    "Disciplined",
+    "Noble",
+    "Powerful"
+  ]
+}

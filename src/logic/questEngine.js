@@ -17,15 +17,23 @@ import { applyStatModifiers, autoAssignStatPoints } from '../data/stats';
 import { getCurrentWeekId } from './dungeons';
 import { getLocalDateString } from '../utils/dateUtils';
 import { getScaledFlowConfig } from '../data/rankDifficulty';
-import { isDebuffActive } from './penalties';
+import { isDebuffActive, checkAndApplyPenalties } from './penalties';
 import { addMissionDailyQuests } from './missionQuestGenerator';
 import { getUnlockedShadows, extractShadow } from '../data/shadows';
 import { applyEquipmentBonuses, updateDurability, checkEnchant, dropEquipment } from '../data/equipment';
 import { applySkillEffects, isSkillActive } from '../data/skills';
 import { applyNabawiTraits, hasPenaltyImmunity, getDebuffDurationReduction } from '../data/seerahChains';
+import { calculateExtremeReward, resetFailureStreak } from './extremeMode';
 import { initializeSeerahChain, advanceSeerahChain, failSeerahChain, getActiveSeerahChain, wasSeerahChainAdvancedOnDate, injectSeerahDailyQuests } from '../data/seerahChains';
 import { initializeJobChangeGate, completeGateStep, failJobChangeGate, getActiveJobChangeGate, getPendingGate } from '../data/jobChangeGates';
 import { initializeMonarchTrials, checkMonarchTrialProgress } from './monarchTrials';
+import { getPillarDisplayKey } from '../utils/pillarDisplay';
+import {
+  initializeKhalifateObjectives,
+  getBlockingGate,
+  isGateComplete,
+  getGateProgress,
+} from '../data/missionGates';
 
 function createEventId(prefix) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -50,8 +58,8 @@ export function initializeDailyQuests(state) {
     }
   }
 
-  const baseDailyQuests = getDailyQuestsForRank(rank.key, state.dailyQuests, (state.user?.name || '').trim().toLowerCase());
-  const dailyQuests = addMissionDailyQuests(baseDailyQuests, rank.key, state.history || []);
+  const baseDailyQuests = getDailyQuestsForRank(rank.key, state.dailyQuests, (state.user?.name || '').trim().toLowerCase(), state.user.overallLevel);
+  const dailyQuests = addMissionDailyQuests(baseDailyQuests, rank.key, state.history || [], state.user.overallLevel);
 
   nextState = {
     ...nextState,
@@ -64,6 +72,7 @@ export function initializeDailyQuests(state) {
   nextState = initializeJobChangeGate(nextState);
   nextState = initializeMonarchTrials(nextState);
   nextState = checkMonarchTrialProgress(nextState);
+  nextState = initializeKhalifateObjectives(nextState);
 
   // Inject seerah daily quests for any active chain
   nextState = injectSeerahDailyQuests(nextState);
@@ -104,7 +113,7 @@ export function initializeWeeklyDungeon(state) {
   if (state.weeklyDungeons.weekId === currentWeek) return state;
 
   const rank = getRankByLevel(state.user.overallLevel);
-  const dungeon = getWeeklyDungeonForRank(rank.key);
+  const dungeon = getWeeklyDungeonForRank(rank.key, state.user.overallLevel);
   dungeon.weekId = currentWeek;
 
   return {
@@ -113,14 +122,100 @@ export function initializeWeeklyDungeon(state) {
   };
 }
 
+// ─── PENALTY INITIALIZATION ───
+export function initializePenalties(state) {
+  const today = getLocalDateString();
+  // Only check once per day
+  if (state.lastPenaltyCheckDate === today) return state;
+
+  const result = checkAndApplyPenalties(state);
+  if (result.penalties.length === 0 && result.redemptionQuests.length === 0 && !result.dungeonPenalty) {
+    return { ...state, lastPenaltyCheckDate: today };
+  }
+
+  let nextState = {
+    ...state,
+    pillars: result.updatedPillars,
+    failureStreaks: result.updatedFailureStreaks,
+    streakFrozen: result.updatedStreakFrozen,
+    lastPenaltyCheckDate: today,
+  };
+
+  // Recalculate overall level in case a penalty caused a pillar level drop
+  nextState = recalculateOverallLevel(nextState);
+
+  // Merge redemption quests (avoid duplicates)
+  const existingIds = new Set((state.redemptionQuests || []).map(rq => rq.id));
+  const newRedemptionQuests = result.redemptionQuests
+    .filter(rq => rq && !existingIds.has(rq.id))
+    .map(rq => ({
+      ...rq,
+      createdAt: new Date().toISOString(),
+      createdLocalDate: today,
+      completed: false,
+    }));
+  if (newRedemptionQuests.length > 0) {
+    nextState.redemptionQuests = [...(state.redemptionQuests || []), ...newRedemptionQuests];
+  }
+
+  // Build system messages for each penalty
+  const penaltyMessages = result.penalties.map(p => {
+    const baseMsg = p.type === 'missedDungeon'
+      ? `Weekly dungeon missed for ${getPillarDisplayKey(p.pillar)}. Shadow soldiers weakened.`
+      : p.type === 'extreme'
+        ? `${getPillarDisplayKey(p.pillar)}: EXTREME MODE ACTIVATED. ${p.message || ''}`
+        : `${getPillarDisplayKey(p.pillar)}: ${p.days} day${p.days > 1 ? 's' : ''} missed. XP lost: ${p.xpLoss.toLocaleString()}.`;
+    const levelMsg = p.levelDropped ? ` LEVEL DROPPED: ${p.oldLevel} → ${p.newLevel}.` : '';
+    return {
+      type: 'penalty',
+      title: 'SYSTEM PENALTY',
+      subtitle: `${getPillarDisplayKey(p.pillar)} — ${p.type}`,
+      message: baseMsg + levelMsg + (p.scaled?.message ? ` ${p.scaled.message}` : ''),
+    };
+  });
+
+  // Dungeon penalty message
+  if (result.dungeonPenalty) {
+    penaltyMessages.push({
+      type: 'penalty',
+      title: 'DUNGEON PENALTY',
+      subtitle: 'Weekly Dungeon Missed',
+      message: result.dungeonPenalty.message,
+    });
+  }
+
+  // Streak frozen warnings (Never Miss Twice)
+  for (const pillar of ['deen', 'body', 'money']) {
+    if (result.updatedStreakFrozen?.[pillar] && !state.streakFrozen?.[pillar]) {
+      penaltyMessages.push({
+        type: 'warning',
+        title: 'STREAK FROZEN',
+        subtitle: `${getPillarDisplayKey(pillar)} — Never Miss Twice`,
+        message: `You missed yesterday. Your ${getPillarDisplayKey(pillar)} streak is FROZEN at ${result.updatedPillars[pillar]?.streak || 0}. Complete a ${getPillarDisplayKey(pillar)} quest TODAY to save it. Miss today and it resets to zero.`,
+      });
+    }
+  }
+
+  if (penaltyMessages.length > 0) {
+    nextState.systemMessages = [...(state.systemMessages || []), ...penaltyMessages];
+  }
+
+  return nextState;
+}
+
 // ─── QUEST COMPLETION ───
 export function completeDailyQuest(state, questUniqueId) {
   const quest = state.dailyQuests.find(q => q.uniqueId === questUniqueId);
   if (!quest || quest.completed) return state;
 
   const rank = getRankByLevel(state.user.overallLevel);
-  const baseXp = quest.xp || getEffectiveXp(quest.baseXp, rank.key);
+  const baseXp = quest.xp || getEffectiveXp(quest.baseXp, rank.key, state.user.overallLevel);
   const gold = calculateGoldReward(quest, rank.key);
+
+  // ─── EXTREME MODE REWARD ───
+  // If this pillar has a 3+ day failure streak, completing a quest
+  // triggers a massive redemption bonus.
+  const extreme = calculateExtremeReward(state, quest.pillar, baseXp, rank.key);
 
   // Apply stat modifiers (Strength/Intelligence/Sense/Agility)
   const statModifiedXp = applyStatModifiers(baseXp, state.stats || {}, quest.pillar);
@@ -145,7 +240,17 @@ export function completeDailyQuest(state, questUniqueId) {
       debuffMultiplier = 1 - (1 - baseMultiplier) * (1 - reduction);
     }
   }
-  const finalXp = Math.floor(traitModifiedXp * debuffMultiplier);
+  let finalXp = Math.floor(traitModifiedXp * debuffMultiplier);
+
+  // Apply extreme multiplier on top of everything
+  if (extreme.multiplier > 1) {
+    finalXp = Math.floor(finalXp * extreme.multiplier);
+  }
+
+  // Apply weekly focus multiplier (+50% XP for focused pillar)
+  if (state.weeklyFocus === quest.pillar) {
+    finalXp = Math.floor(finalXp * 1.5);
+  }
 
   // Update pillar
   const newPillars = { ...state.pillars };
@@ -215,13 +320,24 @@ export function completeDailyQuest(state, questUniqueId) {
   // Check enchant from streak
   let enchantState = checkEnchant(durabilityState, quest.pillar);
 
+  // ─── RESET FAILURE STREAK ON SUCCESS ───
+  const streakResetState = resetFailureStreak(enchantState, quest.pillar);
+
   const result = {
-    ...enchantState,
+    ...streakResetState,
     pillars: newPillars,
     dailyQuests: newDailyQuests,
-    gold: enchantState.gold + finalGold,
-    history: [...enchantState.history, historyEntry],
+    gold: streakResetState.gold + finalGold + (extreme.bonusGold || 0),
+    history: [...streakResetState.history, historyEntry],
   };
+
+  // Clear streak frozen on quest completion (Never Miss Twice protection)
+  if (streakResetState.streakFrozen?.[quest.pillar]) {
+    result.streakFrozen = {
+      ...streakResetState.streakFrozen,
+      [quest.pillar]: false,
+    };
+  }
 
   if (autoStatResult) {
     result.stats = autoStatResult.stats;
@@ -230,14 +346,136 @@ export function completeDailyQuest(state, questUniqueId) {
       ...(result.systemMessages || []),
       {
         type: 'levelUp',
-        title: `${quest.pillar.toUpperCase()} LEVEL UP!`,
+        title: `${getPillarDisplayKey(quest.pillar)} LEVEL UP!`,
         subtitle: `Level ${newPillars[quest.pillar].level}`,
         message: `SYSTEM auto-assigned: ${assignStr}. Performance determines growth.`,
       },
     ];
   }
 
+  // Attach extreme reward message
+  if (extreme.message) {
+    result.systemMessages = [
+      ...(result.systemMessages || []),
+      extreme.message,
+    ];
+  }
+
   return result;
+}
+
+function normalizeCustomQuestPillar(pillar) {
+  if (pillar === 'body' || pillar === 'adventure' || pillar === 'readiness') return 'body';
+  if (pillar === 'money' || pillar === 'wealth') return 'money';
+  if (pillar === 'deen' || pillar === 'service' || pillar === 'family' || pillar === 'ummah') return 'deen';
+  return 'deen';
+}
+
+function getCustomQuestKey(quest) {
+  return quest?.uniqueId || quest?.id || null;
+}
+
+export function completeCustomQuest(state, questIdentifier, today = getLocalDateString()) {
+  const quest = (state.customQuests || []).find(q =>
+    q.uniqueId === questIdentifier || q.id === questIdentifier
+  );
+  if (!quest) return state;
+
+  const questKey = getCustomQuestKey(quest);
+  if (!questKey) return state;
+
+  const completedToday =
+    quest.lastCompleted === today ||
+    (quest.completedAt && getLocalDateString(new Date(quest.completedAt)) === today);
+  if (completedToday) return state;
+
+  const questIds = new Set([quest.id, quest.uniqueId, questKey].filter(Boolean));
+  const alreadyDone = (state.history || []).some(h => {
+    const hDate = h.localDate || (h.date ? getLocalDateString(new Date(h.date)) : '');
+    return hDate === today && h.type === 'custom' && questIds.has(h.questId);
+  });
+  if (alreadyDone) return state;
+
+  const baseXp = quest.xp || 20;
+  const gold = Math.floor(baseXp * 0.5);
+  const pillar = normalizeCustomQuestPillar(quest.pillar);
+  const completedAt = new Date().toISOString();
+  const newPillars = { ...state.pillars };
+  newPillars[pillar] = {
+    ...newPillars[pillar],
+    xp: (newPillars[pillar].xp || 0) + baseXp,
+    streak: (newPillars[pillar].streak || 0) + 1,
+    lastDailyQuestCompletionDate: today,
+  };
+
+  let next = {
+    ...state,
+    customQuests: (state.customQuests || []).map(q =>
+      q.uniqueId === questIdentifier || q.id === questIdentifier
+        ? {
+            ...q,
+            id: q.id || q.uniqueId || questKey,
+            uniqueId: q.uniqueId || q.id || questKey,
+            lastCompleted: today,
+            completedAt,
+          }
+        : q
+    ),
+    pillars: newPillars,
+    gold: (state.gold || 0) + gold,
+    history: [
+      ...(state.history || []),
+      {
+        eventId: createEventId('custom'),
+        type: 'custom',
+        questId: questKey,
+        title: quest.title,
+        description: quest.description || '',
+        pillar,
+        tags: quest.tags || [],
+        missionDuty: quest.missionDuty || null,
+        source: quest.source || 'custom',
+        xp: baseXp,
+        gold,
+        date: completedAt,
+        localDate: today,
+        completed: true,
+      },
+    ],
+  };
+
+  const needed = xpForNextLevel(newPillars[pillar].level || 0);
+  if (newPillars[pillar].xp >= needed) {
+    newPillars[pillar].level = (newPillars[pillar].level || 0) + 1;
+    newPillars[pillar].xp -= needed;
+    const pillarRank = getRankByLevel(newPillars[pillar].level);
+    const spAwarded = pillarRank.statPointsPerLevel || 1;
+    const autoStatResult = autoAssignStatPoints(next.stats || {}, pillar, spAwarded);
+    if (autoStatResult) {
+      next.stats = autoStatResult.stats;
+      const assignStr = autoStatResult.assignments.map(a => `${a.stat.toUpperCase()} +${a.points}`).join(', ');
+      next.systemMessages = [
+        ...(next.systemMessages || []),
+        {
+          type: 'levelUp',
+          title: `${getPillarDisplayKey(pillar)} LEVEL UP!`,
+          subtitle: `Level ${newPillars[pillar].level}`,
+          message: `SYSTEM auto-assigned: ${assignStr}. Performance determines growth.`,
+        },
+      ];
+    }
+    next = { ...next, pillars: newPillars };
+  }
+
+  // Clear streak frozen on custom quest completion (Never Miss Twice)
+  if (next.streakFrozen?.[pillar]) {
+    next = {
+      ...next,
+      streakFrozen: { ...next.streakFrozen, [pillar]: false },
+    };
+  }
+
+  return resetFailureStreak(next, pillar);
 }
 
 export function completeLevelQuest(state, levelQuestIndex, questIndex) {
@@ -453,7 +691,7 @@ export function completeRedemptionQuest(state, redemptionQuestId) {
       ...nextState.systemMessages,
       {
         type: 'levelUp',
-        title: `${pillar.toUpperCase()} LEVEL UP!`,
+        title: `${getPillarDisplayKey(pillar)} LEVEL UP!`,
         subtitle: `Level ${newPillars[pillar].level}`,
         message: `SYSTEM auto-assigned: ${assignStr}.`,
       },
@@ -537,14 +775,27 @@ export function recalculateOverallLevel(state) {
   const bodyLevel = state.pillars.body.level;
   const moneyLevel = state.pillars.money.level;
 
-  // Weighted average: Deen matters most, then Body, then Money
-  const overall = Math.floor((deenLevel * 0.5) + (bodyLevel * 0.3) + (moneyLevel * 0.2));
+  // Weighted discipline still matters, but the displayed hunter level should
+  // never drop below the strongest pillar the user has already earned.
+  const weightedOverall = Math.floor((deenLevel * 0.5) + (bodyLevel * 0.3) + (moneyLevel * 0.2));
+  let overall = Math.max(state.user.overallLevel || 0, weightedOverall, deenLevel, bodyLevel, moneyLevel);
+
+  const prevLevel = state.user.overallLevel || 0;
+
+  // ─── MISSION GATE ENFORCEMENT ───
+  // Real-world objectives must be completed before level ascension.
+  // The pillars' accumulated XP naturally serves as the reserve.
+  const blockingGate = getBlockingGate(state, overall);
+  let gated = false;
+  if (blockingGate && overall > blockingGate.level) {
+    overall = blockingGate.level;
+    gated = true;
+  }
 
   const currentRank = getRankByLevel(overall);
-  const prevRank = getRankByLevel(state.user.overallLevel);
+  const prevRank = getRankByLevel(prevLevel);
 
-  // Award skill points: 1 SP per 5 overall levels
-  const prevLevel = state.user.overallLevel;
+  // Award skill points: 1 SP per 5 overall levels (based on actual achieved level)
   const spEarned = Math.floor(overall / 5) - Math.floor(prevLevel / 5);
 
   let newState = {
@@ -566,6 +817,20 @@ export function recalculateOverallLevel(state) {
         title: `RANK UP! ${currentRank.key}-Rank`,
         subtitle: `${currentRank.title}`,
         message: 'Your power has awakened. New quests and shadows are now available.',
+      },
+    ];
+  }
+
+  // Mission gate block message
+  if (gated && blockingGate) {
+    const progress = getGateProgress(state, blockingGate);
+    newState.systemMessages = [
+      ...newState.systemMessages,
+      {
+        type: 'penalty',
+        title: `🚫 ${blockingGate.title}`,
+        subtitle: blockingGate.subtitle,
+        message: `LEVEL ASCENSION HALTED.\n\nYour calculated power exceeds your Khalifate. The System will not advance you to level ${overall + 1} until you complete ${progress.required - progress.completed} more mission objective${progress.required - progress.completed === 1 ? '' : 's'}:\n\n${blockingGate.objectives.map(o => `${(state.khalifateObjectives || []).find(ko => ko.id === o.id)?.completed ? '✅' : '⬜'} ${o.label}: ${o.description}`).join('\n')}\n\nThe level is a reflection. The mission is the reality. Complete the mission first.`,
       },
     ];
   }
@@ -732,7 +997,7 @@ export function completeWeeklyDungeon(state, pillar) {
       ...(nextState.systemMessages || []),
       {
         type: 'levelUp',
-        title: `${pillar.toUpperCase()} LEVEL UP!`,
+        title: `${getPillarDisplayKey(pillar)} LEVEL UP!`,
         subtitle: `Level ${newPillars[pillar].level}`,
         message: `SYSTEM auto-assigned: ${assignStr}. Performance determines growth.`,
       },
@@ -743,7 +1008,7 @@ export function completeWeeklyDungeon(state, pillar) {
   const dropRoll = Math.random();
   const dropChance = isSoloClear ? 1.0 : 0.15;
   if (dropRoll <= dropChance) {
-    const droppedItem = dropEquipment(rank.key, pillar);
+    const droppedItem = dropEquipment(state.user.overallLevel, pillar);
     if (droppedItem) {
       const slot = droppedItem.slot;
       nextState = {

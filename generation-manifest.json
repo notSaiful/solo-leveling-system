@@ -1,0 +1,119 @@
+{
+  "project": "Solo Leveling System (SLS)",
+  "aesthetic": "Khalifa-Solo Leveling",
+  "generated_at": "2026-06-12",
+  "assets": [
+    {
+      "id": "rank_e",
+      "type": "rank",
+      "name": "Rank E - Seeker",
+      "path": "ad-assets/ranks/rank_e.png",
+      "prompt": "A sharp, weathered grey metal letter 'E', encased in a faint glowing 8-point Islamic star, Anime style, sharp edges, dark cinematic lighting, Void Black background (#0B0B0F), center composition, high focus, subtle blue sparks, dusty atmosphere."
+    },
+    {
+      "id": "rank_d",
+      "type": "rank",
+      "name": "Rank D - Striver",
+      "path": "ad-assets/ranks/rank_d.png",
+      "prompt": "A polished steel letter 'D' with glowing blue inner light, mounted on a geometric Islamic star frame, Anime style with metallic textures, Monarch Blue glow (#3B82F6), front view, cinematic depth of field, blue lightning particles, disciplined mood."
+    },
+    {
+      "id": "rank_c",
+      "type": "rank",
+      "name": "Rank C - Disciplined",
+      "path": "ad-assets/ranks/rank_c.png",
+      "prompt": "A solid bronze letter 'C' with pulsating Monarch Blue energy, integrated into a complex 8-point Girih pattern, Anime style with heavy metallic detail, Bronze and Monarch Blue palette, centered, isometric perspective, glowing geometric ley lines, high energy."
+    },
+    {
+      "id": "rank_b",
+      "type": "rank",
+      "name": "Rank B - Scholar",
+      "path": "ad-assets/ranks/rank_b.png",
+      "prompt": "An elegant silver-etched letter 'B' with gold filigree, surrounded by a radiant 8-point Islamic geometric aura, Anime style with divine glow, Silver and Khalifa Gold (#EAB308) and Monarch Blue, 45-degree angle, sharp focus, floating geometric shards, noble atmosphere."
+    },
+    {
+      "id": "rank_a",
+      "type": "rank",
+      "name": "Rank A - Guide",
+      "path": "ad-assets/ranks/rank_a.png",
+      "prompt": "A majestic glowing golden letter 'A' with intricate Kufic calligraphy etchings, floating inside a massive indigo-light 8-point star, Anime style with high-end digital gloss, Khalifa Gold and Shadow Purple (#7C3AED), front perspective, wide angle focus, radiant divine light beams, powerful presence."
+    },
+    {
+      "id": "rank_s",
+      "type": "rank",
+      "name": "Rank S - Monarch",
+      "path": "ad-assets/ranks/rank_s.png",
+      "prompt": "A flaming indigo and gold letter 'S', pulsing with 'Divine Radiance' energy, set against an exploding geometric mandala of 8-point stars, Anime style with epic power-up effects, Monarch Blue and Khalifa Gold and Shadow Purple, center focus, cinematic explosion, swirling energy particles, monarchic dominance."
+    },
+    {
+      "id": "pillar_deen",
+      "type": "pillar",
+      "name": "Pillar - Deen",
+      "path": "ad-assets/pillars/deen.png",
+      "prompt": "The 'Gate of Tauheed': A massive stone Islamic archway with glowing blue Kufic engravings, radiating intense light from the center, Anime style with stone texture and magical lighting, Monarch Blue and Amber Light (#F59E0B), eye-level perspective, dramatic lighting, floating geometric dust, sacred mood."
+    },
+    {
+      "id": "pillar_body",
+      "type": "pillar",
+      "name": "Pillar - Body",
+      "path": "ad-assets/pillars/body.png",
+      "prompt": "The 'Forge of the Nafs': A heavy steel hammer striking a red-hot glowing anvil, blue sparks flying out in the shape of 8-point geometric stars, Anime style with forge heat effects, Steel Grey (#4B5563) and Monarch Blue and Amber-Red, close-up shot, motion blur on hammer, heat distortion, gritty atmosphere."
+    },
+    {
+      "id": "pillar_money",
+      "type": "pillar",
+      "name": "Pillar - Money",
+      "path": "ad-assets/pillars/money.png",
+      "prompt": "The 'Scales of Justice': Digital gold scales balanced on a Kufic-style pedestal, glowing with Khalifa Gold energy, surrounded by floating geometric coins, Anime style with hologram effects, Khalifa Gold and Void Black, isometric view, sharp digital lines, data-stream particles, disciplined wealth."
+    },
+    {
+      "id": "char_seeker",
+      "type": "character",
+      "name": "Character - The Seeker",
+      "path": "ad-assets/characters/seeker.png",
+      "prompt": "A mysterious hooded apprentice in shadowy dark grey robes, face hidden in deep shadow, standing in a void, Anime style with heavy shadows and sharp highlights, Void Black and Steel Grey, full body medium shot, low angle, subtle blue wisps of shadow, humble beginning."
+    },
+    {
+      "id": "char_guardian",
+      "type": "character",
+      "name": "Character - The Guardian",
+      "path": "ad-assets/characters/guardian.png",
+      "prompt": "A disciplined warrior in sleek modern armor with glowing blue runes and Kufic engravings, holding a shadowy translucent blade, Anime style with intricate armor detail, Monarch Blue and Steel Grey, 3/4 view, heroic pose, blue lightning aura, sharp focus."
+    },
+    {
+      "id": "char_khalifa",
+      "type": "character",
+      "name": "Character - The Khalifa",
+      "path": "ad-assets/characters/khalifa.png",
+      "prompt": "A majestic monarch figure in ornate indigo and gold armor, a cape made of pure light, standing in a radiant Majlis hall, Anime style with divine lighting, Khalifa Gold and Shadow Purple and Monarch Blue, wide shot, center composition, divine radiance, gold-flecked particles, noble authority."
+    },
+    {
+      "id": "shadow_warrior",
+      "type": "shadow",
+      "name": "Legion Shadow - Warrior",
+      "path": "ad-assets/shadows/warrior.png",
+      "prompt": "A dark indigo silhouette of a mujahid warrior with sharp glowing blue eyes, edges dissolving into electric energy, Anime 'Shadow Extraction' style, Shadow Purple and Monarch Blue, action pose, side profile, electric energy arcs, intimidating presence."
+    },
+    {
+      "id": "shadow_scholar",
+      "type": "shadow",
+      "name": "Legion Shadow - Scholar",
+      "path": "ad-assets/shadows/scholar.png",
+      "prompt": "A purple-hued silhouette of a robed scholar figure holding a glowing digital scroll, floating in the void with geometric stars, Anime style with translucent energy, Shadow Purple and Khalifa Gold, meditative pose, top-down perspective, floating knowledge particles, mystical mood."
+    },
+    {
+      "id": "texture_void_forge",
+      "type": "texture",
+      "name": "Texture - Void Forge",
+      "path": "ad-assets/textures/void_forge.png",
+      "prompt": "Deep matte black surface with micro-crystalline blue sparks and faint etched 8-point star patterns in the distance, Cinematic texture, Void Black and Monarch Blue, flat lay macro, shallow depth of field, subtle blue glow, focused atmosphere."
+    },
+    {
+      "id": "texture_divine_majlis",
+      "type": "texture",
+      "name": "Texture - Divine Majlis",
+      "path": "ad-assets/textures/divine_majlis.png",
+      "prompt": "Dark translucent panels with layered gold geometric patterns and floating amber particles in a deep indigo space, Cinematic atmosphere, Shadow Purple and Khalifa Gold, wide perspective, soft bokeh, gold-flecked radiance, noble depth."
+    }
+  ]
+}

@@ -1,8 +1,8 @@
 export const READINESS_ACTIONS = [
-  { id: 'strength', label: 'Strength Training' },
-  { id: 'conditioning', label: 'Conditioning' },
+  { id: 'route-scouting', label: 'Route Scouting' },
+  { id: 'navigation', label: 'Navigation' },
+  { id: 'trail-endurance', label: 'Trail Endurance' },
   { id: 'mobility', label: 'Mobility / Recovery' },
-  { id: 'combat-sport', label: 'Combat Sport' },
   { id: 'deescalation', label: 'De-escalation Drill' },
   { id: 'first-aid', label: 'First Aid' },
   { id: 'situational-awareness', label: 'Awareness Drill' },
@@ -27,8 +27,8 @@ export const READINESS_INTENSITY_LABELS = READINESS_INTENSITIES.reduce((acc, int
 }, {});
 
 export const READINESS_GUARDRAILS = [
-  'Train to protect innocent life lawfully, never to intimidate or oppress.',
+  'Adventure readiness exists to serve, guide, and protect innocent life lawfully.',
   'Restraint is part of readiness: de-escalate, avoid ego, and obey the law.',
-  'Combat practice belongs in lawful sport, coaching, defense training, or controlled drills.',
-  'Recovery, sleep, mobility, and first aid are protection capacity too.',
+  'Route scouting, navigation, first aid, and awareness matter more than ego.',
+  'Recovery, sleep, mobility, and hydration are Adventure capacity too.',
 ];

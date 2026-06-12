@@ -68,7 +68,7 @@ export function getTodayServiceCommand(weakestDuty) {
   const commands = {
     tauheed: 'Study one proof of tawheed or one seerah incident, then write the action it demands from you today.',
     wealth: 'Do one halal wealth action today: ship, sell, invest, save, give, or build an income asset.',
-    readiness: 'Train your body with strength and restraint. Build protection capacity without ego.',
+    readiness: 'Do one Adventure readiness action today: scout a route, hike, navigate, learn first aid, or practice restraint without ego.',
     service: 'Serve one Muslim today through teaching, relief, mentorship, advocacy, or direct help.',
     family: 'Lead your home today through worship, mercy, provision, teaching, or disciplined example.',
   };

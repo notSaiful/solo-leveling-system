@@ -19,7 +19,7 @@ export const JOB_CHANGE_GATES = [
     days: 7,
     steps: [
       { day: 1, title: 'Fajr Warrior', description: 'Pray Fajr on time + 30 min seerah study on prophetic leadership', pillar: 'deen', xp: 100 },
-      { day: 2, title: 'Body Foundation', description: 'Walk 5,000 steps exploring new terrain + 10 minutes barefoot on earth + climb one hill or stairs', pillar: 'body', xp: 100 },
+      { day: 2, title: 'Adventure Foundation', description: 'Walk 5,000 steps exploring new terrain + 10 minutes barefoot on earth + climb one hill or stairs', pillar: 'body', xp: 100 },
       { day: 3, title: 'AI First Step', description: 'Master one AI tool or study one AI concept for 1 hour', pillar: 'money', xp: 100 },
       { day: 4, title: 'All Prayers Perfect', description: 'All 5 prayers on time + rawatib', pillar: 'deen', xp: 120 },
       { day: 5, title: 'Trail Gauntlet', description: '1-hour nature walk or hike + perfect sleep', pillar: 'body', xp: 120 },
@@ -36,7 +36,7 @@ export const JOB_CHANGE_GATES = [
     days: 7,
     steps: [
       { day: 1, title: 'Tahajjud Warrior', description: 'Pray Tahajjud + 45 min seerah deep study on statecraft and justice', pillar: 'deen', xp: 150 },
-      { day: 2, title: 'Warrior Body', description: '45-minute trail hike + weighted pack carry 20 min + balance practice on uneven ground', pillar: 'body', xp: 150 },
+      { day: 2, title: 'Warrior Adventure', description: '45-minute trail hike + weighted pack carry 20 min + balance practice on uneven ground', pillar: 'body', xp: 150 },
       { day: 3, title: 'Ship AI Product', description: 'Ship one AI product/feature or close one AI-related sale (wealth as a tool)', pillar: 'money', xp: 150 },
       { day: 4, title: 'Rawatib Mastery', description: 'All 12 rawatib + Duha + evening adhkar', pillar: 'deen', xp: 180 },
       { day: 5, title: 'Endurance Test', description: '5K trek on trail or uneven ground + hill climb + cold water exposure', pillar: 'body', xp: 180 },
@@ -70,7 +70,7 @@ export const JOB_CHANGE_GATES = [
     days: 7,
     steps: [
       { day: 1, title: 'Strategist\'s Prayer', description: 'Tahajjud 60+ min + 2 Juz + khutbah prep', pillar: 'deen', xp: 300 },
-      { day: 2, title: 'Strategist\'s Body', description: 'Half-day trek (4+ hours) + multi-terrain navigation + lead someone on outdoor excursion', pillar: 'body', xp: 300 },
+      { day: 2, title: 'Strategist\'s Adventure', description: 'Half-day trek (4+ hours) + multi-terrain navigation + lead someone on outdoor excursion', pillar: 'body', xp: 300 },
       { day: 3, title: 'Strategist\'s Empire', description: 'Major strategic AI business action', pillar: 'money', xp: 300 },
       { day: 4, title: 'Ummah Service', description: '10+ hours volunteering or relief this month', pillar: 'deen', xp: 350 },
       { day: 5, title: 'Elite Expedition', description: 'Summit attempt or major wilderness feat', pillar: 'body', xp: 350 },
@@ -90,7 +90,7 @@ export const JOB_CHANGE_GATES = [
       { day: 2, title: 'Khalifa\'s Apex', description: 'Full-day expedition across multiple terrain types in top 5% outdoor endurance', pillar: 'body', xp: 500 },
       { day: 3, title: 'Khalifa\'s Treasury', description: 'Halal AI empire employing 5+ Muslims', pillar: 'money', xp: 500 },
       { day: 4, title: 'Community Dominion', description: 'Organize 100+ person Ummah event', pillar: 'deen', xp: 600 },
-      { day: 5, title: 'Physical Mastery', description: '1-year elite outdoor endurance without breaks', pillar: 'body', xp: 600 },
+      { day: 5, title: 'Adventure Mastery', description: '1-year elite outdoor endurance without breaks', pillar: 'body', xp: 600 },
       { day: 6, title: 'Wealth Mastery', description: 'Financial independence achieved via AI', pillar: 'money', xp: 600 },
       { day: 7, title: "BOSS: The Khalifa's Ascension", description: 'All quests + 40 days perfect streak prep (no breaks, no excuses)', pillar: 'all', xp: 1000 },
     ],

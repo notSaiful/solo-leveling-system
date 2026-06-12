@@ -81,7 +81,7 @@ export default function MissionCommandCenter({ state, setState }) {
     halalGuardrailAccepted: true,
   });
   const [readinessForm, setReadinessForm] = useState({
-    actionType: 'strength',
+    actionType: 'route-scouting',
     intensity: 'moderate',
     action: '',
     minutes: '',
@@ -302,124 +302,145 @@ export default function MissionCommandCenter({ state, setState }) {
   };
 
   return (
-    <div className="max-w-2xl md:max-w-3xl lg:max-w-4xl mx-auto p-2 sm:p-4 space-y-4 sm:space-y-5 relative z-10">
-      <section className="glass-panel-strong p-5 sm:p-6 border border-cyan-500/25">
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-cyan-300">
-              <ShieldCheck size={18} />
-              <span className="font-orbitron text-sm font-bold tracking-wider uppercase">Mission Command</span>
+    <div className="max-w-2xl md:max-w-3xl lg:max-w-4xl mx-auto p-2 sm:p-4 space-y-6 relative z-10 font-inter">
+      <section className="glass-panel-khalifa p-6 sm:p-8 relative overflow-hidden">
+        <div className="absolute top-3 left-3 w-6 h-6 border-l-2 border-t-2 border-khalifa-gold/50" />
+        <div className="absolute top-3 right-3 w-6 h-6 border-r-2 border-t-2 border-khalifa-gold/50" />
+        <div className="absolute bottom-3 left-3 w-6 h-6 border-l-2 border-b-2 border-khalifa-gold/50" />
+        <div className="absolute bottom-3 right-3 w-6 h-6 border-r-2 border-b-2 border-khalifa-gold/50" />
+
+        <div className="absolute -right-20 -bottom-20 w-80 h-80 opacity-[0.03] pointer-events-none">
+          <svg viewBox="0 0 100 100" fill="currentColor" className="text-khalifa-gold">
+            <path d="M50 0l11.756 36.18h38.244L69.065 58.541l11.756 36.18L50 72.18l-30.821 22.541 11.756-36.18L0 36.18h38.244z" />
+          </svg>
+        </div>
+
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6 relative z-10">
+          <div className="space-y-3">
+            <div className="flex items-center gap-3 text-khalifa-gold">
+              <ShieldCheck size={20} className="text-glow-khalifa" />
+              <span className="font-orbitron text-xs font-bold tracking-[0.3em] uppercase">Khalifate Command</span>
             </div>
-            <h2 className="font-orbitron text-xl sm:text-2xl font-bold text-cyan-100 tracking-wide">
+            <h2 className="font-playfair text-2xl sm:text-3xl font-bold text-gray-100 tracking-tight">
               {MISSION_DOCTRINE.title}
             </h2>
-            <p className="text-sm text-cyan-500/70 leading-relaxed max-w-2xl">
-              {MISSION_DOCTRINE.oath}
+            <p className="text-sm text-khalifa-steel italic leading-relaxed max-w-2xl font-playfair">
+              "{MISSION_DOCTRINE.oath}"
             </p>
           </div>
-          <div className="sm:text-right shrink-0">
-            <div className="text-2xl font-bold text-cyan-300">{plan.metrics.missionScore}%</div>
-            <div className="text-[10px] uppercase tracking-wider text-cyan-600">Coverage</div>
+          <div className="sm:text-right shrink-0 bg-khalifa-gold/5 border border-khalifa-gold/20 p-4 rounded-2xl shadow-inner">
+            <div className="text-3xl font-black font-orbitron text-khalifa-gold text-glow-khalifa">{plan.metrics.missionScore}%</div>
+            <div className="text-[10px] uppercase tracking-[0.2em] font-orbitron text-khalifa-gold/60">Mission Coverage</div>
           </div>
         </div>
       </section>
 
-      <section className="glass-panel p-4 border border-yellow-500/20">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+      <section className="glass-panel p-5 border-khalifa-gold/10 bg-khalifa-gold/5">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
-            <div className="text-[10px] text-yellow-500/70 uppercase tracking-wider">Current Phase</div>
-            <div className="font-orbitron text-lg font-bold text-yellow-200">{plan.currentPhase.title}</div>
-            <div className="text-sm text-cyan-500/70 mt-1">{plan.currentPhase.aim}</div>
+            <div className="text-[10px] font-orbitron text-khalifa-gold/70 uppercase tracking-widest mb-1">Operational Phase</div>
+            <div className="font-playfair text-xl font-bold text-gray-100">{plan.currentPhase.title}</div>
+            <div className="text-xs text-khalifa-steel mt-1 font-inter">{plan.currentPhase.aim}</div>
           </div>
-          <div className="sm:text-right">
-            <div className="text-xs text-cyan-500/60">
-              {plan.nextPhase ? `Next: ${plan.nextPhase.title}` : 'Final phase active'}
+          <div className="sm:text-right min-w-[160px]">
+            <div className="text-[10px] font-orbitron text-khalifa-steel/60 uppercase tracking-widest mb-2">
+              {plan.nextPhase ? `Next: ${plan.nextPhase.title}` : 'Peak Evolution Reached'}
             </div>
-            <div className="mt-2 w-full sm:w-40 h-2 rounded-full bg-cyan-950 overflow-hidden">
+            <div className="w-full h-1.5 rounded-full bg-khalifa-void overflow-hidden relative">
               <div
-                className="h-full bg-yellow-400"
+                className="h-full bg-khalifa-gold shadow-[0_0_10px_rgba(234,179,8,0.5)] transition-all duration-1000"
                 style={{ width: `${plan.phaseProgress}%` }}
               />
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {plan.currentPhase.objectives.map(objective => (
-            <div key={objective} className="border border-cyan-900/40 bg-cyan-950/10 rounded-lg p-3 text-sm text-cyan-100 leading-snug">
+            <div key={objective} className="border border-khalifa-gold/10 bg-khalifa-void/40 rounded-xl p-4 text-xs text-gray-200 leading-relaxed flex items-start gap-3">
+              <div className="w-1.5 h-1.5 rounded-full bg-khalifa-gold mt-1.5 shrink-0" />
               {objective}
             </div>
           ))}
         </div>
       </section>
 
-      <section className="glass-panel p-4 border border-cyan-500/20">
-        <div className="flex items-center gap-2 mb-3 text-cyan-300">
-          <WeakIcon size={16} />
-          <span className="font-orbitron text-sm font-semibold tracking-wider uppercase">Weekly Focus</span>
+      <section className="glass-panel p-5 border-khalifa-blue/20 bg-khalifa-blue/5">
+        <div className="flex items-center gap-3 mb-4 text-khalifa-blue">
+          <div className="w-8 h-8 rounded-lg bg-khalifa-blue/10 border border-khalifa-blue/20 flex items-center justify-center">
+            <WeakIcon size={18} />
+          </div>
+          <span className="font-orbitron text-xs font-bold tracking-[0.2em] uppercase">Direct Command</span>
         </div>
-        <div className="text-sm text-cyan-100 leading-relaxed">{plan.weeklyFocus.command}</div>
-        <div className="mt-3 text-xs text-cyan-500/50">
-          Weakest duty: {plan.weeklyFocus.duty?.label || 'Unknown'}
+        <div className="text-base font-playfair text-gray-100 leading-relaxed italic border-l-2 border-khalifa-blue/30 pl-4 py-1">
+          "{plan.weeklyFocus.command}"
+        </div>
+        <div className="mt-4 text-[10px] font-orbitron text-khalifa-steel/50 uppercase tracking-widest">
+          Priority Sector: <span className="text-khalifa-blue">{plan.weeklyFocus.duty?.label || 'Total Coverage'}</span>
         </div>
       </section>
 
-      <section className="glass-panel p-4 border border-cyan-500/20">
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
+      <section className="glass-panel p-5 border-white/5 bg-khalifa-void/20">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6 mb-6">
           <div>
-            <div className="flex items-center gap-2 text-cyan-300 mb-1">
-              <Target size={17} />
-              <span className="font-orbitron text-sm font-semibold tracking-wider uppercase">Mission Review Dashboard</span>
+            <div className="flex items-center gap-3 text-khalifa-gold mb-2">
+              <Target size={20} className="opacity-80" />
+              <span className="font-orbitron text-xs font-bold tracking-[0.2em] uppercase">Intelligence Review</span>
             </div>
-            <div className="text-xs text-cyan-500/60 leading-relaxed">
-              Seven-day review across teaching, wealth, justice, family, livelihood, and readiness evidence.
+            <div className="text-xs text-khalifa-steel/80 leading-relaxed font-inter max-w-md">
+              Synchronized analysis across critical sectors: Teaching, Wealth, Justice, Family, Livelihood, and Readiness.
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-2 sm:min-w-80">
-            <div className="rounded-lg border border-cyan-500/20 bg-cyan-950/10 p-3">
-              <div className="text-[10px] text-cyan-500/70 uppercase tracking-wider">Coverage</div>
-              <div className="text-sm font-bold text-cyan-100">{missionReview.weeklyCoverage}%</div>
+          <div className="grid grid-cols-3 gap-3 sm:min-w-[320px]">
+            <div className="rounded-2xl border border-khalifa-blue/20 bg-khalifa-blue/5 p-4 shadow-inner">
+              <div className="text-[9px] font-orbitron text-khalifa-blue/60 uppercase tracking-widest mb-1">Coverage</div>
+              <div className="text-lg font-black font-orbitron text-khalifa-blue">{missionReview.weeklyCoverage}%</div>
             </div>
-            <div className="rounded-lg border border-cyan-500/20 bg-cyan-950/10 p-3">
-              <div className="text-[10px] text-cyan-500/70 uppercase tracking-wider">Week Logs</div>
-              <div className="text-sm font-bold text-cyan-100">{missionReview.weeklyActions.toLocaleString()}</div>
+            <div className="rounded-2xl border border-khalifa-purple/20 bg-khalifa-purple/5 p-4 shadow-inner">
+              <div className="text-[9px] font-orbitron text-khalifa-purple/60 uppercase tracking-widest mb-1">Logs</div>
+              <div className="text-lg font-black font-orbitron text-khalifa-purple">{missionReview.weeklyActions}</div>
             </div>
-            <div className="rounded-lg border border-yellow-500/20 bg-yellow-950/10 p-3">
-              <div className="text-[10px] text-yellow-500/70 uppercase tracking-wider">Weakest</div>
-              <div className="text-sm font-bold text-yellow-200">{missionReview.weakestDuty?.label || 'Mission'}</div>
+            <div className="rounded-2xl border border-khalifa-amber/20 bg-khalifa-amber/5 p-4 shadow-inner">
+              <div className="text-[9px] font-orbitron text-khalifa-amber/60 uppercase tracking-widest mb-1">Weakest</div>
+              <div className="text-xs font-black font-orbitron text-khalifa-amber uppercase truncate">{missionReview.weakestDuty?.label || 'None'}</div>
             </div>
           </div>
         </div>
 
-        <div className="rounded-lg border border-yellow-500/20 bg-yellow-950/10 p-3 mb-4">
-          <div className="text-[10px] text-yellow-500/70 uppercase tracking-wider mb-1">Next Command</div>
-          <div className="text-sm text-yellow-100 leading-relaxed">{missionReview.command}</div>
+        <div className="rounded-2xl border border-khalifa-gold/20 bg-khalifa-gold/5 p-4 mb-6">
+          <div className="text-[9px] font-orbitron text-khalifa-gold/60 uppercase tracking-widest mb-2">Strategic Command</div>
+          <div className="text-sm font-playfair text-gray-200 leading-relaxed italic">"{missionReview.command}"</div>
         </div>
 
-        <div className="mb-4 rounded-lg border border-yellow-500/20 bg-black/20 p-3">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div>
-              <div className="text-[10px] text-yellow-500/70 uppercase tracking-wider">Corrective Quests</div>
-              <div className="text-sm text-cyan-100 mt-1">
-                {correctiveQuests.length
-                  ? `${correctiveQuests.length} mission correction${correctiveQuests.length === 1 ? '' : 's'} ready to forge.`
-                  : 'Corrective quests already forged or no new correction needed.'}
+        <div className="mb-6 rounded-2xl border border-khalifa-purple/20 bg-khalifa-purple/5 p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-khalifa-purple/10 border border-khalifa-purple/20 flex items-center justify-center">
+                <Zap size={18} className="text-khalifa-purple" />
+              </div>
+              <div>
+                <div className="text-[10px] font-orbitron text-khalifa-purple/70 uppercase tracking-widest">Correction Protocol</div>
+                <div className="text-xs text-gray-300 mt-0.5">
+                  {correctiveQuests.length
+                    ? `${correctiveQuests.length} corrective measures ready for deployment.`
+                    : 'System alignment verified. No corrections needed.'}
+                </div>
               </div>
             </div>
             <button
               type="button"
               onClick={handleForgeCorrectiveQuests}
-              className="rounded-lg border border-yellow-500/40 bg-yellow-900/20 px-3 py-2 text-sm font-semibold text-yellow-100 hover:bg-yellow-900/30 transition-colors"
+              className="rounded-xl border border-khalifa-purple/40 bg-khalifa-purple/10 px-5 py-2.5 text-xs font-bold text-khalifa-purple hover:bg-khalifa-purple/20 transition-all uppercase tracking-widest font-orbitron"
             >
               Forge Corrections
             </button>
           </div>
           {correctiveQuests.length > 0 && (
-            <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
               {correctiveQuests.map(quest => (
-                <div key={quest.id} className="rounded-lg border border-yellow-500/20 bg-yellow-950/10 p-2">
-                  <div className="text-xs font-semibold text-yellow-100 truncate">{quest.title}</div>
-                  <div className="text-[10px] text-cyan-500/70 uppercase tracking-wider">{quest.pillar} · {quest.xp} XP</div>
+                <div key={quest.id} className="rounded-xl border border-white/5 bg-black/30 p-3 flex flex-col justify-between">
+                  <div className="text-xs font-bold text-gray-200 line-clamp-1 mb-1">{quest.title}</div>
+                  <div className="text-[9px] font-orbitron text-khalifa-steel uppercase tracking-widest">{quest.pillar} · <span className="text-khalifa-purple">{quest.xp} XP</span></div>
                 </div>
               ))}
             </div>
@@ -427,133 +448,109 @@ export default function MissionCommandCenter({ state, setState }) {
         </div>
 
         {missionTrends.reviews.length > 0 && (
-          <div className="mb-4 rounded-lg border border-cyan-500/20 bg-cyan-950/10 p-3">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
-              <div className="flex items-center gap-2 text-cyan-300">
-                <TrendingUp size={16} />
-                <span className="font-orbitron text-xs font-semibold tracking-wider uppercase">Weekly Trend</span>
+          <div className="mb-6 rounded-2xl border border-white/5 bg-khalifa-void/40 p-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+              <div className="flex items-center gap-3 text-khalifa-blue">
+                <TrendingUp size={18} />
+                <span className="font-orbitron text-xs font-bold tracking-[0.2em] uppercase">Coverage Trend</span>
               </div>
-              <div className="text-xs text-cyan-500/70">
-                Coverage {missionTrends.coverageDelta >= 0 ? '+' : ''}{missionTrends.coverageDelta}% · Logs {missionTrends.actionDelta >= 0 ? '+' : ''}{missionTrends.actionDelta}
+              <div className="text-[10px] font-orbitron text-khalifa-steel uppercase tracking-widest">
+                Δ Coverage: <span className={missionTrends.coverageDelta >= 0 ? 'text-green-400' : 'text-red-400'}>{missionTrends.coverageDelta >= 0 ? '+' : ''}{missionTrends.coverageDelta}%</span> · Δ Activity: <span className={missionTrends.actionDelta >= 0 ? 'text-green-400' : 'text-red-400'}>{missionTrends.actionDelta >= 0 ? '+' : ''}{missionTrends.actionDelta}</span>
               </div>
             </div>
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-3">
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 mb-4">
               {missionTrends.reviews.map(note => (
-                <div key={note.weekId} className="rounded-lg border border-cyan-900/40 bg-black/20 p-2">
-                  <div className="text-[10px] text-cyan-600 truncate">{note.weekEnd}</div>
-                  <div className="text-sm font-bold text-cyan-100">{note.weeklyCoverage}%</div>
-                  <div className="mt-2 h-12 rounded bg-cyan-950/60 overflow-hidden flex items-end">
+                <div key={note.weekId} className="rounded-xl border border-white/5 bg-black/20 p-3 flex flex-col justify-between">
+                  <div className="text-[9px] font-orbitron text-khalifa-steel uppercase truncate mb-1">{note.weekEnd}</div>
+                  <div className="text-sm font-black font-orbitron text-gray-100">{note.weeklyCoverage}%</div>
+                  <div className="mt-2 h-10 rounded-lg bg-black/40 overflow-hidden flex items-end">
                     <div
-                      className="w-full bg-cyan-400/70"
-                      style={{ height: `${Math.max(6, Math.min(100, note.weeklyCoverage || 0))}%` }}
+                      className="w-full bg-khalifa-blue/40"
+                      style={{ height: `${Math.max(8, Math.min(100, note.weeklyCoverage || 0))}%`, boxShadow: '0 0 10px rgba(59,130,246,0.3)' }}
                     />
                   </div>
                 </div>
               ))}
             </div>
-            {missionTrends.dutyTrends.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-5 gap-2">
-                {missionTrends.dutyTrends.map(duty => (
-                  <div key={duty.id} className="rounded-lg border border-cyan-900/40 bg-black/20 p-2">
-                    <div className="text-[10px] text-cyan-500/70 uppercase tracking-wider truncate">{duty.label}</div>
-                    <div className="text-sm text-cyan-100 font-semibold">
-                      {duty.week} <span className={duty.delta > 0 ? 'text-green-300' : duty.delta < 0 ? 'text-red-300' : 'text-cyan-500'}>{duty.delta >= 0 ? '+' : ''}{duty.delta}</span>
-                    </div>
-                    <div className="text-[10px] text-cyan-600 uppercase tracking-wider">{duty.direction}</div>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {missionReview.duties.map(duty => {
             const DutyIcon = dutyIcons[duty.id] || Target;
             const statusClass = duty.status === 'strong'
-              ? 'border-green-500/25 bg-green-950/10 text-green-200'
+              ? 'border-green-500/20 bg-green-950/5 text-green-400 shadow-[0_0_10px_rgba(34,197,94,0.05)]'
               : duty.status === 'active'
-                ? 'border-cyan-500/25 bg-cyan-950/10 text-cyan-100'
-                : 'border-red-500/25 bg-red-950/10 text-red-100';
+                ? 'border-khalifa-blue/20 bg-khalifa-blue/5 text-khalifa-blue shadow-[0_0_10px_rgba(59,130,246,0.05)]'
+                : 'border-red-500/20 bg-red-950/5 text-red-400 shadow-[0_0_10px_rgba(239,44,44,0.05)]';
             return (
-              <div key={duty.id} className={`rounded-lg border p-3 ${statusClass}`}>
-                <div className="flex items-center justify-between gap-2 mb-2">
+              <div key={duty.id} className={`rounded-xl border p-4 transition-all hover:scale-[1.02] ${statusClass}`}>
+                <div className="flex items-center justify-between gap-2 mb-3">
                   <div className="flex items-center gap-2 min-w-0">
-                    <DutyIcon size={14} className="shrink-0" />
-                    <span className="text-xs font-semibold truncate">{duty.label}</span>
+                    <DutyIcon size={14} className="shrink-0 opacity-80" />
+                    <span className="text-[10px] font-black font-orbitron uppercase tracking-widest truncate">{duty.label}</span>
                   </div>
-                  <span className="text-[10px] uppercase tracking-wider">{duty.status}</span>
                 </div>
                 <div className="flex items-end justify-between gap-2">
                   <div>
-                    <div className="text-[10px] uppercase tracking-wider opacity-70">Week</div>
-                    <div className="text-lg font-bold">{duty.week}</div>
+                    <div className="text-[8px] uppercase tracking-[0.2em] font-orbitron opacity-50 mb-1">Cycle</div>
+                    <div className="text-xl font-black font-orbitron leading-none">{duty.week}</div>
                   </div>
                   <div className="text-right">
-                    <div className="text-[10px] uppercase tracking-wider opacity-70">Total</div>
-                    <div className="text-sm font-semibold">{duty.total}</div>
+                    <div className="text-[8px] uppercase tracking-[0.2em] font-orbitron opacity-50 mb-1">Total</div>
+                    <div className="text-xs font-black font-orbitron leading-none opacity-80">{duty.total}</div>
                   </div>
                 </div>
-                <div className="mt-2 h-1.5 rounded-full bg-black/30 overflow-hidden">
+                <div className="mt-3 h-1 rounded-full bg-black/40 overflow-hidden relative">
                   <div
-                    className="h-full bg-current"
-                    style={{ width: `${Math.min(100, duty.week * 34)}%` }}
+                    className="h-full bg-current relative z-10"
+                    style={{ width: `${Math.min(100, duty.week * 34)}%`, boxShadow: '0 0 5px currentColor' }}
                   />
+                  <div className="absolute inset-0 bg-white/5 opacity-10" />
                 </div>
               </div>
             );
           })}
         </div>
 
-        <div className="mt-4 rounded-lg border border-cyan-500/20 bg-black/20 p-3">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div>
-              <div className="text-[10px] text-cyan-500/70 uppercase tracking-wider">Weekly Review Note</div>
-              <div className="text-sm text-cyan-100 mt-1">
-                {currentWeeklyReview
-                  ? `Sealed ${currentWeeklyReview.createdAt?.slice(0, 10)} · ${currentWeeklyReview.weeklyCoverage}% coverage · weakest: ${currentWeeklyReview.weakestDuty}`
-                  : `No sealed note for ${missionReview.weekStart} to ${missionReview.weekEnd}.`}
+        <div className="mt-6 rounded-2xl border border-white/5 bg-black/40 p-5">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-khalifa-gold/10 border border-khalifa-gold/20 flex items-center justify-center">
+                <FileText size={20} className="text-khalifa-gold opacity-80" />
+              </div>
+              <div>
+                <div className="text-[10px] font-orbitron text-khalifa-gold/70 uppercase tracking-widest">Seal Narrative</div>
+                <div className="text-xs text-gray-300 mt-0.5">
+                  {currentWeeklyReview
+                    ? `Chronicle sealed for Cycle: ${currentWeeklyReview.weekEnd}.`
+                    : `No record found for Cycle: ${missionReview.weekStart} to ${missionReview.weekEnd}.`}
+                </div>
               </div>
             </div>
             <button
               type="button"
               onClick={handleSealWeeklyReview}
-              className="rounded-lg border border-cyan-500/40 bg-cyan-900/20 px-3 py-2 text-sm font-semibold text-cyan-100 hover:bg-cyan-900/30 transition-colors"
+              className="rounded-xl border border-khalifa-gold/40 bg-khalifa-gold/10 px-5 py-2.5 text-xs font-bold text-khalifa-gold hover:bg-khalifa-gold/20 transition-all uppercase tracking-widest font-orbitron"
             >
-              Seal Review
+              Seal Chronicle
             </button>
           </div>
-          {reviewMessage && <div className="text-xs text-green-300 mt-2">{reviewMessage}</div>}
+          {reviewMessage && <div className="text-[10px] font-orbitron text-green-400 uppercase tracking-widest mt-4 animate-pulse">SYSTEM: {reviewMessage}</div>}
           {currentWeeklyReview && (
-            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <div className="rounded-lg border border-green-500/20 bg-green-950/10 p-2">
-                <div className="text-[10px] text-green-400/70 uppercase tracking-wider mb-1">Wins</div>
-                <div className="text-xs text-cyan-100 leading-relaxed">
-                  {currentWeeklyReview.wins.length ? currentWeeklyReview.wins.join(' · ') : 'No wins sealed yet.'}
+            <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="rounded-xl border border-green-500/10 bg-green-950/5 p-4">
+                <div className="text-[9px] font-orbitron text-green-400/70 uppercase tracking-[0.2em] mb-2 font-black">Strategic Triumphs</div>
+                <div className="text-xs text-gray-300 leading-relaxed font-inter">
+                  {currentWeeklyReview.wins.length ? currentWeeklyReview.wins.join(' · ') : 'No triumphs recorded in this cycle.'}
                 </div>
               </div>
-              <div className="rounded-lg border border-red-500/20 bg-red-950/10 p-2">
-                <div className="text-[10px] text-red-400/70 uppercase tracking-wider mb-1">Weak Spots</div>
-                <div className="text-xs text-cyan-100 leading-relaxed">
-                  {currentWeeklyReview.weakSpots.length ? currentWeeklyReview.weakSpots.join(' · ') : 'No neglected duty this week.'}
+              <div className="rounded-xl border border-red-500/10 bg-red-950/5 p-4">
+                <div className="text-[9px] font-orbitron text-red-400/70 uppercase tracking-[0.2em] mb-2 font-black">Identified Vulnerabilities</div>
+                <div className="text-xs text-gray-300 leading-relaxed font-inter">
+                  {currentWeeklyReview.weakSpots.length ? currentWeeklyReview.weakSpots.join(' · ') : 'No vulnerabilities identified.'}
                 </div>
               </div>
-            </div>
-          )}
-          {recentWeeklyReviews.length > 0 && (
-            <div className="mt-3 space-y-2">
-              {recentWeeklyReviews.map(note => (
-                <div key={note.id} className="flex items-center justify-between gap-3 rounded-lg border border-cyan-900/40 bg-black/20 p-2">
-                  <div className="min-w-0">
-                    <div className="text-xs text-cyan-100 font-semibold truncate">{note.weekStart} to {note.weekEnd}</div>
-                    <div className="text-[10px] text-cyan-500/60 truncate">{note.command}</div>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <div className="text-xs text-cyan-300">{note.weeklyCoverage}%</div>
-                    <div className="text-[10px] text-cyan-700">{note.weeklyActions} logs</div>
-                  </div>
-                </div>
-              ))}
             </div>
           )}
         </div>
@@ -682,7 +679,7 @@ export default function MissionCommandCenter({ state, setState }) {
               <span className="font-orbitron text-sm font-semibold tracking-wider uppercase">Readiness & Restraint Protocol</span>
             </div>
             <div className="text-xs text-cyan-500/60 leading-relaxed">
-              Track strength, conditioning, combat sport, first aid, awareness, de-escalation, and restraint under lawful guardrails.
+              Track route scouting, navigation, trail endurance, first aid, awareness, de-escalation, and restraint under lawful guardrails.
             </div>
           </div>
           <div className="grid grid-cols-3 gap-2 sm:min-w-80">
@@ -752,7 +749,7 @@ export default function MissionCommandCenter({ state, setState }) {
             type="text"
             value={readinessForm.action}
             onChange={(event) => updateReadinessForm('action', event.target.value)}
-            placeholder="Training / readiness action"
+            placeholder="Adventure / readiness action"
             className="sm:col-span-2 bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
           />
           <input

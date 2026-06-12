@@ -43,14 +43,20 @@ export function clearQueuedCloudSync() {
   syncTimeout = null;
 }
 
-export function queueCloudSync(state) {
+export function queueCloudSync(state, onSynced) {
   if (!isCanonicalSyncConfigured()) return;
 
   clearQueuedCloudSync();
   syncTimeout = setTimeout(() => {
     syncTimeout = null;
-    syncStateToCloud(state).catch(err => {
-      console.warn('Cloud sync failed:', err);
-    });
+    syncStateToCloud(state)
+      .then(result => {
+        if (result?.success && typeof onSynced === 'function') {
+          onSynced(result, state);
+        }
+      })
+      .catch(err => {
+        console.warn('Cloud sync failed:', err);
+      });
   }, SYNC_DEBOUNCE_MS);
 }

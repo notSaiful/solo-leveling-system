@@ -5,6 +5,7 @@
  *  ============================================================ */
 
 import { RANK_CONFIG, getRankByLevel } from './questCatalog';
+import { getPillarLabel } from '../utils/pillarDisplay';
 
 const RANK_ORDER = ['E', 'D', 'C', 'B', 'A', 'S'];
 
@@ -96,10 +97,11 @@ export function getScaledRedemptionQuest(rankKey, pillar) {
   ];
   const questTitle = titleByTier[idx] || titleByTier[0];
 
-  let description = `Complete ${extraQuests > 0 ? 'ALL daily quests' : 'one daily quest'} for ${pillar}`;
-  if (extraQuests > 0) description += ` plus ${extraQuests} additional ${pillar} quest${extraQuests > 1 ? 's' : ''}`;
-  if (requiresDungeonStep) description += ` and complete one ${pillar} dungeon step`;
-  if (requiresFullDungeon) description += ` and complete the ENTIRE ${pillar} weekly dungeon`;
+  const pillarLabel = getPillarLabel(pillar);
+  let description = `Complete ${extraQuests > 0 ? 'ALL daily quests' : 'one daily quest'} for ${pillarLabel}`;
+  if (extraQuests > 0) description += ` plus ${extraQuests} additional ${pillarLabel} quest${extraQuests > 1 ? 's' : ''}`;
+  if (requiresDungeonStep) description += ` and complete one ${pillarLabel} dungeon step`;
+  if (requiresFullDungeon) description += ` and complete the ENTIRE ${pillarLabel} weekly dungeon`;
   description += ' to clear your debuff. The Khalifate does not stay exiled.';
 
   const baseXp = 50;
@@ -108,7 +110,7 @@ export function getScaledRedemptionQuest(rankKey, pillar) {
   return {
     id: `redemption-${pillar}-${Date.now()}`,
     pillar,
-    title: `${questTitle} (${rankKey}-Rank ${pillar.charAt(0).toUpperCase() + pillar.slice(1)})`,
+    title: `${questTitle} (${rankKey}-Rank ${pillarLabel})`,
     xp: scaledXp,
     isRedemption: true,
     createdAt: new Date().toISOString(),
