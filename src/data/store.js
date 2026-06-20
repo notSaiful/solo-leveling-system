@@ -4,8 +4,8 @@ import { getLocalDateString } from '../utils/dateUtils';
 import { pruneExpiredCustomQuests } from '../logic/customQuests';
 
 export const STORAGE_KEY = 'soloLevelingData';
-const SCHEMA_VERSION = 7;
-const BUILD_VERSION = '2026-06-04-v4.8-cache-bust-1749069000';
+const SCHEMA_VERSION = 8;
+const BUILD_VERSION = '2026-06-20-listen-and-level-v1';
 const CLOUD_ENABLED_KEY = 'cloudSyncEnabled';
 const STALE_ADVENTURE_DAILY_TITLES = new Set([
   'Combat Mobility 5 Min',
@@ -77,6 +77,12 @@ export const DEFAULT_STATE = {
   failureStreaks: { deen: 0, body: 0, money: 0 },
   streakFrozen: { deen: false, body: false, money: false },
   weeklyFocus: null,
+  // v8 Listen & Level fields
+  activities: {},
+  logTargets: [],
+  pendingLogs: [],
+  guidedMode: { enabled: false, lastQuestDate: null },
+  catalogOverrides: {},
   khalifateObjectives: [],
   buildVersion: BUILD_VERSION,
 };
@@ -152,6 +158,15 @@ function normalizeStateShape(state) {
   };
   normalized.weeklyFocus = state.weeklyFocus || null;
   normalized.khalifateObjectives = Array.isArray(state.khalifateObjectives) ? state.khalifateObjectives : [];
+  // v8 Listen & Level normalization
+  normalized.activities = state.activities && typeof state.activities === 'object' ? state.activities : {};
+  normalized.logTargets = Array.isArray(state.logTargets) ? state.logTargets : [];
+  normalized.pendingLogs = Array.isArray(state.pendingLogs) ? state.pendingLogs : [];
+  normalized.guidedMode = {
+    enabled: state.guidedMode?.enabled || false,
+    lastQuestDate: state.guidedMode?.lastQuestDate || null,
+  };
+  normalized.catalogOverrides = state.catalogOverrides && typeof state.catalogOverrides === 'object' ? state.catalogOverrides : {};
   normalized.buildVersion = state.buildVersion || BUILD_VERSION;
   return normalized;
 }

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { awardActivities } from './logEngine';
+import { upgradeStateForCurrentBuild } from '../data/store';
 
 function baseState(overrides = {}) {
   return {
@@ -146,5 +147,33 @@ describe('awardActivities — edge cases', () => {
   it('skips activities with no pillar', () => {
     const next = awardActivities(baseState(), [{ activityKey: 'x', name: 'X', pillar: 'body' }, { activityKey: 'y', name: 'Y', pillar: null }], '2026-06-20');
     expect(next.history).toHaveLength(1);
+  });
+});
+
+describe('schema v8 migration', () => {
+  it('adds new fields and preserves earned progress', () => {
+    const oldState = {
+      version: 7,
+      buildVersion: 'old',
+      user: { name: 'Saiful', currentRank: 'E', overallLevel: 5, joinedDate: '2026-01-01T00:00:00.000Z', jobClass: null },
+      pillars: {
+        deen: { level: 5, xp: 10, streak: 3 },
+        body: { level: 3, xp: 0, streak: 0 },
+        money: { level: 2, xp: 0, streak: 0 },
+      },
+      stats: { strength: 12, agility: 10, intelligence: 11, sense: 10, health: 10, mana: 10 },
+      gold: 50,
+      history: [{ type: 'log', activityKey: 'pushups', xp: 15, localDate: '2026-06-19', completed: true }],
+    };
+    const upgraded = upgradeStateForCurrentBuild(oldState);
+    expect(upgraded.version).toBe(8);
+    expect(upgraded.activities).toEqual({});
+    expect(upgraded.guidedMode).toEqual({ enabled: false, lastQuestDate: null });
+    expect(upgraded.pendingLogs).toEqual([]);
+    expect(upgraded.catalogOverrides).toEqual({});
+    expect(upgraded.user.overallLevel).toBe(5);
+    expect(upgraded.pillars.deen.streak).toBe(3);
+    expect(upgraded.gold).toBe(50);
+    expect(upgraded.history.at(-1).activityKey).toBe('pushups');
   });
 });
