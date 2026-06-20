@@ -111,14 +111,16 @@ User Action → useStore (localStorage) → Auto Cloud Sync (/api/sync-state)
 Each pillar has: Level, XP, Streak, Active Debuffs
 
 ### 4.2 Rank System (E → S)
-| Rank | Name | Requirement |
-|------|------|-------------|
-| E | Seeker | Level 1-5 |
-| D | Striver | Level 6-15 |
-| C | Disciplined | Level 16-30 |
-| B | Scholar | Level 31-50 |
-| A | Guide | Level 51-75 |
-| S | Monarch | Level 76+ |
+| Rank | Name | Level Range | XP Mult | Stat Pts/Lvl |
+|------|------|-------------|---------|--------------|
+| E | Seeker | 0-10 | 1.0 | 1 |
+| D | Striver | 11-25 | 1.3 | 2 |
+| C | Disciplined | 26-45 | 1.6 | 3 |
+| B | Scholar | 46-70 | 2.0 | 4 |
+| A | Guide | 71-99 | 2.5 | 5 |
+| S | Monarch | 100-999 | 3.0 | 6 |
+
+XP is scaled by rank via `getEffectiveXp` (xpMultiplier column). Stat points awarded per level-up follow the statPointsPerLevel column.
 
 ### 4.3 Daily Quests
 - Fisher-Yates shuffle selection from quest catalog
@@ -235,7 +237,7 @@ FALLBACK_MODEL  = 'openai/gpt-4o-mini'       // Reliable small model fallback
 **Why this configuration:** The `openrouter/free` endpoint routes to whatever free models are currently available on OpenRouter. While individual free models vary in quality, the fallback to `gpt-4o-mini` ensures reliability for critical structured output (quest forging, `[[CMD]]` parsing). `gpt-4o-mini` is extremely cost-efficient and serves as the safety net when the free router is overloaded or returning low-quality responses.
 
 **Key Behaviors:**
-- Embedded default API key in `DEFAULT_API_KEY_B64` (base64)
+- AI calls route via `src/services/aiAssistant.js`. When `getApiKey()` returns `''` (no `sk-` key in localStorage), requests go to the `/api/forge-master` proxy. Never hardcode keys.
 - Custom key support via `localStorage.setItem('openrouter_api_key', key)`
 - `sanitize()` strips `[[CMD]]` from user-influenced strings (prompt injection protection)
 - Admin commands embedded in JSON inside `[[CMD]]` / `[[/CMD]]` markers
@@ -492,6 +494,12 @@ All persistent memory files are stored in the `memory/` folder of this vault:
 - [[memory/ai-personalized-medicine]] — AI custom medicine venture
 - [[memory/langsmith-sarah-integration]] — VAPI voice agent (Sarah)
 - [[memory/MEMORY]] — Master index of all memories
+
+## 14. Listen & Level Redesign (v8)
+
+Log flow: useVoiceLog (Web Speech) or text -> parseActivities (crisis scan + AI parse + catalog pin) -> awardActivities (deterministic XP: catalog/effort base -> getEffectiveXp rank scale -> applyStatModifiers -> getActivityStreakBonus -> flowState -> weekly focus). Per-activity streaks in `state.activities`. Guided Mode (`state.guidedMode.enabled`) toggles optional quests/dungeons.
+
+The v3 systems documented in sections 4.9-4.18 remain in the codebase but are no longer surfaced in the default UI: quests and dungeons are behind the Guided Mode toggle, and the Legion/Ummah systems (skills, equipment, shadows, monarch trials, ummah command) are unreachable from the bottom nav.
 
 ---
 
