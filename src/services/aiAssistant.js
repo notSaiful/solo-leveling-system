@@ -117,12 +117,12 @@ ${customTitles}
 
 // ─── THE FORGE-MASTER PERSONALITY CORE ───
 
-function sanitize(str) {
+export function sanitize(str) {
   if (typeof str !== 'string') return '';
   return str.replace(/\[\[CMD\]\]/gi, '[CMD]').replace(/\[\[\/CMD\]\]/gi, '[/CMD]');
 }
 
-function containsCrisisSignal(str) {
+export function containsCrisisSignal(str) {
   if (typeof str !== 'string') return false;
   const text = str.toLowerCase();
   return [
@@ -138,7 +138,7 @@ function containsCrisisSignal(str) {
   ].some(signal => text.includes(signal));
 }
 
-function getCrisisResponse() {
+export function getCrisisResponse() {
   return [
     'Stop. This is not a discipline problem now. This is safety.',
     '',
@@ -763,4 +763,42 @@ Begin the check-in now.`;
 
   const reply = await callOpenRouter([{ role: 'user', content: prompt }], state, [], 600);
   return reply;
+}
+
+async function callRawModel(model, messages, maxTokens, temperature) {
+  const apiKey = getApiKey();
+  const payload = { model, messages, temperature, max_tokens: maxTokens, include_reasoning: false };
+  const response = await fetch(apiKey ? OPENROUTER_API_URL : AI_PROXY_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(apiKey
+        ? { Authorization: `Bearer ${apiKey}`, 'HTTP-Referer': window.location.origin, 'X-Title': 'Solo Leveling System' }
+        : {}),
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const err = new Error(`AI request failed: ${response.status}`);
+    err.status = response.status;
+    throw err;
+  }
+  const data = await response.json();
+  return data.choices?.[0]?.message?.content || '';
+}
+
+export async function callModelWithSystem(systemPrompt, userMessages, { maxTokens = 1000, temperature = 0.3 } = {}) {
+  const messages = [
+    { role: 'system', content: systemPrompt },
+    ...userMessages.map((m) => ({ role: m.role, content: sanitize(m.content) })),
+  ];
+  let lastError = null;
+  for (const model of [PRIMARY_MODEL, FALLBACK_MODEL]) {
+    try {
+      return await callRawModel(model, messages, maxTokens, temperature);
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  throw lastError || new Error('AI service unavailable');
 }
