@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { LayoutDashboard, Mic, BarChart3, Swords, Settings, ShoppingBag, Sparkles, Skull, Coins, Zap, AlertTriangle, Users, Crown, Wrench, Play, Heart } from 'lucide-react';
-import { activateSkill, getSkillCooldownRemaining } from './data/skills';
-import { checkLegacyShadowExtraction, LEGACY_SHADOW_QUESTS, getLegacyShadowProgress, logLegacyShadowDay } from './data/legacyShadows';
+import { LayoutDashboard, Mic, BarChart3, Swords, Settings, ShoppingBag, Sparkles, Skull, Coins, Zap, Crown, Heart } from 'lucide-react';
 import { useStore } from './hooks/useStore';
 import { useLevelUp } from './hooks/useLevelUp';
 import { usePenaltyCheck } from './hooks/usePenaltyCheck';
@@ -17,7 +15,6 @@ import { getCurrentWeekId } from './logic/dungeons';
 import { getFlowStateDisplay, initializeWeeklyDungeon } from './logic/questEngine';
 import { checkAndApplyPenalties } from './logic/penalties';
 import { getCharacterBuild } from './data/stats';
-import { getItemTierLabel, getItemColorClass } from './data/equipment';
 import { DEFAULT_STATE, initCloudSync, syncNow, loadState, STORAGE_KEY } from './data/store';
 import { isCanonicalSyncConfigured } from './services/canonicalSync';
 import { getLocalDateString } from './utils/dateUtils';
@@ -128,9 +125,12 @@ export default function App() {
   useEffect(() => {
     if (!cloudReady) return;
 
+    const today = getLocalDateString();
+    // Non-guided: nothing to reset except once per day — skip the re-fire on every level-up.
+    if (!guidedEnabled && state.lastPenaltyCheckDate === today) return;
+
     if (state.weeklyDungeons.weekId !== getCurrentWeekId()) {
       const currentWeek = getCurrentWeekId();
-      const today = getLocalDateString();
       const hadPreviousWeek = Boolean(state.weeklyDungeons.weekId);
 
       if (guidedEnabled) {
@@ -267,235 +267,8 @@ export default function App() {
         {activeTab === 'guided' && <Dashboard state={state} setState={setState} ready={cloudReady} />}
         {activeTab === 'stats' && <StatsPanel state={state} />}
         {activeTab === 'dungeons' && <WeeklyDungeon state={state} setState={setState} />}
-        {activeTab === 'legion' && (
-          <div className="max-w-2xl mx-auto p-2 sm:p-4 space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="font-playfair text-2xl font-bold text-khalifa-gold tracking-tight text-glow-khalifa">Shadow Legion</h2>
-              <div className="text-[10px] font-orbitron text-khalifa-steel tracking-widest uppercase bg-khalifa-gold/5 px-2 py-1 rounded border border-khalifa-gold/20">
-                Level {state.user.overallLevel} Command
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {(state.legacyShadows || []).length === 0 ? (
-                <div className="col-span-full glass-panel p-8 text-center border-dashed border-khalifa-gold/20">
-                  <Skull size={32} className="mx-auto text-khalifa-steel/30 mb-2" />
-                  <div className="text-sm text-khalifa-steel italic">No Manhood Forge shadows extracted yet.</div>
-                </div>
-              ) : (
-                (state.legacyShadows || []).map((shadow, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.1 }}
-                    className="glass-panel-khalifa p-4 relative overflow-hidden group"
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-br from-khalifa-purple/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <div className="flex items-center gap-4 relative z-10">
-                      <div className="w-12 h-12 rounded-lg bg-khalifa-purple/20 border border-khalifa-purple/30 flex items-center justify-center shadow-[0_0_15px_rgba(124,58,237,0.2)]">
-                        <Users size={24} className="text-khalifa-purple" />
-                      </div>
-                      <div>
-                        <div className="text-base font-bold text-gray-100 font-playfair tracking-wide">{shadow.name}</div>
-                        <div className="text-[10px] text-khalifa-purple/80 uppercase tracking-widest font-orbitron">Legacy Shadow</div>
-                      </div>
-                    </div>
-                    <div className="mt-4 pt-3 border-t border-khalifa-purple/10">
-                      <div className="text-xs text-khalifa-steel">
-                        Inheritance: <span className="text-khalifa-purple">+{shadow.boostValue} {shadow.boostType}</span>
-                      </div>
-                      <div className="text-[10px] text-khalifa-steel/50 mt-1 uppercase tracking-tighter">Secured for future generations</div>
-                    </div>
-                  </motion.div>
-                ))
-              )}
-            </div>
-
-            {/* Manhood Forge Extraction UI */}
-            <div className="space-y-4">
-              <h3 className="font-orbitron text-xs font-bold text-khalifa-gold tracking-[0.3em] uppercase opacity-60">The Manhood Forge</h3>
-              <div className="grid grid-cols-1 gap-3">
-                {LEGACY_SHADOW_QUESTS.map(template => {
-                  const alreadyExtracted = state.legacyShadows?.some(s => s.id === template.shadow.id);
-                  const { currentStreak, canLogToday } = getLegacyShadowProgress(state, template.id);
-                  const progress = alreadyExtracted ? template.requiredDays : currentStreak;
-                  const canExtract = progress >= template.requiredDays;
-                  const percent = Math.min(100, Math.round((progress / template.requiredDays) * 100));
-
-                  return (
-                    <div key={template.id} className={`glass-panel p-4 relative overflow-hidden ${alreadyExtracted ? 'border-green-500/20 bg-green-950/5' : 'border-khalifa-gold/10'}`}>
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className={`text-sm font-bold font-playfair ${alreadyExtracted ? 'text-green-400' : 'text-gray-200'}`}>{template.title}</span>
-                            {alreadyExtracted && <span className="text-[9px] text-green-500/60 uppercase tracking-widest bg-green-500/10 px-1.5 rounded">Extracted</span>}
-                          </div>
-                          <p className="text-xs text-khalifa-steel mt-1 leading-relaxed">{template.description}</p>
-                        </div>
-
-                        {!alreadyExtracted && (
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => setState(prev => logLegacyShadowDay(prev, template.id))}
-                              disabled={!canLogToday}
-                              className={`text-[10px] px-3 py-1.5 rounded-lg border font-bold uppercase tracking-wider transition-all ${
-                                canLogToday
-                                  ? 'bg-khalifa-gold/10 border-khalifa-gold/30 text-khalifa-gold hover:bg-khalifa-gold/20'
-                                  : 'bg-green-500/10 border-green-500/30 text-green-400 cursor-default'
-                              }`}
-                            >
-                              {canLogToday ? 'Log' : 'Logged'}
-                            </button>
-                            <button
-                              onClick={() => setState(prev => checkLegacyShadowExtraction(prev, template.id))}
-                              disabled={!canExtract}
-                              className={`text-[10px] px-3 py-1.5 rounded-lg border font-bold uppercase tracking-wider transition-all ${
-                                canExtract
-                                  ? 'bg-khalifa-purple/20 border-khalifa-purple/40 text-khalifa-purple shadow-[0_0_10px_rgba(124,58,237,0.3)] hover:bg-khalifa-purple/30'
-                                  : 'bg-khalifa-void border-khalifa-steel/20 text-khalifa-steel cursor-not-allowed'
-                              }`}
-                            >
-                              Extract
-                            </button>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="mt-4">
-                        <div className="flex items-center justify-between text-[9px] font-orbitron text-khalifa-steel/50 mb-1.5 uppercase tracking-widest">
-                          <span>Progress: {progress}/{template.requiredDays} Days</span>
-                          <span className={alreadyExtracted ? 'text-green-500' : 'text-khalifa-gold'}>{percent}%</span>
-                        </div>
-                        <div className="w-full bg-khalifa-void rounded-full h-1 relative">
-                          <div
-                            className={`rounded-full h-1 transition-all duration-1000 ${alreadyExtracted ? 'bg-green-500' : 'bg-khalifa-gold'}`}
-                            style={{ width: `${percent}%`, boxShadow: `0 0 10px ${alreadyExtracted ? 'rgba(34,197,94,0.3)' : 'rgba(234,179,8,0.3)'}` }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Active Skills */}
-            <div className="space-y-4">
-              <h3 className="font-orbitron text-xs font-bold text-khalifa-purple tracking-[0.3em] uppercase opacity-60">Awakened Skills</h3>
-              <div className="grid grid-cols-1 gap-3">
-                {(state.skills || []).length === 0 ? (
-                  <div className="glass-panel p-6 text-center border-dashed border-khalifa-purple/20">
-                    <Zap size={24} className="mx-auto text-khalifa-steel/30 mb-2" />
-                    <div className="text-sm text-khalifa-steel italic">Pass Job Change Gates to unlock skills.</div>
-                  </div>
-                ) : (
-                  (state.skills || []).map((skill, i) => {
-                    const cdRemaining = getSkillCooldownRemaining(state, skill.id);
-                    const canActivate = cdRemaining === 0;
-                    return (
-                      <div key={i} className="glass-panel p-4 flex items-center justify-between gap-4 border-khalifa-purple/20 bg-khalifa-purple/5">
-                        <div className="flex items-center gap-4">
-                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center border ${skill.active ? 'bg-khalifa-purple border-khalifa-purple shadow-[0_0_15px_rgba(124,58,237,0.5)]' : 'bg-khalifa-purple/10 border-khalifa-purple/30'}`}>
-                            <Zap size={20} className={skill.active ? 'text-white' : 'text-khalifa-purple'} />
-                          </div>
-                          <div>
-                            <div className="text-sm font-bold text-gray-100">{skill.name}</div>
-                            <div className="text-[10px] text-khalifa-steel mt-0.5">{skill.description}</div>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => {
-                            if (!canActivate) return;
-                            setState(prev => activateSkill(prev, skill.id));
-                          }}
-                          disabled={!canActivate}
-                          className={`text-[10px] px-3 py-1.5 rounded-lg border font-bold uppercase tracking-wider transition-all ${
-                            canActivate
-                              ? 'bg-khalifa-purple/20 border-khalifa-purple/40 text-khalifa-purple hover:bg-khalifa-purple/30'
-                              : 'bg-khalifa-void border-khalifa-steel/20 text-khalifa-steel cursor-not-allowed'
-                          }`}
-                        >
-                          {canActivate ? 'Activate' : `${Math.ceil(cdRemaining / 3600000)}h`}
-                        </button>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-4 pb-4">
-              <h3 className="font-orbitron text-xs font-bold text-khalifa-amber tracking-[0.3em] uppercase opacity-60">Monarch's Regalia</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {['weapon', 'armor', 'ring'].map(slot => {
-                  const item = state.equipment?.[slot];
-                  return (
-                    <div key={slot} className="glass-panel p-4 flex flex-col items-center text-center gap-2 border-khalifa-amber/20 bg-khalifa-amber/5">
-                      <div className={`w-12 h-12 rounded-full flex items-center justify-center border ${item ? 'bg-khalifa-amber/20 border-khalifa-amber/40 shadow-[0_0_15px_rgba(245,158,11,0.2)]' : 'bg-khalifa-void border-khalifa-steel/20'}`}>
-                        <Wrench size={24} className={item ? 'text-khalifa-amber' : 'text-khalifa-steel/30'} />
-                      </div>
-                      <div className="w-full">
-                        <div className="text-[10px] text-khalifa-steel uppercase tracking-widest mb-1">{slot}</div>
-                        <div className={`text-sm font-bold truncate ${item ? getItemColorClass(item) : 'text-khalifa-steel/50'}`}>
-                          {item ? item.name : 'Empty'}
-                        </div>
-                        {item && (
-                          <div className="mt-2 space-y-1">
-                            <div className="flex items-center justify-between text-[9px] text-khalifa-steel/60 px-1">
-                              <span>Durability</span>
-                              <span>{Math.round((item.durability / item.maxDurability) * 100)}%</span>
-                            </div>
-                            <div className="w-full bg-khalifa-void rounded-full h-1">
-                              <div
-                                className={`rounded-full h-1 transition-all ${item.durability > item.maxDurability * 0.3 ? 'bg-khalifa-amber' : 'bg-red-500'}`}
-                                style={{ width: `${(item.durability / item.maxDurability) * 100}%` }}
-                              />
-                            </div>
-                            <div className="text-[9px] text-khalifa-amber/80 font-bold uppercase tracking-tighter pt-1">
-                              {getItemTierLabel(item)} {item.enchantLevel > 0 && `(+${item.enchantLevel})`}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        )}
         {activeTab === 'store' && <RewardStore state={state} setState={setState} />}
         {activeTab === 'build' && <StatDistribution state={state} setState={setState} />}
-        {activeTab === 'ummah' && (
-          <div className="max-w-2xl mx-auto p-2 sm:p-4 space-y-4">
-            <h2 className="font-orbitron text-xl font-bold text-amber-400 tracking-wider">Ummah Command</h2>
-            <div className="glass-panel p-4 space-y-3 border border-amber-700/30">
-              <div className="text-sm text-amber-400/80 font-semibold">Monarch Status: ACTIVE</div>
-              <div className="text-sm text-cyan-500/60">You have ascended to Monarch. The Ummah Command protocol is now unlocked.</div>
-              <div className="space-y-2 mt-3">
-                <div className="text-xs text-cyan-500/40 uppercase tracking-wider">Linked Members</div>
-                {(state.ummahCommand?.linkedMembers || []).length === 0 ? (
-                  <div className="text-sm text-cyan-500/40 italic">No linked members yet. This feature will allow you to share quests and track family progress.</div>
-                ) : (
-                  <div className="space-y-2">
-                    {(state.ummahCommand?.linkedMembers || []).map((member, i) => (
-                      <div key={i} className="flex items-center gap-3 bg-cyan-950/20 border border-cyan-800/30 rounded-lg p-3">
-                        <div className="w-8 h-8 rounded-full bg-amber-900/40 flex items-center justify-center">
-                          <Users size={16} className="text-amber-400" />
-                        </div>
-                        <div>
-                          <div className="text-sm font-semibold text-cyan-200">{member.name}</div>
-                          <div className="text-xs text-cyan-500/60">{member.role}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
         {activeTab === 'settings' && (
           <div className="max-w-2xl mx-auto p-2 sm:p-4 space-y-4">
             <h2 className="font-orbitron text-xl font-bold text-cyan-400 tracking-wider">System Settings</h2>
