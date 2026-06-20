@@ -87,7 +87,6 @@ export default function LogTab({ state, setState }) {
   async function handleLog(payload) {
     const input = (payload ?? text).trim();
     if (!input) return;
-    setText('');
     setNotice('');
     setStatus('parsing');
     let result;
@@ -131,6 +130,7 @@ export default function LogTab({ state, setState }) {
     const gained = result.activities.length;
     setStatus('');
     setNotice(`Logged ${gained} activit${gained === 1 ? 'y' : 'ies'}. The System acknowledges your effort.`);
+    setText('');
   }
 
   function savePendingLog(raw) {

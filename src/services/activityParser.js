@@ -94,6 +94,7 @@ export async function parseActivities(text, context = {}) {
     if (hit) {
       a.activityKey = hit.key;
       a.pillar = hit.pillar;
+      a.name = hit.name;
     }
   }
   return { crisis: false, activities: normalized };

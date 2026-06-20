@@ -29,7 +29,7 @@ function countSameDayLogs(state, activityKey, today) {
 function updateActivityStreak(activityRecord, today) {
   const rec = activityRecord
     ? { ...activityRecord }
-    : { streak: 0, bestStreak: 0, totalSessions: 0, frozen: false, lastLoggedDate: null, createdAt: today };
+    : { streak: 0, bestStreak: 0, totalSessions: 0, totalReps: 0, frozen: false, lastLoggedDate: null, createdAt: today };
 
   if (rec.lastLoggedDate === today) {
     rec.totalSessions = (rec.totalSessions || 0) + 1;
@@ -112,7 +112,6 @@ export function awardActivities(state, activities, today = getLocalDateString())
     pillarState.streak = (pillarState.streak || 0) + 1;
     pillarState.lastDailyQuestCompletionDate = today;
 
-    let leveledUp = false;
     let autoStatResult = null;
     const needed = xpForNextLevel(pillarState.level || 0);
     if (pillarState.xp >= needed) {
@@ -120,7 +119,6 @@ export function awardActivities(state, activities, today = getLocalDateString())
       pillarState.xp -= needed;
       const pillarRank = getRankByLevel(pillarState.level);
       autoStatResult = autoAssignStatPoints(next.stats, pillar, pillarRank.statPointsPerLevel || 1);
-      leveledUp = true;
     }
     next.pillars[pillar] = pillarState;
 
