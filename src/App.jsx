@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { LayoutDashboard, BarChart3, Swords, Settings, ShoppingBag, Sparkles, Coins, Zap, AlertTriangle, Users, Crown, Wrench, Play, Heart } from 'lucide-react';
+import { LayoutDashboard, Mic, BarChart3, Swords, Settings, ShoppingBag, Sparkles, Coins, Zap, AlertTriangle, Users, Crown, Wrench, Play, Heart } from 'lucide-react';
 import { activateSkill, getSkillCooldownRemaining } from './data/skills';
 import { checkLegacyShadowExtraction, LEGACY_SHADOW_QUESTS, getLegacyShadowProgress, logLegacyShadowDay } from './data/legacyShadows';
 import { useStore } from './hooks/useStore';
 import { useLevelUp } from './hooks/useLevelUp';
 import { usePenaltyCheck } from './hooks/usePenaltyCheck';
+import LogTab from './components/LogTab';
 import Dashboard from './components/Dashboard';
 import StatsPanel from './components/StatsPanel';
 import WeeklyDungeon from './components/WeeklyDungeon';
@@ -97,10 +98,12 @@ export default function App() {
   const { notification, dismiss } = useLevelUp(state);
   const [cloudReady, setCloudReady] = useState(() => !isCanonicalSyncConfigured());
 
-  // Check penalties on mount
-  usePenaltyCheck(state, setState, cloudReady);
+  const guidedEnabled = !!state.guidedMode?.enabled;
 
-  const [activeTab, setActiveTab] = useState('dashboard');
+  // Check penalties on mount (only when Guided Mode is on — no quests/dungeons to miss otherwise)
+  usePenaltyCheck(state, setState, cloudReady && guidedEnabled);
+
+  const [activeTab, setActiveTab] = useState('log');
 
   // Cloud init on mount — loads cloud state silently, syncs continuously afterward
   useEffect(() => {
@@ -118,7 +121,10 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Initialize weekly dungeons if needed
+  // Weekly reset. Guided Mode: re-initialize dungeons + apply penalties for the new week.
+  // Non-guided (listen-and-level): only clear weeklyFocus and stamp lastPenaltyCheckDate.
+  // weekId is intentionally left stale in non-guided mode so that enabling Guided Mode
+  // mid-week triggers initialization for the current week (the guided branch runs then).
   useEffect(() => {
     if (!cloudReady) return;
 
@@ -127,35 +133,45 @@ export default function App() {
       const today = getLocalDateString();
       const hadPreviousWeek = Boolean(state.weeklyDungeons.weekId);
 
-      // Initialize new week's dungeons (resets deenCompleted/bodyCompleted/moneyCompleted/ummahCompleted)
-      let nextState = initializeWeeklyDungeon(state);
+      if (guidedEnabled) {
+        // Initialize new week's dungeons (resets deenCompleted/bodyCompleted/moneyCompleted/ummahCompleted)
+        let nextState = initializeWeeklyDungeon(state);
 
-      // If there was a previous week, run penalty check on it (covers daily + dungeon misses for all 4 pillars)
-      if (hadPreviousWeek) {
-        nextState = checkAndApplyPenalties(nextState);
-      }
-
-      // Strip transient _penaltyMeta from pillars before saving
-      const cleanPillars = {};
-      for (const p of ['deen', 'body', 'money']) {
-        if (nextState.pillars[p]) {
-          const { _penaltyMeta, ...rest } = nextState.pillars[p];
-          cleanPillars[p] = rest;
-        } else {
-          cleanPillars[p] = nextState.pillars[p];
+        // If there was a previous week, run penalty check on it (covers daily + dungeon misses for all 4 pillars)
+        if (hadPreviousWeek) {
+          nextState = checkAndApplyPenalties(nextState);
         }
-      }
 
-      setState(prev => ({
-        ...prev,
-        pillars: cleanPillars,
-        weeklyDungeons: nextState.weeklyDungeons,
-        weeklyStats: { soloClear: false, aiPromptsUsed: 0, weekId: currentWeek },
-        weeklyFocus: null,
-        lastPenaltyCheckDate: today,
-      }));
+        // Strip transient _penaltyMeta from pillars before saving
+        const cleanPillars = {};
+        for (const p of ['deen', 'body', 'money']) {
+          if (nextState.pillars[p]) {
+            const { _penaltyMeta, ...rest } = nextState.pillars[p];
+            cleanPillars[p] = rest;
+          } else {
+            cleanPillars[p] = nextState.pillars[p];
+          }
+        }
+
+        setState(prev => ({
+          ...prev,
+          pillars: cleanPillars,
+          weeklyDungeons: nextState.weeklyDungeons,
+          weeklyStats: { soloClear: false, aiPromptsUsed: 0, weekId: currentWeek },
+          weeklyFocus: null,
+          lastPenaltyCheckDate: today,
+        }));
+      } else {
+        // Non-guided: no dungeons or penalties — just clear weekly focus and stamp the date.
+        setState(prev => ({
+          ...prev,
+          weeklyFocus: null,
+          lastPenaltyCheckDate: today,
+        }));
+      }
     }
-  }, [cloudReady, state.weeklyDungeons.weekId, state.user.overallLevel]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cloudReady, state.weeklyDungeons.weekId, state.user.overallLevel, guidedEnabled]);
 
   // Clear expired flow state
   useEffect(() => {
@@ -182,14 +198,13 @@ export default function App() {
   const build = getCharacterBuild(state.stats || {});
 
   const tabs = [
-    { id: 'dashboard', label: 'Status', icon: LayoutDashboard },
+    { id: 'log', label: 'Log', icon: Mic },
     { id: 'stats', label: 'Stats', icon: BarChart3 },
-    { id: 'dungeons', label: 'Dungeons', icon: Swords },
-    { id: 'legion', label: 'Legion', icon: Users },
+    ...(guidedEnabled ? [{ id: 'guided', label: 'Guided', icon: LayoutDashboard }] : []),
+    ...(guidedEnabled ? [{ id: 'dungeons', label: 'Dungeons', icon: Swords }] : []),
     { id: 'store', label: 'Store', icon: ShoppingBag },
     { id: 'build', label: 'Build', icon: Sparkles },
     { id: 'settings', label: 'Settings', icon: Settings },
-    ...(state.ummahCommand?.unlocked ? [{ id: 'ummah', label: 'Ummah', icon: Crown }] : []),
   ];
 
   return (
@@ -248,7 +263,8 @@ export default function App() {
 
       {/* Main Content */}
       <main className="relative z-10 py-4 px-2 sm:px-4">
-        {activeTab === 'dashboard' && <Dashboard state={state} setState={setState} ready={cloudReady} />}
+        {activeTab === 'log' && <LogTab state={state} setState={setState} />}
+        {activeTab === 'guided' && <Dashboard state={state} setState={setState} ready={cloudReady} />}
         {activeTab === 'stats' && <StatsPanel state={state} />}
         {activeTab === 'dungeons' && <WeeklyDungeon state={state} setState={setState} />}
         {activeTab === 'legion' && (
@@ -494,6 +510,24 @@ export default function App() {
                   className="w-full mt-1 bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-base text-cyan-100 focus:outline-none focus:border-cyan-500/50"
                 />
               </div>
+            </div>
+
+            <div className="glass-panel-khalifa p-4">
+              <div className="text-khalifa-gold font-orbitron text-sm mb-1">GUIDED MODE</div>
+              <div className="text-khalifa-steel/70 text-xs mb-3">
+                Optional daily quests and dungeons. Off by default — just log what you did.
+              </div>
+              <button
+                onClick={() => setState((prev) => ({
+                  ...prev,
+                  guidedMode: { enabled: !prev.guidedMode?.enabled, lastQuestDate: prev.guidedMode?.lastQuestDate || null },
+                }))}
+                className={`px-4 py-2 rounded-lg text-sm font-orbitron border ${
+                  guidedEnabled ? 'border-khalifa-gold/60 text-khalifa-gold bg-khalifa-gold/10' : 'border-khalifa-steel/30 text-khalifa-steel'
+                }`}
+              >
+                {guidedEnabled ? 'GUIDED: ON' : 'GUIDED: OFF'}
+              </button>
             </div>
 
             {/* Ummah Burden Tracker */}
