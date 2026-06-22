@@ -1,8 +1,13 @@
 import { CATALOG, UNIT_XP } from '../data/activityCatalog';
 import { getRankByLevel, getEffectiveXp, xpForNextLevel } from '../data/questCatalog';
 import { applyStatModifiers, autoAssignStatPoints } from '../data/stats';
-import { getLocalDateString, getDayDiff } from '../utils/dateUtils';
+import { getLocalDateString, getDayDiff, toLocalDateString } from '../utils/dateUtils';
 import { recalculateOverallLevel, getActivityStreakBonus } from './progression';
+import { applyShadowBonuses, getUnlockedShadows, extractShadow } from '../data/shadows';
+import { initializeSeerahChain } from '../data/seerahChains';
+import { initializeJobChangeGate, completeGateStep, getActiveJobChangeGate } from '../data/jobChangeGates';
+import { initializeMonarchTrials, checkMonarchTrialProgress } from './monarchTrials';
+import { initializeKhalifateObjectives } from '../data/missionGates';
 
 const MAX_SAME_ACTIVITY_LOGS_PER_DAY = 3;
 const FREEZE_TIERS = [7, 30, 90, 180, 365];
@@ -69,6 +74,11 @@ export function awardActivities(state, activities, today = getLocalDateString())
   next.systemMessages = [...(state.systemMessages || [])];
   next.stats = { ...(state.stats || {}) };
   let gold = state.gold || 0;
+  // Pillars whose activity streak crossed a FREEZE_TIER this session. Shadow extraction
+  // runs AFTER level recalculation so unlock checks use the current level/rank, not the
+  // pre-session one (otherwise a tier crossing on the same session a level reaches an
+  // unlock threshold would miss extraction — the tier trigger fires only on that day).
+  const pendingExtractions = [];
 
   const rank = getRankByLevel(state.user.overallLevel || 0);
 
@@ -91,6 +101,12 @@ export function awardActivities(state, activities, today = getLocalDateString())
     if (activity.quantity != null) rec.totalReps = (rec.totalReps || 0) + Number(activity.quantity);
     next.activities[activity.activityKey] = rec;
 
+    // Track streak tier crossings for shadow extraction (performed after recalculation).
+    const prevStreak = prevRec?.streak || 0;
+    if (FREEZE_TIERS.includes(rec.streak) && rec.streak > prevStreak) {
+      pendingExtractions.push(pillar);
+    }
+
     let final = base;
     if (countsForXp) {
       // 3. stat modifiers (body->strength, deen->intelligence, money->sense, +agility)
@@ -98,6 +114,8 @@ export function awardActivities(state, activities, today = getLocalDateString())
       // 4. per-activity streak bonus (newly applied)
       const bonus = getActivityStreakBonus(rec.streak);
       final = Math.floor(final * bonus.multiplier);
+      // shadow army bonus — extracted shadows boost log XP (no-op if army empty)
+      final = applyShadowBonuses(final, pillar, next);
       // 5. flow multiplier (newly applied; reads pre-existing state.flowState)
       if (state.flowState?.active) final = Math.floor(final * (state.flowState.multiplier || 1));
       // 6. weekly focus
@@ -157,5 +175,67 @@ export function awardActivities(state, activities, today = getLocalDateString())
 
   next.gold = gold;
   next = recalculateOverallLevel(next);
+
+  // Shadow extraction — for each pillar whose activity streak crossed a freeze tier this
+  // session, extract the highest unlocked-but-unextracted shadow. Done post-recalc so
+  // unlock checks use the current level/rank. Wrapped so a failure can't crash the log.
+  for (const pillar of new Set(pendingExtractions)) {
+    try {
+      const avail = getUnlockedShadows(next)
+        .filter((s) => !s.extracted && (s.pillar === pillar || s.pillar === 'all'));
+      if (avail.length > 0) {
+        const highest = avail.sort((a, b) => b.passiveBonus - a.passiveBonus)[0];
+        next = extractShadow(next, highest.id);
+      }
+    } catch (err) {
+      console.warn('[shadow extraction] non-fatal:', err);
+    }
+  }
+
+  // Reactivate the v3 endgame state machine from the log loop. Wrapped so an endgame
+  // failure can never crash the daily pipeline (the Monday-crash lesson).
+  try {
+    next = runEndgameCycle(next, today);
+  } catch (err) {
+    console.warn('[endgame] cycle error (non-fatal):', err);
+  }
   return next;
+}
+
+// Reactivate the v3 endgame state machine from the log loop. Chains the idempotent
+// initializers (NO quest generation — v8 has no daily quests), checks monarch trial
+// progress, and auto-advances the active job-change gate from today's logs. Every
+// initializer guards on "already initialized"; the whole cycle is try/catch-wrapped
+// at the call site so an endgame throw can never crash the daily log pipeline.
+export function runEndgameCycle(state, today = getLocalDateString()) {
+  let s = state;
+  s = initializeSeerahChain(s);
+  s = initializeJobChangeGate(s);
+  s = initializeMonarchTrials(s);
+  s = checkMonarchTrialProgress(s);
+  s = initializeKhalifateObjectives(s);
+  s = autoAdvanceJobGate(s, today);
+  return s;
+}
+
+// Auto-advance the active job-change gate by one step per day when today's logs qualify
+// for the current step's pillar. One step per day (guarded by completedAt date). The
+// manual "Complete Step" button in Legion remains as an override fallback.
+function autoAdvanceJobGate(state, today) {
+  const gate = getActiveJobChangeGate(state);
+  if (!gate) return state;
+  const idx = gate.steps.findIndex((s) => !s.completed);
+  if (idx < 0) return state;
+  const alreadyToday = gate.steps.some(
+    (s) => s.completedAt && toLocalDateString(s.completedAt) === today
+  );
+  if (alreadyToday) return state;
+  const todayLogs = (state.history || []).filter(
+    (h) => h.localDate === today && h.completed && (h.xp || 0) > 0
+  );
+  const stepPillar = gate.steps[idx].pillar;
+  const qualifies = stepPillar === 'all'
+    ? todayLogs.length >= 1
+    : todayLogs.some((h) => h.pillar === stepPillar);
+  return qualifies ? completeGateStep(state, gate.gateId, idx) : state;
 }

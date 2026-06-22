@@ -19,7 +19,7 @@ cssclasses:
 > **Project Type:** Gamified Self-Development Web App (PWA + iOS)
 > **Target User:** Muslim man, India, seeking disciplined self-improvement
 > **Current Status:** Production-ready web app + automated IPA builder (Schema v3)
-> **Last Updated:** 2026-06-03
+> **Last Updated:** 2026-06-23
 > **Vault Root:** This folder is an Obsidian vault. Open it in Obsidian to browse project knowledge.
 
 ---
@@ -366,6 +366,7 @@ bash build-ios-ipa.sh
 | 47 | Seerah Chains Refined + Defensive Guards + Test baseState v3 defaults | ✅ |
 | 48 | Monday Reset Bug Fix (App.jsx) — single penalty path covers all 4 dungeons | ✅ |
 | 49 | Production Deploy to Vercel (https://solo-leveling-system-psi.vercel.app) | ✅ |
+| 50 | Khalifa Endgame Arc — Phase 1: reactivate v3 endgame in log loop + always-on Legion/Missions tabs + gate-capped leveling + `Zap` import fix in MissionCommandCenter | ✅ |
 
 ---
 
@@ -499,7 +500,9 @@ All persistent memory files are stored in the `memory/` folder of this vault:
 
 Log flow: useVoiceLog (Web Speech) or text -> parseActivities (crisis scan + AI parse + catalog pin) -> awardActivities (deterministic XP: catalog/effort base -> getEffectiveXp rank scale -> applyStatModifiers -> getActivityStreakBonus -> flowState -> weekly focus). Per-activity streaks in `state.activities`. Guided Mode (`state.guidedMode.enabled`) toggles optional quests/dungeons.
 
-The v3 systems documented in sections 4.9-4.18 remain in the codebase but are no longer surfaced in the default UI: quests and dungeons are behind the Guided Mode toggle, and the Legion/Ummah systems (skills, equipment, shadows, monarch trials, ummah command) are unreachable from the bottom nav.
+**Khalifa Endgame Arc — Phase 1 (2026-06-23):** the v3 endgame is reactivated inside the daily log loop and surfaced in the default UI. `awardActivities` now runs `runEndgameCycle` (chained idempotent initializers — seerah chain, job-change gate, monarch trials, khalifate objectives, job-gate auto-advance) after `recalculateOverallLevel`, all try/catch-wrapped so an endgame throw can never crash the pipeline (the Monday-crash lesson). Shadow bonuses apply to logged XP via `applyShadowBonuses`; a streak crossing a FREEZE_TIER (7/30/90/180/365) auto-extracts the highest unlocked shadow of that pillar. `recalculateOverallLevel` re-enforces khalifate mission gates (L100/200/…/999): ascension pauses at the first incomplete gate until its objectives are done; below L100 levels climb freely (job gates L10-70 award class titles, non-capping). Monarch stage-4 now counts 3 DISTINCT pillars with XP-earning logs (not 3 same-pillar logs). Two always-on tabs (no Guided gate): **Legion** (`src/components/Legion.jsx` — shadow army, job gates, seerah, monarch trial, khalifate objectives, equipment, skills) and **Missions** (mounts the existing `MissionCommandCenter.jsx` with all 6 mission ledgers). Terse endgame status row in `LogTab` ProgressHeader. BUILD_VERSION bumped to `2026-06-22-khalifa-endgame-v1`. Tests: `src/logic/logEngine.endgame.test.js` (11 cases). Phases 2-4 outlined in `~/.claude/plans/fluffy-cuddling-lantern.md`.
+
+Quests and dungeons remain behind the Guided Mode toggle. Seerah chains initialize and display but do not advance in v8 (advancement is wired to ibadah tracking in Phase 2).
 
 ---
 

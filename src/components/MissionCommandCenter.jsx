@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { BookOpen, Briefcase, CheckCircle2, Circle, FileText, GraduationCap, HandHeart, HeartHandshake, Home, Megaphone, Scale, ShieldCheck, Target, TrendingUp, Users, Wallet } from 'lucide-react';
+import { BookOpen, Briefcase, CheckCircle2, Circle, FileText, GraduationCap, HandHeart, HeartHandshake, Home, Megaphone, Scale, ShieldCheck, Target, TrendingUp, Users, Wallet, Zap } from 'lucide-react';
 import { MISSION_DOCTRINE } from '../data/missionDoctrine';
 import { FAMILY_ACTION_LABELS, FAMILY_ACTIONS, FAMILY_GUARDRAILS, FAMILY_RELATION_LABELS, FAMILY_RELATIONS } from '../data/familyCovenant';
 import { IMPACT_CATEGORIES, IMPACT_CATEGORY_LABELS } from '../data/ummahImpact';

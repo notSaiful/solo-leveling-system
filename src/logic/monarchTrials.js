@@ -63,11 +63,15 @@ export function checkMonarchTrialProgress(state) {
   if (daysSinceStart >= 40) {
     const last40Days = getLastNDays(40);
     const allDaysPerfect = last40Days.every(day => {
-      const dayCompletions = (state.history || []).filter(h => {
+      const dayLogs = (state.history || []).filter(h => {
         const hDate = h.localDate || (h.date ? new Date(h.date).toLocaleDateString('en-CA') : '');
-        return hDate === day && h.completed;
+        return hDate === day && h.completed && (h.xp || 0) > 0;
       });
-      return dayCompletions.length >= 3; // All 3 pillars
+      // Require 3 DISTINCT pillars with XP-earning logs — not 3 same-pillar logs (e.g.
+      // 3 push-ups must not count as "all 3 pillars"). h.xp > 0 excludes daily-cap
+      // entries that record xp:0.
+      const pillarsHit = new Set(dayLogs.map(h => h.pillar).filter(Boolean));
+      return pillarsHit.size >= 3;
     });
     if (allDaysPerfect) {
       return completeMonarchAscension(state);

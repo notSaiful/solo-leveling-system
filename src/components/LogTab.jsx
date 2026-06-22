@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react';
-import { Mic, Square, Send, Flame, Sparkles, Loader2 } from 'lucide-react';
+import { Mic, Square, Send, Flame, Sparkles, Loader2, Skull, Crown } from 'lucide-react';
 import { useVoiceLog } from '../hooks/useVoiceLog';
 import { parseActivities } from '../services/activityParser';
 import { awardActivities } from '../logic/logEngine';
 import { checkFlowState, getActivityStreakBonus } from '../logic/progression';
 import { getRankByLevel, xpForNextLevel } from '../data/questCatalog';
 import { getLocalDateString } from '../utils/dateUtils';
+import { getTotalShadowPower } from '../data/shadows';
+import { getActiveJobChangeGate } from '../data/jobChangeGates';
 
 function ProgressHeader({ state }) {
   const overall = state.user.overallLevel || 0;
@@ -41,6 +43,32 @@ function ProgressHeader({ state }) {
           );
         })}
       </div>
+      {/* Endgame status — terse, only when data exists */}
+      {(() => {
+        const activeGate = getActiveJobChangeGate(state);
+        const hasEndgame = state.shadows?.length > 0 || state.user.jobClass || state.monarchTrials?.active || activeGate;
+        if (!hasEndgame) return null;
+        return (
+          <div className="flex flex-wrap gap-x-3 gap-y-1 mt-3 pt-3 border-t border-khalifa-gold/10 text-[11px]">
+            {state.shadows?.length > 0 && (
+              <span className="text-purple-400 flex items-center gap-1">
+                <Skull size={11} /> {state.shadows.length} shadow{state.shadows.length === 1 ? '' : 's'} · +{Math.round(getTotalShadowPower(state) * 100)}%
+              </span>
+            )}
+            {state.user.jobClass && (
+              <span className="text-khalifa-gold flex items-center gap-1">
+                <Crown size={11} /> {state.user.jobClass}
+              </span>
+            )}
+            {state.monarchTrials?.active && (
+              <span className="text-yellow-400">Trial · Stage {state.monarchTrials.stage}</span>
+            )}
+            {activeGate && (
+              <span className="text-blue-400">Gate · Day {activeGate.day}/{activeGate.totalDays}</span>
+            )}
+          </div>
+        );
+      })()}
     </div>
   );
 }

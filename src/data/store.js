@@ -5,7 +5,7 @@ import { pruneExpiredCustomQuests } from '../logic/customQuests';
 
 export const STORAGE_KEY = 'soloLevelingData';
 const SCHEMA_VERSION = 8;
-const BUILD_VERSION = '2026-06-20-listen-and-level-v1';
+const BUILD_VERSION = '2026-06-22-khalifa-endgame-v1';
 const CLOUD_ENABLED_KEY = 'cloudSyncEnabled';
 const STALE_ADVENTURE_DAILY_TITLES = new Set([
   'Combat Mobility 5 Min',

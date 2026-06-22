@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { LayoutDashboard, Mic, BarChart3, Swords, Settings, ShoppingBag, Sparkles, Skull, Coins, Zap, Crown, Heart } from 'lucide-react';
+import { LayoutDashboard, Mic, BarChart3, Swords, Settings, ShoppingBag, Sparkles, Skull, Coins, Zap, Crown, Heart, Target } from 'lucide-react';
 import { useStore } from './hooks/useStore';
 import { useLevelUp } from './hooks/useLevelUp';
 import { usePenaltyCheck } from './hooks/usePenaltyCheck';
@@ -11,6 +11,8 @@ import SystemMessage from './components/SystemMessage';
 import RewardStore from './components/RewardStore';
 import StatDistribution from './components/StatDistribution';
 import AIAssistant from './components/AIAssistant';
+import Legion from './components/Legion';
+import MissionCommandCenter from './components/MissionCommandCenter';
 import { getCurrentWeekId } from './logic/dungeons';
 import { getFlowStateDisplay, initializeWeeklyDungeon } from './logic/questEngine';
 import { checkAndApplyPenalties } from './logic/penalties';
@@ -203,6 +205,8 @@ export default function App() {
 
   const tabs = [
     { id: 'log', label: 'Log', icon: Mic },
+    { id: 'missions', label: 'Missions', icon: Target },
+    { id: 'legion', label: 'Legion', icon: Skull },
     { id: 'stats', label: 'Stats', icon: BarChart3 },
     ...(guidedEnabled ? [{ id: 'guided', label: 'Guided', icon: LayoutDashboard }] : []),
     ...(guidedEnabled ? [{ id: 'dungeons', label: 'Dungeons', icon: Swords }] : []),
@@ -268,6 +272,8 @@ export default function App() {
       {/* Main Content */}
       <main className="relative z-10 py-4 px-2 sm:px-4">
         {activeTab === 'log' && <LogTab state={state} setState={setState} />}
+        {activeTab === 'missions' && <MissionCommandCenter state={state} setState={setState} />}
+        {activeTab === 'legion' && <Legion state={state} setState={setState} />}
         {activeTab === 'guided' && <Dashboard state={state} setState={setState} ready={cloudReady} />}
         {activeTab === 'stats' && <StatsPanel state={state} />}
         {activeTab === 'dungeons' && <WeeklyDungeon state={state} setState={setState} />}
