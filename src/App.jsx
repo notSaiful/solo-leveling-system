@@ -135,21 +135,25 @@ export default function App() {
 
       if (guidedEnabled) {
         // Initialize new week's dungeons (resets deenCompleted/bodyCompleted/moneyCompleted/ummahCompleted)
+        // initializeWeeklyDungeon returns a full state with refreshed weeklyDungeons.
         let nextState = initializeWeeklyDungeon(state);
 
-        // If there was a previous week, run penalty check on it (covers daily + dungeon misses for all 4 pillars)
-        if (hadPreviousWeek) {
-          nextState = checkAndApplyPenalties(nextState);
-        }
+        // checkAndApplyPenalties returns a RESULT ENVELOPE ({ penalties, updatedPillars, ... }),
+        // NOT a full state — keep nextState intact and read the envelope's fields separately.
+        // (Reassigning nextState to the envelope previously wiped .pillars/.weeklyDungeons and
+        // crashed the effect with "Cannot read properties of undefined (reading 'deen')".)
+        const penaltyResult = hadPreviousWeek ? checkAndApplyPenalties(nextState) : null;
+        const sourcePillars = penaltyResult ? penaltyResult.updatedPillars : nextState.pillars;
 
         // Strip transient _penaltyMeta from pillars before saving
         const cleanPillars = {};
         for (const p of ['deen', 'body', 'money']) {
-          if (nextState.pillars[p]) {
-            const { _penaltyMeta, ...rest } = nextState.pillars[p];
+          const pillar = sourcePillars?.[p];
+          if (pillar) {
+            const { _penaltyMeta, ...rest } = pillar;
             cleanPillars[p] = rest;
           } else {
-            cleanPillars[p] = nextState.pillars[p];
+            cleanPillars[p] = nextState.pillars?.[p];
           }
         }
 
@@ -159,7 +163,7 @@ export default function App() {
           weeklyDungeons: nextState.weeklyDungeons,
           weeklyStats: { soloClear: false, aiPromptsUsed: 0, weekId: currentWeek },
           weeklyFocus: null,
-          lastPenaltyCheckDate: today,
+          lastPenaltyCheckDate: penaltyResult?.lastPenaltyCheckDate || today,
         }));
       } else {
         // Non-guided: no dungeons or penalties — just clear weekly focus and stamp the date.
