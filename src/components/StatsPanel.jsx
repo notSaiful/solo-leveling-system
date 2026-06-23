@@ -1,4 +1,4 @@
-import { BarChart3, TrendingUp, Flame, AlertTriangle, Shield, Trophy, Zap, Activity, Swords, Brain, Eye, Heart, Sparkles, Dumbbell, Wind } from 'lucide-react';
+import { BarChart3, TrendingUp, Flame, AlertTriangle, Shield, Skull, Trophy, Zap, Activity, Swords, Brain, Eye, Heart, Sparkles, Dumbbell, Wind } from 'lucide-react';
 import { isDebuffActive } from '../logic/penalties';
 import { getLevelProgress } from '../logic/questEngine';
 import { xpForNextLevel } from '../data/questCatalog';

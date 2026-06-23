@@ -4,8 +4,8 @@
 // component that renders with a real/default state but throws at render time
 // (e.g. a missing lucide import — the `Zap` bug this test was created to
 // guard). Mounts the production build via `vite preview` and exercises the
-// always-on Legion/Missions tabs plus the LogTab endgame row on both a fresh
-// state and a seeded endgame state.
+// always-on Legion/Missions/Stats tabs (Stats is the Skull-import regression
+// guard) on both a fresh state and a seeded endgame state.
 //
 // Run: `npm run test:e2e` (builds, then runs this script).
 
@@ -101,8 +101,8 @@ process.on('SIGTERM', () => { cleanup(); process.exit(143); });
     await clickNav(page, /^Missions$/);
     check('Missions renders (fresh, no collapse)', await healthy(page));
 
-    await clickNav(page, /^Log$/);
-    check('Log renders (fresh, no collapse)', await healthy(page));
+    await clickNav(page, /^Stats$/);
+    check('Stats renders (fresh, no collapse — Skull import guard)', await healthy(page));
     await ctx.close();
 
     // ── 2. SEEDED ENDGAME STATE ──
@@ -117,9 +117,38 @@ process.on('SIGTERM', () => { cleanup(); process.exit(143); });
     check('Legion: active gate Day 2/7', (await page2.getByText(/Day 2\/7/).count()) > 0);
     check('Legion: MONARCH TRIAL section', (await page2.getByText('MONARCH TRIAL').count()) > 0);
 
-    await clickNav(page2, /^Log$/);
-    check('Log: endgame status row (1 shadow)', (await page2.getByText(/1 shadow/).count()) > 0);
+    await clickNav(page2, /^Stats$/);
+    check('Stats renders (seeded endgame, no collapse)', await healthy(page2));
     await ctx2.close();
+
+    // ── 3. SELF-TEST: a render throw is ISOLATED, not a full collapse ──
+    // Loads ?selftest=crash which mounts a component that throws on render inside
+    // a real SectionErrorBoundary. The throw must be caught locally (localized
+    // "unstable" notice) — NOT propagate to the top-level ErrorBoundary (no
+    // "SYSTEM COLLAPSE"), NOT fire an uncaught pageerror, and the app must stay
+    // fully usable (nav present, a real tab still renders). This is the
+    // regression guard for "the app never collapses on its own": a throw in any
+    // section degrades gracefully instead of taking down everything.
+    const ctx3 = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+    const page3 = await ctx3.newPage();
+    const selfErrs = [];
+    page3.on('pageerror', (e) => selfErrs.push(e.message));
+    await page3.goto(`${BASE}?selftest=crash`, { waitUntil: 'load' });
+    await page3.waitForTimeout(700);
+    check('self-test: no SYSTEM COLLAPSE (throw isolated to its section)',
+      (await page3.getByText('SYSTEM COLLAPSE').count()) === 0);
+    check('self-test: SectionErrorBoundary fallback shown',
+      (await page3.getByText(/SELF-TEST UNSTABLE/i).count()) > 0);
+    const navAfterCrash = (await page3.locator('nav button').allTextContents()).map((t) => t.trim()).filter(Boolean);
+    check('self-test: app still alive (nav present)', navAfterCrash.length >= 7);
+    check('self-test: no uncaught pageerror (boundary caught the throw)',
+      selfErrs.length === 0, selfErrs[0] || '');
+    // The app must remain fully usable — click a real tab and confirm it renders.
+    await page3.locator('nav button').filter({ hasText: /^Missions$/ }).first().click();
+    await page3.waitForTimeout(300);
+    check('self-test: app usable after isolated throw (Missions renders, no collapse)',
+      (await page3.getByText('SYSTEM COLLAPSE').count()) === 0);
+    await ctx3.close();
   } catch (err) {
     console.error('SMOKE SCRIPT ERROR:', err);
     exitCode = 2;

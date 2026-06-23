@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { LayoutDashboard, Mic, BarChart3, Swords, Settings, ShoppingBag, Sparkles, Skull, Coins, Zap, Crown, Heart, Target } from 'lucide-react';
+import { LayoutDashboard, BarChart3, Swords, Settings, ShoppingBag, Sparkles, Skull, Coins, Zap, Crown, Heart, Target, AlertTriangle, RefreshCw } from 'lucide-react';
 import { useStore } from './hooks/useStore';
 import { useLevelUp } from './hooks/useLevelUp';
 import { usePenaltyCheck } from './hooks/usePenaltyCheck';
-import LogTab from './components/LogTab';
 import Dashboard from './components/Dashboard';
 import StatsPanel from './components/StatsPanel';
 import WeeklyDungeon from './components/WeeklyDungeon';
@@ -13,6 +12,7 @@ import StatDistribution from './components/StatDistribution';
 import AIAssistant from './components/AIAssistant';
 import Legion from './components/Legion';
 import MissionCommandCenter from './components/MissionCommandCenter';
+import SectionErrorBoundary from './components/SectionErrorBoundary';
 import { getCurrentWeekId } from './logic/dungeons';
 import { getFlowStateDisplay, initializeWeeklyDungeon } from './logic/questEngine';
 import { checkAndApplyPenalties } from './logic/penalties';
@@ -22,7 +22,13 @@ import { isCanonicalSyncConfigured } from './services/canonicalSync';
 import { getLocalDateString } from './utils/dateUtils';
 import { pruneExpiredCustomQuests } from './logic/customQuests';
 
-// Error Boundary to catch runtime crashes and show reset UI
+// Error Boundary to catch runtime crashes. This is the LAST-RESORT boundary —
+// it only fires if a throw escapes every SectionErrorBoundary (i.e. the app
+// shell itself crashed). Per-tab boundaries handle the common case so a single
+// broken section never takes down the whole app. Recovery here is
+// NON-DESTRUCTIVE first (reload keeps localStorage + cloud state); the wipe
+// is demoted to a confirmed secondary so a transient render bug can never
+// silently destroy months of progress.
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
@@ -31,24 +37,46 @@ class ErrorBoundary extends React.Component {
   static getDerivedStateFromError(error) {
     return { hasError: true, error };
   }
+  componentDidCatch(error, info) {
+    // Log the real error + component stack so a collapse is diagnosable from
+    // the console instead of vanishing into a red screen with no detail.
+    console.error('[App crash — top-level ErrorBoundary]', error, info && info.componentStack);
+  }
+  reloadApp = () => window.location.reload();
+  wipeAndReload = () => {
+    if (confirm('This permanently deletes ALL local progress (the cloud copy is untouched). Only use this if reloading keeps crashing. Proceed?')) {
+      localStorage.removeItem(STORAGE_KEY);
+      window.location.reload();
+    }
+  };
   render() {
     if (this.state.hasError) {
+      const msg = (this.state.error && (this.state.error.message || String(this.state.error))) || '';
       return (
         <div className="min-h-screen flex items-center justify-center bg-khalifa-void text-khalifa-gold p-6">
           <div className="glass-panel-khalifa p-8 max-w-md w-full text-center space-y-4 border-red-500/30 bg-red-950/10">
-            <Skull size={48} className="mx-auto text-red-500 animate-pulse" />
-            <h2 className="font-playfair text-xl font-bold tracking-tight">SYSTEM COLLAPSE</h2>
+            <AlertTriangle size={48} className="mx-auto text-red-500 animate-pulse" />
+            <h2 className="font-playfair text-xl font-bold tracking-tight">SYSTEM INSTABILITY</h2>
             <p className="text-sm text-khalifa-steel">
-              Dimensional instability detected. The Monarch's resolve must be restored.
+              A fatal error escaped the System's defenses. Your progress is safe in local storage and the cloud.
+              Reload to resume — this is almost always enough.
             </p>
+            {msg && (
+              <pre className="text-[10px] text-red-300/70 bg-red-950/20 border border-red-500/20 rounded p-2 text-left overflow-auto max-h-24 whitespace-pre-wrap break-words">
+                {msg}
+              </pre>
+            )}
             <button
-              onClick={() => {
-                localStorage.removeItem(STORAGE_KEY);
-                window.location.reload();
-              }}
-              className="w-full bg-red-900/40 hover:bg-red-800/60 border border-red-500/50 text-red-100 py-3 rounded-lg font-bold transition-all uppercase tracking-widest font-orbitron"
+              onClick={this.reloadApp}
+              className="w-full bg-khalifa-gold/90 hover:bg-khalifa-gold text-khalifa-void py-3 rounded-lg font-bold transition-all uppercase tracking-widest font-orbitron flex items-center justify-center gap-2"
             >
-              Initialize System Rebirth
+              <RefreshCw size={16} /> RELOAD APP
+            </button>
+            <button
+              onClick={this.wipeAndReload}
+              className="w-full bg-red-900/30 hover:bg-red-800/50 border border-red-500/40 text-red-300/80 py-2 rounded-lg text-xs transition-all uppercase tracking-widest font-orbitron"
+            >
+              Wipe local & reinitialize (last resort)
             </button>
           </div>
         </div>
@@ -58,6 +86,15 @@ class ErrorBoundary extends React.Component {
   }
 }
 
+
+// URL-gated self-test probe (?selftest=crash): forces a render throw inside a
+// real SectionErrorBoundary so the e2e smoke can verify a throw is ISOLATED
+// (localized "unstable" notice, app stays alive, no SYSTEM COLLAPSE, no data
+// wipe) instead of regressing to a full collapse. Inert in normal and prod
+// use — only activates when the query param is present.
+function CrashProbe() {
+  throw new Error('self-test: forced render throw');
+}
 
 // Floating particle component
 function FloatingParticles() {
@@ -99,10 +136,13 @@ export default function App() {
 
   const guidedEnabled = !!state.guidedMode?.enabled;
 
+  // Self-test flag — inert unless ?selftest=crash is in the URL.
+  const selfTestCrash = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('selftest') === 'crash';
+
   // Check penalties on mount (only when Guided Mode is on — no quests/dungeons to miss otherwise)
   usePenaltyCheck(state, setState, cloudReady && guidedEnabled);
 
-  const [activeTab, setActiveTab] = useState('log');
+  const [activeTab, setActiveTab] = useState('missions');
 
   // Cloud init on mount — loads cloud state silently, syncs continuously afterward
   useEffect(() => {
@@ -204,7 +244,6 @@ export default function App() {
   const build = getCharacterBuild(state.stats || {});
 
   const tabs = [
-    { id: 'log', label: 'Log', icon: Mic },
     { id: 'missions', label: 'Missions', icon: Target },
     { id: 'legion', label: 'Legion', icon: Skull },
     { id: 'stats', label: 'Stats', icon: BarChart3 },
@@ -224,7 +263,9 @@ export default function App() {
       <div className="fixed inset-0 bg-gradient-to-b from-transparent via-black/20 to-transparent pointer-events-none z-0" />
 
       {/* System Messages */}
-      <SystemMessage notification={notification} onDismiss={dismiss} />
+      <SectionErrorBoundary label="System Message">
+        <SystemMessage notification={notification} onDismiss={dismiss} />
+      </SectionErrorBoundary>
 
       {/* Header */}
       <header className="relative z-10 p-3 sm:p-4 border-b border-khalifa-gold/10 bg-khalifa-void/90 backdrop-blur-md">
@@ -263,7 +304,7 @@ export default function App() {
             )}
             <div className="flex items-center gap-1 bg-khalifa-amber/10 border border-khalifa-amber/30 px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs">
               <Coins size={12} className="text-khalifa-amber" />
-              <span className="font-bold text-khalifa-amber font-orbitron">{state.gold.toLocaleString()}</span>
+              <span className="font-bold text-khalifa-amber font-orbitron">{Number(state.gold || 0).toLocaleString()}</span>
             </div>
           </div>
         </div>
@@ -271,15 +312,43 @@ export default function App() {
 
       {/* Main Content */}
       <main className="relative z-10 py-4 px-2 sm:px-4">
-        {activeTab === 'log' && <LogTab state={state} setState={setState} />}
-        {activeTab === 'missions' && <MissionCommandCenter state={state} setState={setState} />}
-        {activeTab === 'legion' && <Legion state={state} setState={setState} />}
-        {activeTab === 'guided' && <Dashboard state={state} setState={setState} ready={cloudReady} />}
-        {activeTab === 'stats' && <StatsPanel state={state} />}
-        {activeTab === 'dungeons' && <WeeklyDungeon state={state} setState={setState} />}
-        {activeTab === 'store' && <RewardStore state={state} setState={setState} />}
-        {activeTab === 'build' && <StatDistribution state={state} setState={setState} />}
+        {activeTab === 'missions' && (
+          <SectionErrorBoundary label="Missions">
+            <MissionCommandCenter state={state} setState={setState} />
+          </SectionErrorBoundary>
+        )}
+        {activeTab === 'legion' && (
+          <SectionErrorBoundary label="Legion">
+            <Legion state={state} setState={setState} />
+          </SectionErrorBoundary>
+        )}
+        {activeTab === 'guided' && (
+          <SectionErrorBoundary label="Guided">
+            <Dashboard state={state} setState={setState} ready={cloudReady} />
+          </SectionErrorBoundary>
+        )}
+        {activeTab === 'stats' && (
+          <SectionErrorBoundary label="Stats">
+            <StatsPanel state={state} />
+          </SectionErrorBoundary>
+        )}
+        {activeTab === 'dungeons' && (
+          <SectionErrorBoundary label="Dungeons">
+            <WeeklyDungeon state={state} setState={setState} />
+          </SectionErrorBoundary>
+        )}
+        {activeTab === 'store' && (
+          <SectionErrorBoundary label="Store">
+            <RewardStore state={state} setState={setState} />
+          </SectionErrorBoundary>
+        )}
+        {activeTab === 'build' && (
+          <SectionErrorBoundary label="Build">
+            <StatDistribution state={state} setState={setState} />
+          </SectionErrorBoundary>
+        )}
         {activeTab === 'settings' && (
+          <SectionErrorBoundary label="Settings">
           <div className="max-w-2xl mx-auto p-2 sm:p-4 space-y-4">
             <h2 className="font-orbitron text-xl font-bold text-cyan-400 tracking-wider">System Settings</h2>
 
@@ -384,11 +453,20 @@ export default function App() {
               </button>
             </div>
           </div>
+          </SectionErrorBoundary>
+        )}
+
+        {selfTestCrash && (
+          <SectionErrorBoundary label="Self-Test">
+            <CrashProbe />
+          </SectionErrorBoundary>
         )}
       </main>
 
       {/* AI Assistant Floating Widget */}
-      <AIAssistant state={state} setState={setState} />
+      <SectionErrorBoundary label="Forge-Master">
+        <AIAssistant state={state} setState={setState} />
+      </SectionErrorBoundary>
 
       {/* Bottom Nav */}
       <nav className="fixed bottom-0 left-0 right-0 z-20 bg-khalifa-void/95 border-t border-khalifa-gold/10 pb-safe backdrop-blur-lg">

@@ -169,8 +169,8 @@ export function initializeJobChangeGate(state) {
 }
 
 export function completeGateStep(state, gateId, stepIndex) {
-  const gate = state.jobChangeGates.find(g => g.gateId === gateId && !g.completed && !g.failed);
-  if (!gate) return state;
+  const gate = (state.jobChangeGates || []).find(g => g && g.gateId === gateId && !g.completed && !g.failed);
+  if (!gate || !Array.isArray(gate.steps)) return state;
 
   const newSteps = [...gate.steps];
   if (newSteps[stepIndex]) {
@@ -257,5 +257,7 @@ export function failJobChangeGate(state, gateId) {
 }
 
 export function getActiveJobChangeGate(state) {
-  return state.jobChangeGates.find(g => !g.completed && !g.failed) || null;
+  // Only return gates with a valid steps array — callers (Legion,
+  // autoAdvanceJobGate) iterate .steps, so a gate missing steps would throw.
+  return (state.jobChangeGates || []).find(g => g && Array.isArray(g.steps) && !g.completed && !g.failed) || null;
 }

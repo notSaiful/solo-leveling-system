@@ -31,6 +31,7 @@ import { completeGateStep } from '../data/jobChangeGates';
 import { AlertTriangle, Skull, Zap, Coins, Sparkles, Activity, Swords, Shield, Crown, Wrench, BookOpen, Lock, Star, Heart, CheckCircle2, Flame } from 'lucide-react';
 import { calculateUmmahBurden, getCurrentMilestone } from '../data/ummah';
 import { PILLAR_LABELS, getPillarDisplayKey } from '../utils/pillarDisplay';
+import { runEndgameCycle } from '../logic/endgame';
 
 const rankColorMap = {
   'text-gray-400': '#9ca3af',
@@ -44,6 +45,14 @@ const rankColorMap = {
 export default function Dashboard({ state, setState, ready = true }) {
   const rank = getRankByLevel(state.user.overallLevel);
   const today = getLocalDateString();
+
+  // Run the endgame cycle (seerah / job-gate / monarch / khalifate) after any
+  // quest completion so the v3 endgame advances from quests now that the log
+  // flow is gone. Wrapped non-fatal — an endgame throw must never break quest
+  // completion (the Monday-crash lesson).
+  const runEndgame = (s) => {
+    try { return runEndgameCycle(s, today); } catch (e) { console.warn('[endgame] non-fatal:', e); return s; }
+  };
 
   // Initialize quests after render (not during render to avoid reversion loops)
   useEffect(() => {
@@ -151,6 +160,7 @@ export default function Dashboard({ state, setState, ready = true }) {
 
       // Update flow state after any quest completion
       next = { ...next, flowState: checkFlowState(next.history || [], rank.key) };
+      next = runEndgame(next);
 
       return next;
     });
@@ -162,6 +172,7 @@ export default function Dashboard({ state, setState, ready = true }) {
       let next = completeLevelQuest(prev, levelQuestIndex, questIndex);
       next = recalculateOverallLevel(next);
       next = { ...next, flowState: checkFlowState(next.history || [], rank.key) };
+      next = runEndgame(next);
       return next;
     });
   };
@@ -171,6 +182,7 @@ export default function Dashboard({ state, setState, ready = true }) {
     setState(prev => {
       let next = completeRedemptionQuest(prev, redemptionId);
       next = { ...next, flowState: checkFlowState(next.history || [], rank.key) };
+      next = runEndgame(next);
       return next;
     });
   };
@@ -197,6 +209,7 @@ export default function Dashboard({ state, setState, ready = true }) {
       if (next === prev) return prev;
       next = recalculateOverallLevel(next);
       next = { ...next, flowState: checkFlowState(next.history || [], rank.key) };
+      next = runEndgame(next);
       return next;
     });
   };

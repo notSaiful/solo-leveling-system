@@ -297,7 +297,10 @@ export function mergeStatesForSync(currentState, incomingState) {
     aiDungeons: mergeUniqueBy(base.aiDungeons, other.aiDungeons),
     aiChatHistory: mergeChatHistory(base.aiChatHistory, other.aiChatHistory),
     aiChatUpdatedAt: Math.max(base.aiChatUpdatedAt || 0, other.aiChatUpdatedAt || 0),
-    history: mergeUniqueBy(base.history, other.history, getHistoryEventKey),
+    // history is unioned AFTER the missing-history replay below — assigning it here
+    // would make applyHistoryReward's "already in history" guard false-positive on
+    // the very events we need to replay, silently dropping the non-base device's
+    // XP/gold on a cross-device conflict (the bug caught by coreSystems.test.js).
     lastQuestDate: [base.lastQuestDate, other.lastQuestDate].filter(Boolean).sort().pop() || null,
     lastActiveDate: [base.lastActiveDate, other.lastActiveDate].filter(Boolean).sort().pop() || null,
     lastPenaltyCheckDate: [base.lastPenaltyCheckDate, other.lastPenaltyCheckDate].filter(Boolean).sort().pop() || null,
@@ -308,6 +311,10 @@ export function mergeStatesForSync(currentState, incomingState) {
   missingHistory.forEach((event) => {
     merged = applyHistoryReward(merged, event);
   });
+
+  // Replay ran against base.history only (so the guard saw the missing events as
+  // unprocessed). Now union the full history so both devices' events are preserved.
+  merged.history = mergeUniqueBy(base.history, other.history, getHistoryEventKey);
 
   return merged;
 }

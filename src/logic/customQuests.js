@@ -18,7 +18,8 @@ export function isCustomQuestExpired(quest, today = getLocalDateString()) {
 }
 
 export function pruneExpiredCustomQuests(customQuests = [], today = getLocalDateString()) {
-  return customQuests
+  return (customQuests || [])
+    .filter((quest) => quest && typeof quest === 'object') // a null/non-object entry would throw in normalizeCustomQuest
     .map(normalizeCustomQuest)
-    .filter(quest => !isCustomQuestExpired(quest, today));
+    .filter((quest) => !isCustomQuestExpired(quest, today));
 }

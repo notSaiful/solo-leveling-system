@@ -5,7 +5,7 @@ import { pruneExpiredCustomQuests } from '../logic/customQuests';
 
 export const STORAGE_KEY = 'soloLevelingData';
 const SCHEMA_VERSION = 8;
-const BUILD_VERSION = '2026-06-22-khalifa-endgame-v1';
+const BUILD_VERSION = '2026-06-23-remove-log-guided-default';
 const CLOUD_ENABLED_KEY = 'cloudSyncEnabled';
 const STALE_ADVENTURE_DAILY_TITLES = new Set([
   'Combat Mobility 5 Min',
@@ -81,7 +81,7 @@ export const DEFAULT_STATE = {
   activities: {},
   logTargets: [],
   pendingLogs: [],
-  guidedMode: { enabled: false, lastQuestDate: null },
+  guidedMode: { enabled: true, lastQuestDate: null },
   catalogOverrides: {},
   khalifateObjectives: [],
   buildVersion: BUILD_VERSION,
@@ -163,7 +163,10 @@ function normalizeStateShape(state) {
   normalized.logTargets = Array.isArray(state.logTargets) ? state.logTargets : [];
   normalized.pendingLogs = Array.isArray(state.pendingLogs) ? state.pendingLogs : [];
   normalized.guidedMode = {
-    enabled: state.guidedMode?.enabled || false,
+    // Guided Mode (quest-based progression) is now the default XP path — the
+    // voice/text log flow was removed. Default to ON when unspecified; an
+    // explicit user toggle (true/false) is always respected.
+    enabled: state.guidedMode?.enabled ?? true,
     lastQuestDate: state.guidedMode?.lastQuestDate || null,
   };
   normalized.catalogOverrides = state.catalogOverrides && typeof state.catalogOverrides === 'object' ? state.catalogOverrides : {};
@@ -175,6 +178,13 @@ export function upgradeStateForCurrentBuild(state, { resetGeneratedContent = fal
   const upgraded = normalizeStateShape(state || DEFAULT_STATE);
   upgraded.version = SCHEMA_VERSION;
   upgraded.buildVersion = BUILD_VERSION;
+
+  // The log flow is gone; quest-based progression (Guided Mode) is now the
+  // default XP path. Flip Guided ON for anyone upgrading from a build where it
+  // defaulted to OFF, so existing states start earning XP via quests. A later
+  // manual toggle OFF in Settings is still respected — it persists across loads
+  // once buildVersion matches and no upgrade runs.
+  upgraded.guidedMode = { ...upgraded.guidedMode, enabled: true };
 
   if (resetGeneratedContent) {
     // Quest catalogs are code-owned. Regenerate them after content migrations
