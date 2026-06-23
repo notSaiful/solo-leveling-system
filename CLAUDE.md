@@ -471,6 +471,9 @@ npm run dev
 # Production build
 npm run build
 
+# E2E render-safety smoke (builds, serves via vite preview, headless Playwright)
+npm run test:e2e
+
 # iOS IPA build
 bash build-ios-ipa.sh
 
