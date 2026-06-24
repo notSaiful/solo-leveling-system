@@ -5,9 +5,10 @@ import { pruneExpiredCustomQuests } from '../logic/customQuests';
 
 export const STORAGE_KEY = 'soloLevelingData';
 const SCHEMA_VERSION = 8;
-const BUILD_VERSION = '2026-06-23-remove-log-guided-default';
+const BUILD_VERSION = '2026-06-24-physical-power';
 const CLOUD_ENABLED_KEY = 'cloudSyncEnabled';
 const STALE_ADVENTURE_DAILY_TITLES = new Set([
+  // pre-v8 sprint/combat titles (kept)
   'Combat Mobility 5 Min',
   'Sprint Drills',
   'Outdoor Sprints',
@@ -15,6 +16,55 @@ const STALE_ADVENTURE_DAILY_TITLES = new Set([
   'Hill Sprint Repeats',
   'Outdoor Movement Circuit',
   'Outdoor Circuit Challenge',
+  // v8 roaming/adventure titles being replaced by Physical Power (all from DAILY_QUEST_POOLS.body, ranks E→S)
+  'Explore a New Street',
+  'Barefoot on Earth',
+  'Park Visit',
+  'Landmark Count',
+  'Phone-Free Outdoors',
+  'Sunset Watch',
+  '2,000 Explorer Steps',
+  'Green Route Walk',
+  'Route Sketch',
+  'Adventure Kit Check',
+  'Phone-Free Scout',
+  'Terrain Notes',
+  '5,000 Step Expedition',
+  'Weather Reading',
+  'Masjid Route Scout',
+  'Night Sky Orientation',
+  'Trail Hike 45 Min',
+  'Compass Direction Drill',
+  'Safe Night Walk',
+  'Elevation Route',
+  'Local Resource Map',
+  'Water Route Survey',
+  'Pack Route Test',
+  'Terrain Photo Log',
+  '2-Hour Trek',
+  'Tent or Shelter Setup',
+  'Rock Route Survey',
+  'Water Crossing Plan',
+  'Orienteering Walk',
+  'Hill Route Audit',
+  'Wilderness Navigation',
+  'Emergency Exit Map',
+  'Half-Day Trek',
+  'Solo Sunrise Hike',
+  'Lead a Group Hike',
+  'Wilderness Survival Skill',
+  'Mountain Route Log',
+  'Teach Outdoor Skills',
+  'Overnight Camping Prep',
+  'Multi-Terrain Survey',
+  "The Monarch's Expedition",
+  'Multi-Day Trek Plan',
+  'Teach Wilderness Leadership',
+  'Summit Challenge',
+  'Solo Wilderness Navigation',
+  'Lead Expedition Group',
+  'Extreme Terrain Day',
+  'Adventure Discipline Master',
 ]);
 
 export const DEFAULT_STATE = {
@@ -84,6 +134,33 @@ export const DEFAULT_STATE = {
   guidedMode: { enabled: true, lastQuestDate: null },
   catalogOverrides: {},
   khalifateObjectives: [],
+  // v9 Physical Power fields
+  strengthLog: {
+    bodyweightKg: null,
+    baselineTested: false,
+    lifts: {
+      squat: { trainingMax: null, history: [], lastTested: null, milestone: null },
+      deadlift: { trainingMax: null, history: [], lastTested: null, milestone: null },
+      press: { trainingMax: null, history: [], lastTested: null, milestone: null },
+      bench: { trainingMax: null, history: [], lastTested: null, milestone: null },
+      row: { trainingMax: null, history: [], lastTested: null, milestone: null },
+      pullup: { trainingMax: null, history: [], lastTested: null, milestone: null },
+    },
+  },
+  recovery: {
+    proteinTarget: null,
+    proteinLog: [],
+    sleepLog: [],
+    hydrationLog: [],
+    mobilityMinutes: 0,
+    injury: null,
+    deloadState: null,
+  },
+  physicalPower: {
+    equipment: null, // 'barbell' | 'bodyweight' | 'mixed' | 'kettlebell' — set on first launch
+    trackProgress: { strength: 0, power: 0, endurance: 0, resilience: 0 },
+    gateResults: [],
+  },
   buildVersion: BUILD_VERSION,
 };
 
@@ -170,6 +247,16 @@ function normalizeStateShape(state) {
     lastQuestDate: state.guidedMode?.lastQuestDate || null,
   };
   normalized.catalogOverrides = state.catalogOverrides && typeof state.catalogOverrides === 'object' ? state.catalogOverrides : {};
+  // v9 Physical Power normalization (additive, no data loss)
+  normalized.strengthLog = state.strengthLog && typeof state.strengthLog === 'object'
+    ? { ...DEFAULT_STATE.strengthLog, ...state.strengthLog, lifts: { ...DEFAULT_STATE.strengthLog.lifts, ...(state.strengthLog.lifts || {}) } }
+    : DEFAULT_STATE.strengthLog;
+  normalized.recovery = state.recovery && typeof state.recovery === 'object'
+    ? { ...DEFAULT_STATE.recovery, ...state.recovery }
+    : DEFAULT_STATE.recovery;
+  normalized.physicalPower = state.physicalPower && typeof state.physicalPower === 'object'
+    ? { ...DEFAULT_STATE.physicalPower, ...state.physicalPower, trackProgress: { ...DEFAULT_STATE.physicalPower.trackProgress, ...(state.physicalPower.trackProgress || {}) } }
+    : DEFAULT_STATE.physicalPower;
   normalized.buildVersion = state.buildVersion || BUILD_VERSION;
   return normalized;
 }
