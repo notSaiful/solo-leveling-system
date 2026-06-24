@@ -364,8 +364,8 @@ export function completeDailyQuest(state, questUniqueId) {
   return result;
 }
 
-function normalizeCustomQuestPillar(pillar) {
-  if (pillar === 'body' || pillar === 'adventure' || pillar === 'readiness') return 'body';
+export function normalizeCustomQuestPillar(pillar) {
+  if (pillar === 'body' || pillar === 'adventure' || pillar === 'readiness' || pillar === 'power' || pillar === 'physical' || pillar === 'fitness') return 'body';
   if (pillar === 'money' || pillar === 'wealth') return 'money';
   if (pillar === 'deen' || pillar === 'service' || pillar === 'family' || pillar === 'ummah') return 'deen';
   return 'deen';

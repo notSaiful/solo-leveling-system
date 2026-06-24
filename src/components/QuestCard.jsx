@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Compass, BookOpen, Wallet, Zap, Skull, Lock, ChevronDown } from 'lucide-react';
+import { Check, Dumbbell, BookOpen, Wallet, Zap, Skull, Lock, ChevronDown } from 'lucide-react';
 import { getPillarDisplayKey } from '../utils/pillarDisplay';
 
 const pillarIcons = {
   deen: BookOpen,
-  body: Compass,
+  body: Dumbbell,
   money: Wallet,
 };
 

@@ -1,6 +1,6 @@
 export const PILLAR_LABELS = {
   deen: 'Deen',
-  body: 'Adventure',
+  body: 'Physical Power',
   money: 'Money',
   ummah: 'Ummah Service',
   all: 'All',
