@@ -43,6 +43,7 @@ The prior `2026-06-02-khalifa-alignment-design.md` spec already reframed Body as
 3. **Benchmarks:** progressive scaling — achievable at E, escalating to the documented S-rank apex. Grounded in validated standards, not invented numbers.
 4. **Target:** 10/10 for what an app can do; built in two phases (Phase 1 → 9/10, Phase 2 → 10/10).
 5. **Internal pillar key stays `body`.** Display label, content, theme, and the new strength subsystem change; the key does not.
+6. **Two-phase delivery.** Phase 1 (→9/10) ships and is used first; Phase 2 (→10/10) is a separate later build. Rationale: the periodized engine depends on the foundation laid in Phase 1 (strength log, recovery state, gate-test structure, equipment-adaptation, Power Log UI). Phasing lets those foundation mechanics be validated with real use *before* the dependent engine locks in on top of them — de-risking the layer the engine consumes. Cost is bounded: only the daily-quest *source* is transitional (rethemed pool in Phase 1 → engine + pool fallback in Phase 2); all other Phase 1 work stands in both phases. Phase 1 is not "ship and forget" — learnings from real use (log UX, equipment path, gate feel) feed Phase 2 planning.
 
 ## 4. Architecture — How It Fits the Existing App
 
@@ -171,6 +172,7 @@ A new setting `state.physicalPower.equipment` ∈ `barbell | bodyweight | mixed 
 - `src/data/store.js` `STALE_ADVENTURE_DAILY_TITLES` + `src/logic/stateMerge.js` mirror (lines ~4, 119–125): add all current adventure daily/level/dungeon titles so the solo user's stale quests force-refresh to the new Physical Power content on next load (the codebase's established content-migration pattern).
 - `normalizeStateShape()` deep-merge: add `strengthLog`, `recovery`, `physicalPower` defaults (no data loss for existing states).
 - `BUILD_VERSION` bump → `2026-06-24-physical-power`; `upgradeStateForCurrentBuild` initializes new state slices + sets `physicalPower.equipment` default (prompt on first launch via baseline test) + forces the stale-title refresh.
+- **Activation is automatic on next load** (browser + iOS): the BUILD_VERSION bump runs the migration against the existing canonical state, the retheme + Power Log panel appear, and stale quests refresh. The only interactive step is the one-time baseline test + equipment prompt (§5.10/§8). No user toggle for Phase 1.
 
 ### 5.12 Files Touched (Phase 1)
 
@@ -231,6 +233,15 @@ The S-rank Khalifa Trial (5.5) becomes a fully programmed, autoregulated test da
 **New:** `src/logic/strengthProgram.js`, `src/data/sahabiArchetypes.js` (physical-trait blocks), tests `src/logic/strengthProgram.test.js`.
 **Edit:** `src/data/seerahChains.js` (physical Nabawi Traits), `src/data/ummah.js` (strength milestone feed), `src/services/aiAssistant.js` (Fajr/fasted/service framing), `src/components/PowerLog.jsx` (program view + autoregulation UI), `src/data/store.js` (program state shape), `src/logic/strengthLog.js` (autoregulation hooks), `CLAUDE.md`.
 
+### 6.7 Phase 2 Activation & Mode Toggle
+
+- Phase 2 is a **separate future build**, not a latent switch in Phase 1 — it activates only after Phase 2 is coded and deployed, via its own BUILD_VERSION bump.
+- **Programmed Mode toggle (recommended):** the periodized engine is opt-in, mirroring the existing Guided Mode pattern (`state.physicalPower.programMode.enabled`). On → daily body quests come from the engine; Off → they come from the rethemed pool (Phase 1 behavior). The pool remains as the engine's fallback either way, so an engine bug never breaks the body pillar's daily content.
+- **Fajr training** and **fasted training** are opt-in settings within the program, not forced.
+- **Khalifa Trial** unlocks at S-rank (gated by progression, not a toggle).
+- **Autoregulation + deload + Sahabi-archetype blocks** run automatically once Programmed Mode is on.
+- **No reset:** Phase 1 progress (`strengthLog`, `recovery`, `physicalPower.trackProgress`, `gateResults`) carries forward into Phase 2; the engine consumes it.
+
 ## 7. Data Model / State Additions
 
 ```js
@@ -263,6 +274,7 @@ state.physicalPower = {
   trackProgress: { strength: 0, power: 0, endurance: 0, resilience: 0 },
   gateResults: [],               // [{ rank, gate, passed, date, events }]
   program: null,                 // Phase 2: { blockType, week, day, sessions[] }
+  programMode: { enabled: false }, // Phase 2: opt-in toggle (mirrors Guided Mode)
 };
 ```
 
