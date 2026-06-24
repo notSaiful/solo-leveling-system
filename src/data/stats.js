@@ -1,10 +1,10 @@
 // Stat system inspired by Solo Leveling's 6 attributes
 export const STAT_NAMES = {
-  strength: { name: 'Strength', icon: '💪', description: 'Outdoor endurance. Boosts Adventure quest XP.', color: '#f44336' },
+  strength: { name: 'Strength', icon: '💪', description: 'Raw physical power. Boosts Physical Power quest XP.', color: '#f44336' },
   agility: { name: 'Agility', icon: '⚡', description: 'Speed and consistency. Enables Flow State faster.', color: '#2196F3' },
   intelligence: { name: 'Intelligence', icon: '🧠', description: 'Knowledge depth. Boosts Deen quest XP.', color: '#9C27B0' },
   sense: { name: 'Sense', icon: '👁️', description: 'Intuition and awareness. Boosts Money quest XP.', color: '#FF9800' },
-  health: { name: 'Health', icon: '❤️', description: 'Wellness and stamina. Reduces fatigue effects.', color: '#E91E63' },
+  health: { name: 'Health', icon: '❤️', description: 'Conditioning, stamina, and durability. Reduces fatigue effects.', color: '#E91E63' },
   mana: { name: 'Mana', icon: '✨', description: 'Spiritual energy. Reduces debuff duration.', color: '#00BCD4' },
 };
 
@@ -58,7 +58,7 @@ export function getCharacterBuild(stats) {
   const topStats = entries.filter(([_, v]) => v >= max - 5).map(([k]) => k);
 
   if (topStats.includes('strength') && topStats.includes('health')) {
-    return { name: 'Pathfinder Build', icon: '⚔️', description: 'Dominant in outdoor endurance' };
+    return { name: 'Pathfinder Build', icon: '⚔️', description: 'Dominant in raw physical power and conditioning' };
   }
   if (topStats.includes('intelligence') && topStats.includes('mana')) {
     return { name: 'Scholar Build', icon: '📜', description: 'Dominant in spiritual knowledge' };
@@ -82,7 +82,7 @@ export function autoAssignStatPoints(stats, pillar, pointsToAssign) {
 
   // Each pillar maps to two primary stats
   const pillarMap = {
-    body:  { primary: 'strength', secondary: 'agility', reason: 'Adventure endurance and terrain readiness' },
+    body:  { primary: 'strength', secondary: 'agility', reason: 'Physical power and speed' },
     deen:  { primary: 'intelligence', secondary: 'mana', reason: 'Spiritual knowledge and discipline energy' },
     money: { primary: 'sense', secondary: 'agility', reason: 'Intuition and execution speed' },
   };

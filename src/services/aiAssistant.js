@@ -180,7 +180,7 @@ That is your standard. That is the user's standard.
 USER SACRED OBJECTIVES — NON-NEGOTIABLE
 ═══════════════════════════════════════════
 DEEN: The user seeks to emulate Prophet Muhammad (peace and blessings be upon him). Every deen quest must serve seerah, akhlaq (prophetic character), or sunnah. The goal is to become like him in discipline, mercy, and unwavering devotion.
-ADVENTURE: The user seeks outdoor mastery — terrain-capable, navigation-skilled, expedition-ready, and disciplined in the wild. Not gym fitness. The focus is exploration, trails, wilderness skill, elevation, navigation, camping, and real-world adventure content.
+PHYSICAL POWER: The user forges physical power — strength, speed, explosive power, endurance, and resilience. Barbell lifts, calisthenics progressions, sprints, jumps, rucks, loaded carries, mobility, nutrition, sleep. Getting stronger, faster, more capable as a future khalifa who can carry the burden of his family and Ummah. Not outdoor roaming — disciplined, progressive physical training forged for service, not vanity.
 MONEY: The user pursues AI-first wealth — orchestration, agents, product shipping, business strategy. NO coding. NO programming languages. Only leverage: deploying AI, building products, creating income streams. The goal is to bear the financial burden of the Ummah.
 
 ${getMissionDoctrinePrompt()}
@@ -491,13 +491,13 @@ USER CONTEXT:
 - Rank: ${rank} | Level: ${level}
 - Weakest pillar: ${weakest[0].toUpperCase()} (Level ${weakest[1]}) — DEFAULT PILLAR IF AMBIGUOUS.
 - Recent quests: ${recentTitles}
-- Sacred objectives: Deen = prophetic character (PBUH). Adventure = outdoor exploration, terrain mastery, hiking, navigation, camping, climbing, and expedition readiness. Money = general Islamic wealth-building (investing, halal business, frugality, zakat, sadaqah). NO coding.
+- Sacred objectives: Deen = prophetic character (PBUH). Physical Power = raw physical power — strength, speed, endurance, barbell lifts, calisthenics, sprints, jumps, rucks, loaded carries, mobility. Money = general Islamic wealth-building (investing, halal business, frugality, zakat, sadaqah). NO coding.
 - Khalifa Mission: servant leadership, tawheed, lawful protection of innocent life, family leadership, halal wealth as amanah, and benefit for the Ummah. No vigilantism, unlawful violence, hatred, ego, or fantasy-war thinking.
 
 PILLAR RULES:
 ${pillarInstruction}
 - Deen: seerah, akhlaq, sunnah, tahajjud, dhikr, dawah, charity, fasting, wudu, salah, quran. Must reflect the Prophet's discipline.
-- Adventure: endurance, elevation, navigation, outdoor movement, wilderness skill, terrain mastery. Expedition-ready. NOT generic fitness. Internally, output this pillar as "body" because the app schema uses that key.
+- Physical Power: strength, speed, explosive power, endurance, resilience. Barbell lifts, calisthenics progressions, sprints, jumps, rucks, loaded carries, mobility. NOT outdoor roaming. Internally, output this pillar as "body" because the app schema uses that key.
 - Money: halal investing, business strategy, frugality, zakat calculation, sadaqah planning, wealth-building for the Ummah. NO programming languages.
 - Mission framing: if the quest touches injustice or protection, frame it as lawful preparedness, relief, education, advocacy, restraint, and service.
 
