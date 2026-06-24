@@ -254,9 +254,11 @@ describe('strengthStandards', () => {
     expect(bw.kg).toBeNull();
   });
   it('getBodyweightMilestone advances with reps', () => {
-    const novice = getBodyweightMilestone('pushup', 20);
-    const elite = getBodyweightMilestone('pushup', 60);
-    expect(novice).not.toBe(elite);
+    // Progression ladders have DECREASING minReps (harder variation = fewer reps needed),
+    // so reps below the first threshold map to the first step, and reps past every
+    // threshold map to the final step.
+    expect(getBodyweightMilestone('pushup', 8)).toBe('Push-up');          // 8 < 20 → first step
+    expect(getBodyweightMilestone('pushup', 25)).toBe('One-arm Push-up'); // past all thresholds → final step
   });
   it('defines progressions for the four bodyweight families', () => {
     expect(BODYWEIGHT_PROGRESSIONS.pushup.length).toBeGreaterThanOrEqual(3);
@@ -545,10 +547,10 @@ describe('strengthLog', () => {
     expect(next.strengthLog.lifts.squat.history.length).toBe(1);
     expect(next.strengthLog.lifts.squat.history[0].weight).toBe(50);
   });
-  it('recomputeTrainingMax uses Epley and stores lastTested', () => {
-    const tm = recomputeTrainingMax({ trainingMax: 60, history: [], lastTested: null }, { weight: 50, reps: 5 });
-    // Epley: weight * (1 + reps/30) = 50 * (1 + 5/30) = 58.3
-    expect(tm.trainingMax).toBeCloseTo(58.33, 1);
+  it('recomputeTrainingMax uses Epley (90% training max) and stores lastTested', () => {
+    const tm = recomputeTrainingMax({ trainingMax: 60, history: [], lastTested: null }, { weight: 60, reps: 5 });
+    // Epley 1RM = 60 * (1 + 5/30) = 70; training max = 90% of 1RM = 63 (5/3/1 convention)
+    expect(tm.trainingMax).toBe(63);
     expect(tm.lastTested).toBeTruthy();
   });
   it('nextSessionLoad prescribes 80% of training max for a 3x5', () => {
@@ -632,7 +634,20 @@ export function nextSessionLoad(state, lift) {
 }
 
 // Advance the bodyweight progression ladder when reps meet the next milestone.
+// `milestone` = the step currently being worked TOWARD (undefined = working toward
+// ladder[0]). When a logged session meets that step's minReps, graduate it and point
+// milestone at the next step (or keep the final step once all are graduated).
 const FAMILY_BY_LIFT = { pullup: 'pull', row: 'pull', press: 'pushup', bench: 'pushup', squat: 'squat', deadlift: 'hinge' };
+
+function setLiftMilestone(state, lift, liftState, milestone) {
+  return {
+    ...state,
+    strengthLog: {
+      ...state.strengthLog,
+      lifts: { ...(state.strengthLog?.lifts || {}), [lift]: { ...liftState, milestone } },
+    },
+  };
+}
 
 export function advanceBodyweightProgression(state, lift) {
   if (state.physicalPower?.equipment === 'barbell') return state;
@@ -640,22 +655,23 @@ export function advanceBodyweightProgression(state, lift) {
   const ladder = BODYWEIGHT_PROGRESSIONS[family] || [];
   if (!ladder.length) return state;
   const liftState = state.strengthLog?.lifts?.[lift] || { trainingMax: 0, history: [], lastTested: null };
-  const currentIdx = ladder.findIndex(s => s.name === liftState.milestone);
+  const currentIdx = ladder.findIndex(s => s.name === liftState.milestone); // -1 when milestone unset
   const last = (liftState.history || []).at(-1);
-  if (!last) return state;
-  const nextIdx = Math.max(0, currentIdx);
-  const target = ladder[Math.min(nextIdx, ladder.length - 1)];
-  if (last.reps >= target.minReps && currentIdx < ladder.length - 1) {
-    const advanced = ladder[currentIdx + 1] || target;
-    return {
-      ...state,
-      strengthLog: {
-        ...state.strengthLog,
-        lifts: { ...(state.strengthLog?.lifts || {}), [lift]: { ...liftState, milestone: advanced.name } },
-      },
-    };
+  // The step currently being worked toward is one past the last achieved (ladder[0] if none).
+  const targetIdx = currentIdx + 1;
+  const target = ladder[targetIdx];
+  if (!last) {
+    // No sessions yet: if no milestone is set, seed it to the first step.
+    return liftState.milestone == null && target ? setLiftMilestone(state, lift, liftState, target.name) : state;
   }
-  return { ...state, strengthLog: { ...state.strengthLog, lifts: { ...(state.strengthLog?.lifts || {}), [lift]: { ...liftState, milestone: target.name } } } };
+  if (target && last.reps >= target.minReps) {
+    // Graduated `target` → work toward the next step, or stay at the final step once reached.
+    const nextTarget = ladder[targetIdx + 1];
+    return setLiftMilestone(state, lift, liftState, nextTarget ? nextTarget.name : target.name);
+  }
+  // Haven't met the target yet — ensure milestone points at the current target.
+  if (liftState.milestone == null && target) return setLiftMilestone(state, lift, liftState, target.name);
+  return state;
 }
 ```
 
