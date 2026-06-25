@@ -17,7 +17,7 @@
  *  Categories:
  *  - charity: Direct aid, food, shelter, medical, education
  *  - spiritual: Qurans, prayer supplies, masjid equipment, Islamic knowledge
- *  - adventure: Gear for relief workers, dawah teams, field volunteers
+ *  - physical-power: Gear for physical preparation, training, and field endurance
  *  - tech: Equipment for Muslim developers, students, academies, platforms
  *  - wealth: Gold, property, land, investment — held in trust for the Ummah
  *  - family: Care for orphans, elderly, widows, needy families — NOT your own comfort
@@ -144,8 +144,8 @@ export const REWARD_ITEMS = [
     unlockRank: 'E', rarity: 'common',
   },
   {
-    id: 'reward-hiking-socks', name: 'Hiking Socks for Relief Walker', cost: 500, category: 'adventure',
-    description: 'Quality merino socks for a volunteer who walks trails and rough terrain to deliver aid. Protect the feet that carry relief.',
+    id: 'reward-hiking-socks', name: 'Lifting Straps for Training Volunteers', cost: 500, category: 'physical-power',
+    description: 'Heavy duty lifting straps to help a training brother break grip barriers and build physical strength.',
     unlockRank: 'E', rarity: 'common',
   },
   {
@@ -164,8 +164,8 @@ export const REWARD_ITEMS = [
     unlockRank: 'E', rarity: 'common',
   },
   {
-    id: 'reward-carabiner-multi', name: 'Multi-Tools for Field Volunteers', cost: 350, category: 'adventure',
-    description: 'Compact carabiners with knife, firestarter, and screwdriver for relief workers and scouts. Equip the hands that rebuild.',
+    id: 'reward-carabiner-multi', name: 'Gym Hand Grippers for Volunteers', cost: 350, category: 'physical-power',
+    description: 'Heavy duty hand grippers to build grip strength for volunteers lifting and moving supplies.',
     unlockRank: 'E', rarity: 'common',
   },
   {
@@ -193,8 +193,8 @@ export const REWARD_ITEMS = [
     unlockRank: 'D', rarity: 'uncommon',
   },
   {
-    id: 'reward-trekking-shoes', name: 'Boots for Field Relief Worker', cost: 3000, category: 'adventure',
-    description: 'Waterproof trekking boots with ankle support for a volunteer who covers rough terrain to deliver aid. Equip the feet that serve.',
+    id: 'reward-trekking-shoes', name: 'Running Shoes for Field Volunteers', cost: 3000, category: 'physical-power',
+    description: 'Durable, high-performance athletic shoes for volunteers covering ground quickly on missions.',
     unlockRank: 'D', rarity: 'uncommon',
   },
   {
@@ -208,13 +208,13 @@ export const REWARD_ITEMS = [
     unlockRank: 'D', rarity: 'uncommon',
   },
   {
-    id: 'reward-binoculars', name: 'Binoculars for Relief Survey Team', cost: 2200, category: 'adventure',
-    description: 'Compact binoculars for a volunteer team assessing terrain, disaster zones, and VAWT sites. See farther so you can serve better.',
+    id: 'reward-binoculars', name: 'Foam Rollers for Volunteer Recovery', cost: 2200, category: 'physical-power',
+    description: 'High-density foam rollers donated to a volunteer training gym to support recovery and mobility.',
     unlockRank: 'D', rarity: 'uncommon',
   },
   {
-    id: 'reward-mission-backpack', name: 'Backpacks for Dawah / Relief Team', cost: 1800, category: 'adventure',
-    description: 'Durable, organized backpacks for volunteers carrying literature, first aid, and relief supplies. One bag can carry the message of Islam to a village.',
+    id: 'reward-mission-backpack', name: 'Heavy Duty Gym Bags for Relief Volunteers', cost: 1800, category: 'physical-power',
+    description: 'Durable, high-capacity gym bags for volunteers to carry training gear, towels, and first aid kits.',
     unlockRank: 'D', rarity: 'uncommon',
   },
   {
@@ -238,8 +238,8 @@ export const REWARD_ITEMS = [
     unlockRank: 'D', rarity: 'uncommon',
   },
   {
-    id: 'reward-first-aid-kit', name: 'Field First Aid Kits for Relief Team', cost: 1900, category: 'adventure',
-    description: 'Comprehensive first aid kits for volunteers working in disaster zones and remote areas. Be ready to heal through those you equip.',
+    id: 'reward-first-aid-kit', name: 'First Aid and Trauma Kits for Volunteer Teams', cost: 1900, category: 'physical-power',
+    description: 'Comprehensive medical kits for training facilities and field relief operations to handle physical training and emergency needs.',
     unlockRank: 'D', rarity: 'uncommon',
   },
   {
@@ -258,8 +258,8 @@ export const REWARD_ITEMS = [
     unlockRank: 'D', rarity: 'uncommon',
   },
   {
-    id: 'reward-field-power', name: 'Field Power Banks for Relief Workers', cost: 1700, category: 'adventure',
-    description: 'High-capacity power banks for volunteers in the field. Keep their phones alive so they can coordinate aid and call for help.',
+    id: 'reward-field-power', name: 'Gym Timer for Muslim Youth Center', cost: 1700, category: 'physical-power',
+    description: 'A wall-mounted gym interval timer donated to a youth center to run structured conditioning workouts.',
     unlockRank: 'D', rarity: 'uncommon',
   },
   {
@@ -268,8 +268,8 @@ export const REWARD_ITEMS = [
     unlockRank: 'D', rarity: 'uncommon',
   },
   {
-    id: 'reward-compass-watch', name: 'Field Watches for Relief Coordinators', cost: 2300, category: 'adventure',
-    description: 'Rugged analog watches with compass bezels for team leaders. Direction and discipline for those who direct relief.',
+    id: 'reward-compass-watch', name: 'Heart Rate Trackers for Relief Coordinators', cost: 2300, category: 'physical-power',
+    description: 'Wearable fitness trackers to monitor cardiovascular strain and recovery during intense physical workloads.',
     unlockRank: 'D', rarity: 'uncommon',
   },
   {
@@ -332,8 +332,8 @@ export const REWARD_ITEMS = [
     unlockRank: 'C', rarity: 'rare',
   },
   {
-    id: 'reward-dawah-luggage', name: 'Dawah Travel Gear for Field Missionary', cost: 6200, category: 'adventure',
-    description: 'A durable carry-on and packing system for a brother doing dawah or relief in remote areas. Equip the messenger.',
+    id: 'reward-dawah-luggage', name: 'Weighted Vests for Training Dawah Volunteers', cost: 6200, category: 'physical-power',
+    description: 'Weighted vests to increase conditioning and work capacity for volunteers during training exercises.',
     unlockRank: 'C', rarity: 'rare',
   },
   {
@@ -342,8 +342,8 @@ export const REWARD_ITEMS = [
     unlockRank: 'C', rarity: 'rare',
   },
   {
-    id: 'reward-camping-hammock', name: 'Camping Gear for Relief / Scout Team', cost: 5500, category: 'adventure',
-    description: 'Packable hammocks and camping gear for volunteers on multi-day relief missions. Rest the bodies that serve.',
+    id: 'reward-camping-hammock', name: 'Gym Gymnastics Rings for Youth Center', cost: 5500, category: 'physical-power',
+    description: 'Professional-grade bodyweight training rings donated to a Muslim youth center to develop physical coordination.',
     unlockRank: 'C', rarity: 'rare',
   },
   {
@@ -352,13 +352,13 @@ export const REWARD_ITEMS = [
     unlockRank: 'C', rarity: 'rare',
   },
   {
-    id: 'reward-trail-shoes', name: 'Trail Shoes for Field Volunteers', cost: 6800, category: 'adventure',
-    description: 'Quality trail runners for relief workers covering rugged terrain. Move fast when the Ummah calls.',
+    id: 'reward-trail-shoes', name: 'Gym Lifting Belts for Field Volunteers', cost: 6800, category: 'physical-power',
+    description: 'Premium leather weightlifting belts for volunteers who do heavy lifting of supply crates.',
     unlockRank: 'C', rarity: 'rare',
   },
   {
-    id: 'reward-headlamp', name: 'Headlamps for Night Relief Workers', cost: 5000, category: 'adventure',
-    description: 'Powerful LED headlamps for volunteers working through the night. Light the path for those who carry aid in darkness.',
+    id: 'reward-headlamp', name: 'Kettlebells for Community Fitness Center', cost: 5000, category: 'physical-power',
+    description: 'A set of heavy cast iron kettlebells donated to a community center to run physical conditioning classes.',
     unlockRank: 'C', rarity: 'rare',
   },
   {
@@ -401,8 +401,8 @@ export const REWARD_ITEMS = [
     unlockRank: 'B', rarity: 'epic',
   },
   {
-    id: 'reward-clean-bike', name: 'Bicycle for Needy Muslim Commuter', cost: 13000, category: 'adventure',
-    description: 'A quality bicycle for a brother who walks two hours to work or madrasa. Give him speed so he can serve faster.',
+    id: 'reward-clean-bike', name: 'Spin Bike for Community Wellness Center', cost: 13000, category: 'physical-power',
+    description: 'A commercial spin bike donated to a community center to help brothers maintain cardiovascular health.',
     unlockRank: 'B', rarity: 'epic',
   },
   {
@@ -426,13 +426,13 @@ export const REWARD_ITEMS = [
     unlockRank: 'B', rarity: 'epic',
   },
   {
-    id: 'reward-muslim-land-trip', name: 'Sponsor Dawah Trip for Student Group', cost: 20000, category: 'adventure',
-    description: 'Fund a 3-day trip to a Muslim city for a group of students to learn, connect, and do dawah. Send them so they return with purpose.',
+    id: 'reward-muslim-land-trip', name: 'Sponsor Physical Conditioning Camp for Youth', cost: 20000, category: 'physical-power',
+    description: 'Fund a 3-day structured physical conditioning camp for Muslim youth. Train them to build work capacity.',
     unlockRank: 'B', rarity: 'legendary',
   },
   {
-    id: 'reward-mountain-bike', name: 'Mountain Bike for Relief Access', cost: 15500, category: 'adventure',
-    description: 'A hardtail MTB for a relief worker who needs to reach areas no car can access. Conquer terrain so aid can conquer suffering.',
+    id: 'reward-mountain-bike', name: 'Gym Squat Rack for Youth Center', cost: 15500, category: 'physical-power',
+    description: 'A heavy-duty squat rack and barbell set donated to a youth training center. Build the foundation of strength.',
     unlockRank: 'B', rarity: 'epic',
   },
   {
@@ -451,13 +451,13 @@ export const REWARD_ITEMS = [
     unlockRank: 'B', rarity: 'legendary',
   },
   {
-    id: 'reward-ebike-dawah', name: 'E-Bike for Dawah / Relief Worker', cost: 14500, category: 'adventure',
-    description: 'A pedal-assist bike for a brother doing dawah or relief across a wide area. Multiply his reach without multiplying his exhaustion.',
+    id: 'reward-ebike-dawah', name: 'Rowing Machine for Community Gym', cost: 14500, category: 'physical-power',
+    description: 'A professional rowing machine donated to a community gym to develop cardiovascular power and endurance.',
     unlockRank: 'B', rarity: 'epic',
   },
   {
-    id: 'reward-relief-jacket', name: 'All-Climate Jackets for Relief Team', cost: 12500, category: 'adventure',
-    description: 'Warm, durable jackets for volunteers traveling to cold climates during relief missions. The Khalifa is prepared through those he equips.',
+    id: 'reward-relief-jacket', name: 'Weight Sled for Field Training', cost: 12500, category: 'physical-power',
+    description: 'A heavy pushing sled for field volunteers to build leg drive, stamina, and physical endurance.',
     unlockRank: 'B', rarity: 'epic',
   },
   {
@@ -475,7 +475,7 @@ export const REWARD_ITEMS = [
     unlockRank: 'A', rarity: 'legendary',
   },
   {
-    id: 'reward-family-umrah', name: 'Umrah Trip for Needy Muslim Family', cost: 50000, category: 'adventure',
+    id: 'reward-family-umrah', name: 'Umrah Trip for Needy Muslim Family', cost: 50000, category: 'physical-power',
     description: 'Send a poor Muslim family for Umrah who have never seen the Kaaba. Show them the House of Allah. Let them return transformed.',
     unlockRank: 'A', rarity: 'mythic',
   },
@@ -490,13 +490,13 @@ export const REWARD_ITEMS = [
     unlockRank: 'A', rarity: 'legendary',
   },
   {
-    id: 'reward-himalayan-trek', name: 'Sponsor Outdoor Leadership Camp for Youth', cost: 40000, category: 'adventure',
-    description: 'Fund a 5-day Himalayan trek for a group of Muslim youth. Test their bodies so they learn to carry the Ummah\'s burdens.',
+    id: 'reward-himalayan-trek', name: 'Sponsor Physical Leadership Camp for Youth', cost: 40000, category: 'physical-power',
+    description: 'Fund a 5-day intense physical leadership camp for a group of Muslim youth. Test their bodies so they learn to carry the Ummah\'s burdens.',
     unlockRank: 'A', rarity: 'legendary',
   },
   {
-    id: 'reward-relief-drone', name: 'Relief Survey Drone for Muslim NGO', cost: 38000, category: 'adventure',
-    description: 'A drone donated to a Muslim relief organization for surveying disaster zones and mapping aid delivery. See from above so you can serve below.',
+    id: 'reward-relief-drone', name: 'Conditioning Sandbags for Volunteer Gym', cost: 38000, category: 'physical-power',
+    description: 'A set of heavy-duty training sandbags (30-80kg) for field volunteers to practice odd-object lifting.',
     unlockRank: 'A', rarity: 'legendary',
   },
   {
@@ -530,12 +530,12 @@ export const REWARD_ITEMS = [
     unlockRank: 'A', rarity: 'legendary',
   },
   {
-    id: 'reward-kayak', name: 'Kayak for River Relief Access', cost: 36000, category: 'adventure',
-    description: 'A sea kayak for a relief team accessing riverside communities where roads do not reach. Water is the other path to those in need.',
+    id: 'reward-kayak', name: 'Treadmills for Muslim Community Center', cost: 36000, category: 'physical-power',
+    description: 'Commercial-grade treadmills donated to a community center to support indoor cardiovascular training.',
     unlockRank: 'A', rarity: 'legendary',
   },
   {
-    id: 'reward-umrah-parents', name: 'Umrah for Needy Elderly Muslims', cost: 75000, category: 'adventure',
+    id: 'reward-umrah-parents', name: 'Umrah for Needy Elderly Muslims', cost: 75000, category: 'physical-power',
     description: 'Send elderly Muslims who have never performed Umrah. The best gift is the one that wipes sins and draws them closer to Allah.',
     unlockRank: 'A', rarity: 'mythic',
   },
@@ -574,7 +574,7 @@ export const REWARD_ITEMS = [
     unlockRank: 'S', rarity: 'mythic',
   },
   {
-    id: 'reward-hajj-package', name: 'Hajj for Needy Muslim Couple', cost: 600000, category: 'adventure',
+    id: 'reward-hajj-package', name: 'Hajj for Needy Muslim Couple', cost: 600000, category: 'physical-power',
     description: 'The fifth pillar. Send a poor Muslim couple who have saved their whole lives but still cannot afford it. Carry them to Arafat.',
     unlockRank: 'S', rarity: 'mythic',
   },
@@ -599,8 +599,8 @@ export const REWARD_ITEMS = [
     unlockRank: 'S', rarity: 'mythic',
   },
   {
-    id: 'reward-muslim-lands-tour', name: 'Sponsor Muslim Lands Study Tour for Students', cost: 900000, category: 'adventure',
-    description: 'A month-long journey through Muslim lands for a group of students. Send them to see the Ummah they will one day serve.',
+    id: 'reward-muslim-lands-tour', name: 'Sponsor Physical Conditioning Tour for Students', cost: 900000, category: 'physical-power',
+    description: 'A month-long physical development and leadership tour through Muslim communities for student leaders.',
     unlockRank: 'S', rarity: 'mythic',
   },
   {
@@ -668,7 +668,7 @@ export const REWARD_ITEMS = [
     unlockRank: 'S_II', rarity: 'mythic',
   },
   {
-    id: 'reward-hajj-parents-comfort', name: 'Comfortable Hajj for Needy Elderly Couple', cost: 6000000, category: 'adventure',
+    id: 'reward-hajj-parents-comfort', name: 'Comfortable Hajj for Needy Elderly Couple', cost: 6000000, category: 'physical-power',
     description: 'A well-organized Hajj package for an elderly couple with private guide, accessible hotel, and medical support. Carry the weak to the strongest act of worship.',
     unlockRank: 'S_II', rarity: 'mythic',
   },
@@ -703,7 +703,7 @@ export const REWARD_ITEMS = [
     unlockRank: 'S_II', rarity: 'mythic',
   },
   {
-    id: 'reward-umrah-100', name: 'Umrah for 100 Muslims', cost: 30000000, category: 'adventure',
+    id: 'reward-umrah-100', name: 'Umrah for 100 Muslims', cost: 30000000, category: 'physical-power',
     description: 'Sponsor Umrah for 100 Muslims who cannot afford it. The Sovereign carries the Ummah to the Haram.',
     unlockRank: 'S_II', rarity: 'mythic',
   },
@@ -777,7 +777,7 @@ export const REWARD_ITEMS = [
     unlockRank: 'S_III', rarity: 'mythic',
   },
   {
-    id: 'reward-hajj-1000', name: 'Hajj for 1,000 Muslims', cost: 200000000, category: 'adventure',
+    id: 'reward-hajj-1000', name: 'Hajj for 1,000 Muslims', cost: 200000000, category: 'physical-power',
     description: 'Sponsor Hajj for 1,000 Muslims from poor communities. The Divine carries the Ummah to Arafat.',
     unlockRank: 'S_III', rarity: 'mythic',
   },

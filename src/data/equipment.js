@@ -23,24 +23,24 @@ export const EQUIPMENT_TIERS = {
 
 export const EQUIPMENT_TEMPLATES = {
   // ─── TIER 1: Novice (E-D, lv 0-25) — 100 durability, +5%–8% ───
-  'trail-staff':        { id: 'trail-staff',        name: 'Trail Staff',        slot: 'weapon', pillar: 'body',  boost: 0.05, maxDurability: 100 },
-  'wanderer-cloak':     { id: 'wanderer-cloak',     name: 'Wanderer Cloak',     slot: 'armor',  pillar: 'body',  boost: 0.05, maxDurability: 100 },
+  'trail-staff':        { id: 'trail-staff',        name: 'Training Barbell',   slot: 'weapon', pillar: 'body',  boost: 0.05, maxDurability: 100 },
+  'wanderer-cloak':     { id: 'wanderer-cloak',     name: 'Weighted Vest',      slot: 'armor',  pillar: 'body',  boost: 0.05, maxDurability: 100 },
   'apprentice-seal':    { id: 'apprentice-seal',    name: 'Apprentice Seal',    slot: 'ring',   pillar: 'all',   boost: 0.03, maxDurability: 100 },
   'dhikr-strand':       { id: 'dhikr-strand',       name: 'Dhikr Strand',       slot: 'ring',   pillar: 'deen',  boost: 0.05, maxDurability: 100 },
   'code-tablet':        { id: 'code-tablet',        name: 'Strategy Tablet',      slot: 'weapon', pillar: 'money', boost: 0.05, maxDurability: 100 },
   'prayer-beads':       { id: 'prayer-beads',       name: 'Prayer Beads',       slot: 'ring',   pillar: 'deen',  boost: 0.05, maxDurability: 100 },
   'coin-pouch':         { id: 'coin-pouch',         name: 'Coin Pouch',         slot: 'armor',  pillar: 'money', boost: 0.05, maxDurability: 100 },
-  'runner-blade':       { id: 'runner-blade',       name: 'Runner Blade',       slot: 'weapon', pillar: 'body',  boost: 0.08, maxDurability: 100 },
+  'runner-blade':       { id: 'runner-blade',       name: 'Power Grips',        slot: 'weapon', pillar: 'body',  boost: 0.08, maxDurability: 100 },
 
   // ─── TIER 2: Adept (C-B, lv 26-70) — 150 durability, +15%–18% ───
-  'compass-of-truth':   { id: 'compass-of-truth',   name: 'Compass of Truth',   slot: 'weapon', pillar: 'body',  boost: 0.15, maxDurability: 150 },
-  'expedition-gear':    { id: 'expedition-gear',    name: 'Expedition Gear',    slot: 'armor',  pillar: 'body',  boost: 0.15, maxDurability: 150 },
+  'compass-of-truth':   { id: 'compass-of-truth',   name: 'Barbell of Truth',   slot: 'weapon', pillar: 'body',  boost: 0.15, maxDurability: 150 },
+  'expedition-gear':    { id: 'expedition-gear',    name: 'Conditioning Gear',  slot: 'armor',  pillar: 'body',  boost: 0.15, maxDurability: 150 },
   'tactician-signet':   { id: 'tactician-signet',   name: 'Tactician Signet',   slot: 'ring',   pillar: 'all',   boost: 0.10, maxDurability: 150 },
   'misbaha-of-focus':   { id: 'misbaha-of-focus',   name: 'Misbaha of Focus',   slot: 'ring',   pillar: 'deen',  boost: 0.15, maxDurability: 150 },
   'ledger-of-barakah':  { id: 'ledger-of-barakah',  name: 'Ledger of Barakah',  slot: 'weapon', pillar: 'money', boost: 0.15, maxDurability: 150 },
   'shield-of-fajr':     { id: 'shield-of-fajr',     name: 'Shield of Fajr',     slot: 'armor',  pillar: 'deen',  boost: 0.15, maxDurability: 150 },
   'scale-of-rizq':      { id: 'scale-of-rizq',      name: 'Scale of Rizq',      slot: 'weapon', pillar: 'money', boost: 0.18, maxDurability: 150 },
-  'sprint-boots':       { id: 'sprint-boots',       name: 'Sprint Boots',       slot: 'armor',  pillar: 'body',  boost: 0.18, maxDurability: 150 },
+  'sprint-boots':       { id: 'sprint-boots',       name: 'Lifting Shoes',      slot: 'armor',  pillar: 'body',  boost: 0.18, maxDurability: 150 },
 
   // ─── TIER 3: Elite (A, lv 71-99) — 200 durability, +30%–35% ───
   'blade-of-tawhid':    { id: 'blade-of-tawhid',    name: 'Blade of Tawhid',    slot: 'weapon', pillar: 'all',   boost: 0.30, maxDurability: 200 },
@@ -59,8 +59,8 @@ export const EQUIPMENT_TEMPLATES = {
   'spear-of-ummah-defense':   { id: 'spear-of-ummah-defense',   name: 'Spear of Ummah Defense', slot: 'weapon', pillar: 'deen',  boost: 0.55, maxDurability: 300 },
   'breastplate-of-istiqamah': { id: 'breastplate-of-istiqamah', name: 'Breastplate of Istiqamah',slot: 'armor',  pillar: 'deen',  boost: 0.55, maxDurability: 300 },
   'ring-of-barakah-flow':     { id: 'ring-of-barakah-flow',     name: 'Ring of Barakah Flow',   slot: 'ring',   pillar: 'money', boost: 0.55, maxDurability: 300 },
-  'war-axe-of-fitness':       { id: 'war-axe-of-fitness',       name: 'War Axe of Fitness',       slot: 'weapon', pillar: 'body',  boost: 0.55, maxDurability: 300 },
-  'cuirass-of-discipline':    { id: 'cuirass-of-discipline',    name: 'Cuirass of Discipline',  slot: 'armor',  pillar: 'body',  boost: 0.55, maxDurability: 300 },
+  'war-axe-of-fitness':       { id: 'war-axe-of-fitness',       name: 'Kettlebell of Fitness',    slot: 'weapon', pillar: 'body',  boost: 0.55, maxDurability: 300 },
+  'cuirass-of-discipline':    { id: 'cuirass-of-discipline',    name: 'Harness of Discipline',    slot: 'armor',  pillar: 'body',  boost: 0.55, maxDurability: 300 },
 
   // ─── TIER 5: Sovereign (S-II, lv 300-599) — 450 durability, +75%–80% ───
   'throneblade-of-divinity':  { id: 'throneblade-of-divinity',  name: 'Throneblade of Divinity',  slot: 'weapon', pillar: 'all',   boost: 0.75, maxDurability: 450 },
@@ -69,8 +69,8 @@ export const EQUIPMENT_TEMPLATES = {
   'lance-of-shahada':         { id: 'lance-of-shahada',         name: 'Lance of Shahada',         slot: 'weapon', pillar: 'deen',  boost: 0.80, maxDurability: 450 },
   'shield-of-divine-protection':{ id: 'shield-of-divine-protection', name: 'Shield of Divine Protection', slot: 'armor', pillar: 'deen', boost: 0.80, maxDurability: 450 },
   'crown-of-endless-rizq':    { id: 'crown-of-endless-rizq',    name: 'Crown of Endless Rizq',    slot: 'ring',   pillar: 'money', boost: 0.80, maxDurability: 450 },
-  'fist-of-iron-discipline':  { id: 'fist-of-iron-discipline',  name: 'Fist of Iron Discipline',  slot: 'weapon', pillar: 'body',  boost: 0.80, maxDurability: 450 },
-  'shell-of-unbreakable-health':{ id: 'shell-of-unbreakable-health', name: 'Shell of Unbreakable Health', slot: 'armor', pillar: 'body', boost: 0.80, maxDurability: 450 },
+  'fist-of-iron-discipline':  { id: 'fist-of-iron-discipline',  name: 'Grip of Iron Discipline',  slot: 'weapon', pillar: 'body',  boost: 0.80, maxDurability: 450 },
+  'shell-of-unbreakable-health':{ id: 'shell-of-unbreakable-health', name: 'Shield of Unbreakable Health', slot: 'armor', pillar: 'body', boost: 0.80, maxDurability: 450 },
 
   // ─── TIER 6: Divine (S-III, lv 600-999) — 600 durability, +100%–110% ───
   'ashrafi-of-creation':      { id: 'ashrafi-of-creation',      name: 'Ashrafi of Creation',      slot: 'weapon', pillar: 'all',   boost: 1.00, maxDurability: 600 },
@@ -79,7 +79,7 @@ export const EQUIPMENT_TEMPLATES = {
   'sword-of-the-last-prophet':{ id: 'sword-of-the-last-prophet',name: 'Sword of the Last Prophet',slot: 'weapon', pillar: 'deen',  boost: 1.10, maxDurability: 600 },
   'throne-vestments-of-jannah':{ id: 'throne-vestments-of-jannah',name: 'Throne Vestments of Jannah', slot: 'armor', pillar: 'deen', boost: 1.10, maxDurability: 600 },
   'seal-of-infinite-wealth':  { id: 'seal-of-infinite-wealth',  name: 'Seal of Infinite Wealth',  slot: 'ring',   pillar: 'money', boost: 1.10, maxDurability: 600 },
-  'fist-of-divine-strength':  { id: 'fist-of-divine-strength',  name: 'Fist of Divine Strength',  slot: 'weapon', pillar: 'body',  boost: 1.10, maxDurability: 600 },
+  'fist-of-divine-strength':  { id: 'fist-of-divine-strength',  name: 'Grip of Divine Strength',  slot: 'weapon', pillar: 'body',  boost: 1.10, maxDurability: 600 },
   'immortal-frame-of-the-khalifa':{ id: 'immortal-frame-of-the-khalifa', name: 'Immortal Frame of the Khalifa', slot: 'armor', pillar: 'body', boost: 1.10, maxDurability: 600 },
 };
 
