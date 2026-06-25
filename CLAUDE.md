@@ -18,7 +18,7 @@ cssclasses:
 
 > **Project Type:** Gamified Self-Development Web App (PWA + iOS)
 > **Target User:** Muslim man, India, seeking disciplined self-improvement
-> **Current Status:** Production-ready web app + automated IPA builder (Schema v3 / Physical Power Phase 1)
+> **Current Status:** Production-ready simplified web app + automated IPA builder (Schema v3 / Jargon-free UI)
 > **Last Updated:** 2026-06-25
 > **Vault Root:** This folder is an Obsidian vault. Open it in Obsidian to browse project knowledge.
 
@@ -377,6 +377,7 @@ bash build-ios-ipa.sh
 | 54 | Rewire endgame into quests — `runEndgameCycle` moved to `src/logic/endgame.js`, called from Dashboard.jsx quest-completion handlers (try/catch-wrapped) | ✅ |
 | 55 | Fix cross-device sync XP/gold loss — `stateMerge.js` replayed missing history against the already-unioned `merged.history`, so `applyHistoryReward`'s "already in history" guard flagged every missing event as processed and skipped it. Reordered to replay against `base.history` only, then union. | ✅ |
 | 56 | Physical Power retheme Phase 1 — body pillar renamed to 'Physical Power'; daily quest pools, level-story quests, weekly dungeons (Physics Gates), job-gate steps, and body redemption templates fully rethemed; created <PowerLog /> with equipment-adaptation (barbell/bodyweight/mixed/kettlebell) and baseline seeding; wired side effects linking body quest completion to strength logs (progressive overload) and recovery tracking (protein/sleep logs) in Dashboard.jsx | ✅ |
+| 57 | Jargon-free UI Simplification — Reduced navigation to 4 main tabs (Quests, Workouts, Ummah Ledger, Settings); pruned RPG game jargon (Hunter Candidate, Knight, Monarch, etc.) from ranks and config; extracted workout logs into a dedicated "Workouts" tab; stripped the header of gaming currency/stats; updated Playwright E2E tests for the simplified layout | ✅ |
 
 ---
 
