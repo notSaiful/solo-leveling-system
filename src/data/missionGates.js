@@ -14,7 +14,7 @@ export const MISSION_GATES = [
     objectives: [
       { id: 'kg-100-1', label: 'Khalifate Foundation', description: 'Define your mission, write your oath, and begin one real-world project that serves the Ummah.', pillar: 'deen' },
       { id: 'kg-100-2', label: 'First Income Stream', description: 'Launch or validate one halal income stream that uses AI or technology to create value.', pillar: 'money' },
-      { id: 'kg-100-3', label: 'Body of the Khalifa', description: 'Establish a consistent outdoor readiness protocol you can maintain for 1 year.', pillar: 'body' },
+      { id: 'kg-100-3', label: 'Body of the Khalifa', description: 'Establish a consistent physical training protocol you can maintain for 1 year.', pillar: 'body' },
     ],
   },
   {
@@ -25,8 +25,8 @@ export const MISSION_GATES = [
     requiredCount: 2,
     objectives: [
       { id: 'kg-200-1', label: 'Mission Revenue', description: 'Your AI or technology venture generates its first real revenue. Validation over theory.', pillar: 'money' },
-      { id: 'kg-200-2', label: 'Community Anchor', description: 'Build one community practice — study circle, outdoor group, or mentorship — that meets regularly without you.', pillar: 'deen' },
-      { id: 'kg-200-3', label: 'Physical Standard', description: 'Achieve an outdoor endurance standard in the top 20% of natural athletes in your age group.', pillar: 'body' },
+      { id: 'kg-200-2', label: 'Community Anchor', description: 'Build one community practice — study circle, training group, or mentorship — that meets regularly without you.', pillar: 'deen' },
+      { id: 'kg-200-3', label: 'Physical Standard', description: 'Achieve an endurance standard in the top 20% of natural athletes in your age group.', pillar: 'body' },
     ],
   },
   {
@@ -38,7 +38,7 @@ export const MISSION_GATES = [
     objectives: [
       { id: 'kg-300-1', label: 'Automated Empire', description: 'One income stream operates with less than 2 hours of your time per week.', pillar: 'money' },
       { id: 'kg-300-2', label: 'Institutional Worship', description: 'A group worship or study practice you founded runs for 90 days without your direct leadership.', pillar: 'deen' },
-      { id: 'kg-300-3', label: 'Teach Ten', description: 'Train 10 Muslims to B-rank standards in deen, outdoor readiness, or wealth-building.', pillar: 'service' },
+      { id: 'kg-300-3', label: 'Teach Ten', description: 'Train 10 Muslims to B-rank standards in deen, physical readiness, or wealth-building.', pillar: 'service' },
     ],
   },
   {
@@ -63,7 +63,7 @@ export const MISSION_GATES = [
       { id: 'kg-500-1', label: 'Empire Employment', description: 'Your ventures employ 10+ Muslims with halal livelihoods.', pillar: 'money' },
       { id: 'kg-500-2', label: 'Ummah Fund', description: 'Establish a dedicated fund that distributes to ummah causes automatically every month.', pillar: 'money' },
       { id: 'kg-500-3', label: 'Multi-Year Impact', description: 'Document 3 years of continuous service to the Ummah through your ventures, teaching, or relief.', pillar: 'service' },
-      { id: 'kg-500-4', label: 'Lifetime Fitness', description: 'Maintain elite outdoor readiness for 5 consecutive years without a break longer than 7 days.', pillar: 'body' },
+      { id: 'kg-500-4', label: 'Lifetime Fitness', description: 'Maintain elite physical readiness for 5 consecutive years without a break longer than 7 days.', pillar: 'body' },
     ],
   },
   {
@@ -123,7 +123,7 @@ export const MISSION_GATES = [
     objectives: [
       { id: 'kg-999-1', label: 'The Mission Complete', description: 'Your primary Khalifate mission — the venture you were called to build — is operational, self-sustaining, and serving the Ummah at scale.', pillar: 'service' },
       { id: 'kg-999-2', label: 'Legacy Without You', description: 'Your institutions, wealth systems, and teaching chains operate without your daily presence for 1+ year.', pillar: 'money' },
-      { id: 'kg-999-3', label: 'The Final Sujood', description: 'You have maintained perfect worship, outdoor readiness, and wealth discipline for so long that they are no longer habits. They are identity.', pillar: 'deen' },
+      { id: 'kg-999-3', label: 'The Final Sujood', description: 'You have maintained perfect worship, physical readiness, and wealth discipline for so long that they are no longer habits. They are identity.', pillar: 'deen' },
       { id: 'kg-999-4', label: 'Beyond the Mission', description: 'You have expanded your mission beyond its original scope — into new markets, new nations, or new generations.', pillar: 'service' },
     ],
   },

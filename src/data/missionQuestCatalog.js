@@ -36,10 +36,10 @@ export const MISSION_DAILY_QUEST_TEMPLATES = {
   readiness: [
     {
       id: 'mission-readiness-restraint',
-      title: 'Adventure With Restraint',
-      description: 'Complete one outdoor readiness action and log one restraint or safety lesson.',
+      title: 'Physical Power With Restraint',
+      description: 'Complete one physical training action and log one restraint or safety lesson.',
       steps: [
-        'Pick one action: scout a 1km route, walk 2,000 steps outside, do 10 push-ups, stretch for 5 minutes, or check your emergency kit.',
+        'Pick one action: run 1 km, do 30 push-ups, 20 squats, stretch for 5 minutes, or check your emergency kit.',
         'Complete the action.',
         'Log one sentence: what you did, what you noticed, and one safety or restraint rule you followed.',
       ],
@@ -47,7 +47,7 @@ export const MISSION_DAILY_QUEST_TEMPLATES = {
       pillar: 'body',
       estimatedMinutes: 10,
       missionDuty: 'readiness',
-      tags: ['readiness', 'adventure', 'route', 'endurance', 'navigation', 'first aid', 'de-escalation', 'discipline'],
+      tags: ['readiness', 'strength', 'endurance', 'conditioning', 'first aid', 'de-escalation', 'discipline', 'restraint'],
     },
   ],
   service: [

@@ -81,7 +81,7 @@ export default function MissionCommandCenter({ state, setState }) {
     halalGuardrailAccepted: true,
   });
   const [readinessForm, setReadinessForm] = useState({
-    actionType: 'route-scouting',
+    actionType: 'strength',
     intensity: 'moderate',
     action: '',
     minutes: '',
@@ -679,7 +679,7 @@ export default function MissionCommandCenter({ state, setState }) {
               <span className="font-orbitron text-sm font-semibold tracking-wider uppercase">Readiness & Restraint Protocol</span>
             </div>
             <div className="text-xs text-cyan-500/60 leading-relaxed">
-              Track route scouting, navigation, trail endurance, first aid, awareness, de-escalation, and restraint under lawful guardrails.
+              Track strength, conditioning, endurance, first aid, awareness, de-escalation, and restraint under lawful guardrails.
             </div>
           </div>
           <div className="grid grid-cols-3 gap-2 sm:min-w-80">
@@ -749,7 +749,7 @@ export default function MissionCommandCenter({ state, setState }) {
             type="text"
             value={readinessForm.action}
             onChange={(event) => updateReadinessForm('action', event.target.value)}
-            placeholder="Adventure / readiness action"
+            placeholder="Physical Power / readiness action"
             className="sm:col-span-2 bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-500/50"
           />
           <input

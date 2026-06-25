@@ -4,7 +4,7 @@ import { getLocalDateString, parseLocalDate } from '../utils/dateUtils';
 const DUTY_COMMANDS = {
   tauheed: 'Teach one source-backed lesson or write one tawheed action step.',
   wealth: 'Move money or earning capacity today: give, invest, build, sell, or train someone to earn.',
-  readiness: 'Build Adventure readiness with restraint: include route scouting, navigation, first aid, recovery, or de-escalation.',
+  readiness: 'Build Physical Power readiness with restraint: include strength, conditioning, first aid, recovery, or de-escalation.',
   service: 'Serve one Muslim through relief, advocacy, mentorship, livelihood, or direct help.',
   family: 'Lead your home through worship, mercy, repair, provision, presence, or example.',
 };
@@ -41,15 +41,15 @@ const CORRECTIVE_TEMPLATES = {
     tags: ['wealth', 'halal', 'income', 'sadaqah', 'correction'],
   },
   readiness: {
-    title: 'Corrective: Adventure Readiness',
-    description: 'Complete one outdoor readiness action, then log one restraint or de-escalation lesson.',
+    title: 'Corrective: Physical Power Readiness',
+    description: 'Complete one physical training action, then log one restraint or de-escalation lesson.',
     steps: [
-      'Pick one action: walk 10 minutes outside, do 20 squats, stretch hips and back for 5 minutes, check your shoes/kit, or scout one safe route near home.',
+      'Pick one action: run 10 minutes, do 20 squats, stretch hips and back for 5 minutes, check your shoes/kit, or practice one de-escalation drill at home.',
       'Complete it now.',
       'Log one sentence: what you did and one safety or restraint rule you followed.',
     ],
     xp: 35,
-    tags: ['readiness', 'adventure', 'navigation', 'outdoor', 'restraint', 'lawful', 'correction'],
+    tags: ['readiness', 'strength', 'conditioning', 'restraint', 'lawful', 'correction'],
   },
   service: {
     title: 'Corrective: Serve One Muslim',

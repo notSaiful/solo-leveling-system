@@ -7,7 +7,7 @@ export const MISSION_PHASES = [
     aim: 'Become reliable before trying to lead anyone.',
     objectives: [
       'Protect salah, Quran, and truthful speech.',
-      'Build Adventure readiness that can serve under pressure.',
+      'Build Physical Power readiness that can serve under pressure.',
       'Track money, remove waste, and create halal earning momentum.',
       'Serve family and one Muslim without needing recognition.',
     ],
@@ -19,10 +19,10 @@ export const MISSION_PHASES = [
     thresholdCoverage: 60,
     aim: 'Turn private discipline into useful strength.',
     objectives: [
-      'Maintain worship, Adventure, earning, service, and family action every week.',
+      'Maintain worship, Physical Power, earning, service, and family action every week.',
       'Create one repeatable income or learning asset.',
       'Teach what you learn in simple language.',
-      'Practice lawful protection readiness: outdoor endurance, restraint, first aid, documentation, and de-escalation.',
+      'Practice lawful protection readiness: physical conditioning, restraint, first aid, documentation, and de-escalation.',
     ],
   },
   {
@@ -70,7 +70,7 @@ export const DAILY_TRUSTS = [
     id: 'readiness',
     dutyId: 'readiness',
     title: 'Readiness',
-    command: 'Scout, hike, navigate, recover, learn first aid, or practice lawful protection readiness.',
+    command: 'Lift, run, condition, recover, learn first aid, or practice lawful protection readiness.',
   },
   {
     id: 'service',
@@ -91,7 +91,7 @@ export const LAWFUL_JUSTICE_PROTOCOL = [
   'Protect immediate innocent life only through lawful, proportionate means.',
   'Document harm, preserve evidence, and report through legitimate channels.',
   'Fund relief, medical aid, legal aid, education, and livelihood support.',
-  'Build Adventure readiness with restraint; anger must become service, advocacy, and disciplined preparation.',
+  'Build Physical Power readiness with restraint; anger must become service, advocacy, and disciplined preparation.',
 ];
 
 export const WEEKLY_REVIEW_QUESTIONS = [

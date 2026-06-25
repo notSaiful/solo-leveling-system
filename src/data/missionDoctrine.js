@@ -18,9 +18,9 @@ export const MISSION_DOCTRINE = {
     },
     {
       id: 'readiness',
-      label: 'Adventure Readiness',
-      duty: 'Build outdoor competence, endurance, navigation, restraint, and lawful preparedness to serve and protect without oppression.',
-      tags: ['adventure', 'outdoor', 'endurance', 'wilderness', 'navigation', 'terrain', 'discipline', 'health', 'body', 'hike', 'trek', 'route', 'camp', 'explore', 'safety', 'first aid'],
+      label: 'Physical Power Readiness',
+      duty: 'Build physical strength, endurance, conditioning, mobility, restraint, and lawful preparedness to serve and protect without oppression.',
+      tags: ['physical', 'strength', 'power', 'endurance', 'conditioning', 'mobility', 'discipline', 'health', 'body', 'safety', 'first aid', 'restraint', 'ruck', 'run', 'sprint'],
     },
     {
       id: 'service',

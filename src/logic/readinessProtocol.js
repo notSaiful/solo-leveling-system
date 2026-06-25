@@ -25,13 +25,13 @@ export function containsUnsafeReadinessIntent(text = '') {
 }
 
 export function createReadinessEntry(input = {}) {
-  const actionType = READINESS_ACTION_LABELS[input.actionType] ? input.actionType : 'route-scouting';
+  const actionType = READINESS_ACTION_LABELS[input.actionType] ? input.actionType : 'strength';
   const intensity = READINESS_INTENSITY_LABELS[input.intensity] ? input.intensity : 'moderate';
   const action = normalizeText(input.action, 220);
   const restraintLesson = normalizeText(input.restraintLesson, 220);
   const combinedText = [input.action, input.restraintLesson, input.note].join(' ');
 
-  if (!action) throw new Error('Readiness entry needs the concrete Adventure or restraint action.');
+  if (!action) throw new Error('Readiness entry needs the concrete training or restraint action.');
   if (containsUnsafeReadinessIntent(combinedText)) {
     throw new Error('Readiness must remain lawful: no vigilantism, revenge, threats, or unlawful violence.');
   }
@@ -65,7 +65,7 @@ export function createReadinessHistoryEntry(entry) {
     title: `Readiness: ${entry.actionLabel}`,
     description: entry.restraintLesson || entry.action,
     pillar: 'body',
-    tags: ['readiness', 'adventure', 'outdoor', 'navigation', 'discipline', 'restraint', 'lawful', 'protection', entry.actionType, entry.intensity],
+    tags: ['readiness', 'strength', 'conditioning', 'physical', 'discipline', 'restraint', 'lawful', 'protection', entry.actionType, entry.intensity],
     missionDuty: 'readiness',
     source: 'readiness-protocol',
     xp: 0,
@@ -97,7 +97,7 @@ export function getReadinessMetrics(entries = []) {
     ? Math.round(restraintEntries.reduce((sum, entry) => sum + (Number(entry.restraintScore) || 0), 0) / restraintEntries.length)
     : 0;
   const byAction = entries.reduce((acc, entry) => {
-    const key = entry.actionType || 'route-scouting';
+    const key = entry.actionType || 'strength';
     acc[key] = (acc[key] || 0) + 1;
     return acc;
   }, {});
