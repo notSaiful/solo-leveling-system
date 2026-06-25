@@ -550,7 +550,7 @@ describe('mission doctrine and metrics', () => {
 
     expect(review.weeklyCoverage).toBe(40);
     expect(review.weakestDuty.id).toBe('readiness');
-    expect(review.command).toContain('Adventure readiness');
+    expect(review.command).toContain('Physical Power readiness');
   });
 
   it('creates and replaces a sealed weekly mission review note', () => {
