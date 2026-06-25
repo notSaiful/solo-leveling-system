@@ -18,6 +18,7 @@ import {
 } from '../data/missionGates';
 import { MONARCH_STAGES } from '../logic/monarchTrials';
 import { getItemTierLabel, getItemColorClass, getSetBonusStatus } from '../data/equipment';
+import PowerLog from './PowerLog';
 
 const RANK_ORDER = ['E', 'D', 'C', 'B', 'A', 'S'];
 
@@ -299,6 +300,9 @@ export default function Legion({ state, setState }) {
           </div>
         )}
       </div>
+
+      {/* ───────── PHYSICAL POWER LOG ───────── */}
+      <PowerLog state={state} setState={setState} />
 
       {/* ───────── EQUIPMENT + SKILLS ───────── */}
       {hasEquipment && (
