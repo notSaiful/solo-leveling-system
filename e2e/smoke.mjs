@@ -89,20 +89,22 @@ process.on('SIGTERM', () => { cleanup(); process.exit(143); });
     await load(page, null);
     check('app boots (fresh state)', await healthy(page));
     const navTexts = (await page.locator('nav button').allTextContents()).map((t) => t.trim()).filter(Boolean);
-    check('7 bottom-nav tabs', navTexts.length >= 7, navTexts.join('|'));
-    check('Missions tab present', navTexts.some((l) => /^missions$/i.test(l)));
-    check('Legion tab present', navTexts.some((l) => /^legion$/i.test(l)));
+    check('4 bottom-nav tabs', navTexts.length === 4, navTexts.join('|'));
+    check('Quests tab present', navTexts.some((l) => /^quests$/i.test(l)));
+    check('Workouts tab present', navTexts.some((l) => /^workouts$/i.test(l)));
+    check('Ummah Ledger tab present', navTexts.some((l) => /^ummah ledger$/i.test(l)));
 
-    await clickNav(page, /^Legion$/);
-    check('Legion renders (fresh)', (await healthy(page)) && (await page.getByText('SHADOW ARMY').count()) > 0);
-    check('Legion: JOB CHANGE GATES section', (await page.getByText('JOB CHANGE GATES').count()) > 0);
-    check('Legion: KHALIFATE OBJECTIVES section', (await page.getByText('KHALIFATE OBJECTIVES').count()) > 0);
+    await clickNav(page, /^Quests$/);
+    check('Quests renders (fresh, no collapse)', (await healthy(page)) && (await page.getByText('Forge Status').count()) > 0);
 
-    await clickNav(page, /^Missions$/);
-    check('Missions renders (fresh, no collapse)', await healthy(page));
+    await clickNav(page, /^Workouts$/);
+    check('Workouts renders (fresh, power log visible)', (await healthy(page)) && (await page.getByText(/PHYSICAL POWER/i).count()) > 0);
 
-    await clickNav(page, /^Stats$/);
-    check('Stats renders (fresh, no collapse — Skull import guard)', await healthy(page));
+    await clickNav(page, /^Ummah Ledger$/);
+    check('Ummah Ledger renders (fresh, no collapse)', (await healthy(page)) && (await page.getByText('Readiness & Restraint Protocol').count()) > 0);
+
+    await clickNav(page, /^Settings$/);
+    check('Settings renders (fresh, no collapse)', (await healthy(page)) && (await page.getByText('System Settings').count()) > 0);
     await ctx.close();
 
     // ── 2. SEEDED ENDGAME STATE ──
@@ -111,24 +113,17 @@ process.on('SIGTERM', () => { cleanup(); process.exit(143); });
     await load(page2, makeSeededState());
     check('app boots (seeded endgame)', await healthy(page2));
 
-    await clickNav(page2, /^Legion$/);
-    check('Legion renders (seeded)', await healthy(page2));
-    check('Legion: extracted shadow chip', (await page2.getByText('Shadow of Movement').count()) > 0);
-    check('Legion: active gate Day 2/7', (await page2.getByText(/Day 2\/7/).count()) > 0);
-    check('Legion: MONARCH TRIAL section', (await page2.getByText('MONARCH TRIAL').count()) > 0);
+    await clickNav(page2, /^Quests$/);
+    check('Quests renders (seeded, overall level correct)', (await healthy(page2)) && (await page2.getByText(/LEVEL 10/i).count()) > 0);
 
-    await clickNav(page2, /^Stats$/);
-    check('Stats renders (seeded endgame, no collapse)', await healthy(page2));
+    await clickNav(page2, /^Workouts$/);
+    check('Workouts renders (seeded)', await healthy(page2));
+
+    await clickNav(page2, /^Ummah Ledger$/);
+    check('Ummah Ledger renders (seeded)', await healthy(page2));
     await ctx2.close();
 
     // ── 3. SELF-TEST: a render throw is ISOLATED, not a full collapse ──
-    // Loads ?selftest=crash which mounts a component that throws on render inside
-    // a real SectionErrorBoundary. The throw must be caught locally (localized
-    // "unstable" notice) — NOT propagate to the top-level ErrorBoundary (no
-    // "SYSTEM COLLAPSE"), NOT fire an uncaught pageerror, and the app must stay
-    // fully usable (nav present, a real tab still renders). This is the
-    // regression guard for "the app never collapses on its own": a throw in any
-    // section degrades gracefully instead of taking down everything.
     const ctx3 = await browser.newContext({ viewport: { width: 1280, height: 800 } });
     const page3 = await ctx3.newPage();
     const selfErrs = [];
@@ -140,13 +135,13 @@ process.on('SIGTERM', () => { cleanup(); process.exit(143); });
     check('self-test: SectionErrorBoundary fallback shown',
       (await page3.getByText(/SELF-TEST UNSTABLE/i).count()) > 0);
     const navAfterCrash = (await page3.locator('nav button').allTextContents()).map((t) => t.trim()).filter(Boolean);
-    check('self-test: app still alive (nav present)', navAfterCrash.length >= 7);
+    check('self-test: app still alive (nav present)', navAfterCrash.length === 4);
     check('self-test: no uncaught pageerror (boundary caught the throw)',
       selfErrs.length === 0, selfErrs[0] || '');
     // The app must remain fully usable — click a real tab and confirm it renders.
-    await page3.locator('nav button').filter({ hasText: /^Missions$/ }).first().click();
+    await page3.locator('nav button').filter({ hasText: /^Ummah Ledger$/ }).first().click();
     await page3.waitForTimeout(300);
-    check('self-test: app usable after isolated throw (Missions renders, no collapse)',
+    check('self-test: app usable after isolated throw (Ummah Ledger renders, no collapse)',
       (await page3.getByText('SYSTEM COLLAPSE').count()) === 0);
     await ctx3.close();
   } catch (err) {

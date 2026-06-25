@@ -253,7 +253,7 @@ export default function Dashboard({ state, setState, ready = true }) {
           <RankBadge level={state.user.overallLevel} />
           <div className="flex-1 w-full space-y-4">
             <div className="flex items-center justify-between mb-2">
-              <div className="system-header text-glow-khalifa text-khalifa-gold/80">Monarch Status</div>
+              <div className="system-header text-glow-khalifa text-khalifa-gold/80">Forge Status</div>
               <div className="font-orbitron text-[10px] text-khalifa-steel tracking-widest">{new Date().toLocaleDateString('en-CA')}</div>
             </div>
 
@@ -272,18 +272,6 @@ export default function Dashboard({ state, setState, ready = true }) {
             </div>
           </div>
         </div>
-
-        {/* Stats row */}
-        {state.stats && (
-          <div className="grid grid-cols-6 gap-2 mt-6 pt-6 border-t border-khalifa-gold/10">
-            {Object.entries(state.stats).map(([key, val]) => (
-              <div key={key} className="text-center group">
-                <div className="text-[9px] text-khalifa-steel group-hover:text-khalifa-gold/60 transition-colors uppercase tracking-[0.2em]">{key.slice(0, 3)}</div>
-                <div className="text-sm font-orbitron font-bold text-khalifa-gold/90">{val}</div>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* Weekly Pillar Focus Selector */}

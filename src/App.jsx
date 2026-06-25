@@ -1,22 +1,18 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { LayoutDashboard, BarChart3, Swords, Settings, ShoppingBag, Sparkles, Skull, Coins, Zap, Crown, Heart, Target, AlertTriangle, RefreshCw } from 'lucide-react';
+import { LayoutDashboard, Settings, Zap, Heart, AlertTriangle, RefreshCw, Activity } from 'lucide-react';
 import { useStore } from './hooks/useStore';
 import { useLevelUp } from './hooks/useLevelUp';
 import { usePenaltyCheck } from './hooks/usePenaltyCheck';
 import Dashboard from './components/Dashboard';
-import StatsPanel from './components/StatsPanel';
-import WeeklyDungeon from './components/WeeklyDungeon';
+import PowerLog from './components/PowerLog';
 import SystemMessage from './components/SystemMessage';
-import RewardStore from './components/RewardStore';
-import StatDistribution from './components/StatDistribution';
 import AIAssistant from './components/AIAssistant';
-import Legion from './components/Legion';
 import MissionCommandCenter from './components/MissionCommandCenter';
 import SectionErrorBoundary from './components/SectionErrorBoundary';
 import { getCurrentWeekId } from './logic/dungeons';
 import { getFlowStateDisplay, initializeWeeklyDungeon } from './logic/questEngine';
 import { checkAndApplyPenalties } from './logic/penalties';
-import { getCharacterBuild } from './data/stats';
+import { getRankByLevel } from './data/questCatalog';
 import { DEFAULT_STATE, initCloudSync, syncNow, loadState, STORAGE_KEY } from './data/store';
 import { isCanonicalSyncConfigured } from './services/canonicalSync';
 import { getLocalDateString } from './utils/dateUtils';
@@ -135,6 +131,7 @@ export default function App() {
   const [cloudReady, setCloudReady] = useState(() => !isCanonicalSyncConfigured());
 
   const guidedEnabled = !!state.guidedMode?.enabled;
+  const rank = getRankByLevel(state.user.overallLevel);
 
   // Self-test flag — inert unless ?selftest=crash is in the URL.
   const selfTestCrash = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('selftest') === 'crash';
@@ -142,7 +139,7 @@ export default function App() {
   // Check penalties on mount (only when Guided Mode is on — no quests/dungeons to miss otherwise)
   usePenaltyCheck(state, setState, cloudReady && guidedEnabled);
 
-  const [activeTab, setActiveTab] = useState('missions');
+  const [activeTab, setActiveTab] = useState('quests');
 
   // Cloud init on mount — loads cloud state silently, syncs continuously afterward
   useEffect(() => {
@@ -241,16 +238,11 @@ export default function App() {
   }, [cloudReady, state.customQuests, state.flowState?.active, state.flowState?.expiresAt]);
 
   const flowDisplay = getFlowStateDisplay(state.flowState);
-  const build = getCharacterBuild(state.stats || {});
 
   const tabs = [
-    { id: 'missions', label: 'Missions', icon: Target },
-    { id: 'legion', label: 'Legion', icon: Skull },
-    { id: 'stats', label: 'Stats', icon: BarChart3 },
-    ...(guidedEnabled ? [{ id: 'guided', label: 'Guided', icon: LayoutDashboard }] : []),
-    ...(guidedEnabled ? [{ id: 'dungeons', label: 'Dungeons', icon: Swords }] : []),
-    { id: 'store', label: 'Store', icon: ShoppingBag },
-    { id: 'build', label: 'Build', icon: Sparkles },
+    { id: 'quests', label: 'Quests', icon: LayoutDashboard },
+    { id: 'workouts', label: 'Workouts', icon: Activity },
+    { id: 'ledger', label: 'Ummah Ledger', icon: Heart },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
@@ -267,8 +259,7 @@ export default function App() {
         <SystemMessage notification={notification} onDismiss={dismiss} />
       </SectionErrorBoundary>
 
-      {/* Header */}
-      <header className="relative z-10 p-3 sm:p-4 border-b border-khalifa-gold/10 bg-khalifa-void/90 backdrop-blur-md">
+       <header className="relative z-10 p-3 sm:p-4 border-b border-khalifa-gold/10 bg-khalifa-void/90 backdrop-blur-md">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2 sm:gap-3">
             <div className="relative">
@@ -286,25 +277,8 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className="flex items-center gap-1 text-[10px] sm:text-xs text-khalifa-steel hidden sm:flex uppercase tracking-widest font-orbitron">
-              <Sparkles size={12} className="text-khalifa-gold/40" />
-              <span>{build.name}</span>
-            </div>
-            {state.skillPoints > 0 && (
-              <div className="flex items-center gap-1 bg-khalifa-purple/10 border border-khalifa-purple/30 px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs">
-                <Zap size={12} className="text-khalifa-purple" />
-                <span className="font-bold text-khalifa-purple font-orbitron">{state.skillPoints} SP</span>
-              </div>
-            )}
-            {state.ummahCommand?.unlocked && (
-              <div className="flex items-center gap-1 bg-khalifa-gold/10 border border-khalifa-gold/30 px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs">
-                <Crown size={12} className="text-khalifa-gold" />
-                <span className="font-bold text-khalifa-gold hidden sm:inline uppercase tracking-widest font-orbitron">Ummah</span>
-              </div>
-            )}
-            <div className="flex items-center gap-1 bg-khalifa-amber/10 border border-khalifa-amber/30 px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs">
-              <Coins size={12} className="text-khalifa-amber" />
-              <span className="font-bold text-khalifa-amber font-orbitron">{Number(state.gold || 0).toLocaleString()}</span>
+            <div className="flex items-center gap-1 text-[10px] sm:text-xs text-khalifa-gold/80 font-bold uppercase tracking-widest font-orbitron">
+              {rank.title} · Level {state.user.overallLevel}
             </div>
           </div>
         </div>
@@ -312,39 +286,29 @@ export default function App() {
 
       {/* Main Content */}
       <main className="relative z-10 py-4 px-2 sm:px-4">
-        {activeTab === 'missions' && (
-          <SectionErrorBoundary label="Missions">
+        {activeTab === 'quests' && (
+          <SectionErrorBoundary label="Quests">
+            {guidedEnabled ? (
+              <Dashboard state={state} setState={setState} ready={cloudReady} />
+            ) : (
+              <div className="max-w-2xl mx-auto p-6 text-center space-y-4 glass-panel-khalifa border border-yellow-500/20">
+                <LayoutDashboard size={48} className="mx-auto text-khalifa-gold/50" />
+                <h3 className="font-playfair text-lg font-bold text-khalifa-gold">Daily Quests Suspended</h3>
+                <p className="text-sm text-khalifa-steel/80 max-w-sm mx-auto">
+                  Guided Mode is currently disabled. Enable it in Settings to receive and track your daily Deen, Body, and Money quests.
+                </p>
+              </div>
+            )}
+          </SectionErrorBoundary>
+        )}
+        {activeTab === 'workouts' && (
+          <SectionErrorBoundary label="Workouts">
+            <PowerLog state={state} setState={setState} />
+          </SectionErrorBoundary>
+        )}
+        {activeTab === 'ledger' && (
+          <SectionErrorBoundary label="Ummah Ledger">
             <MissionCommandCenter state={state} setState={setState} />
-          </SectionErrorBoundary>
-        )}
-        {activeTab === 'legion' && (
-          <SectionErrorBoundary label="Legion">
-            <Legion state={state} setState={setState} />
-          </SectionErrorBoundary>
-        )}
-        {activeTab === 'guided' && (
-          <SectionErrorBoundary label="Guided">
-            <Dashboard state={state} setState={setState} ready={cloudReady} />
-          </SectionErrorBoundary>
-        )}
-        {activeTab === 'stats' && (
-          <SectionErrorBoundary label="Stats">
-            <StatsPanel state={state} />
-          </SectionErrorBoundary>
-        )}
-        {activeTab === 'dungeons' && (
-          <SectionErrorBoundary label="Dungeons">
-            <WeeklyDungeon state={state} setState={setState} />
-          </SectionErrorBoundary>
-        )}
-        {activeTab === 'store' && (
-          <SectionErrorBoundary label="Store">
-            <RewardStore state={state} setState={setState} />
-          </SectionErrorBoundary>
-        )}
-        {activeTab === 'build' && (
-          <SectionErrorBoundary label="Build">
-            <StatDistribution state={state} setState={setState} />
           </SectionErrorBoundary>
         )}
         {activeTab === 'settings' && (
