@@ -284,7 +284,7 @@ const RAW_LEVEL_QUESTS = [
     description: 'You have been chosen. The Khalifate begins with a single step: prayer, first steps on earth, and a line of code.',
     quests: [
       { id: 'lq-e-1-1', title: 'First Prayer on Time', description: 'Pray one salah exactly on time today. This is your first awakening — the leader begins with salah.', steps: ['Check prayer time for your city.','When the time enters, stop what you are doing and pray within 5 minutes.','Say one dua after the prayer asking Allah to accept it.'], xp: 50, pillar: 'deen' },
-      { id: 'lq-e-1-2', title: 'Adventure Activation', description: 'Walk 1,000 steps on a new route and spend 5 minutes barefoot on grass or soil. The adventurer begins with the earth.', steps: ['Open your step counter or health app.','Walk a street or path you have never walked before until you hit 1,000 steps.','Find grass, soil, or sand. Stand barefoot for 5 minutes. Breathe.'], xp: 30, pillar: 'body' },
+      { id: 'lq-e-1-2', title: 'First Forge Activation', description: 'Walk 1,000 steps, then 10 push-ups and 10 bodyweight squats. The forge ignites with the first rep on the earth Allah placed under your feet.', steps: ['Open your step counter or health app.','Walk a street or path you have never walked before until you hit 1,000 steps.','Find grass, soil, or sand. Stand barefoot for 5 minutes, then do 10 push-ups and 10 squats. Breathe.'], xp: 30, pillar: 'body' },
       { id: 'lq-e-1-3', title: 'First AI Tool Mastery', description: 'Use an AI tool to complete one real money-making or productivity task — draft a pitch, research a market, analyze a stock, or automate a workflow. High-leverage tools are the Khalifate\'s weapon.', steps: ['Open Claude, ChatGPT, or any AI tool.','Pick one real task you need done today: write an email, research a topic, make a list, or summarize a document.','Type your request, get the result, and use it.'], xp: 30, pillar: 'money' },
     ],
     reward: { gold: 50, statPoints: 1, message: 'The System has recognized you. Welcome, Seeker. The Khalifate is forged.' },
@@ -294,7 +294,7 @@ const RAW_LEVEL_QUESTS = [
     description: 'Commit to the path. Consistency is the seed of all greatness.',
     quests: [
       { id: 'lq-e-2-1', title: '3-Day Prayer Streak', description: 'Pray all 5 prayers on time for 3 consecutive days.', steps: ['Set prayer reminders on your phone for all 5 prayers.','When each reminder fires, pray within 10 minutes.','Do this for 3 days in a row. If you miss one, restart the count.'], xp: 60, pillar: 'deen' },
-      { id: 'lq-e-2-2', title: 'Movement Habit', description: 'Walk or explore outdoors 10 minutes every day for 3 days.', steps: ['Put on shoes and step outside.','Walk for exactly 10 minutes. No phone scrolling. Just walk and observe.','Repeat for 3 days in a row. Log each day.'], xp: 40, pillar: 'body' },
+      { id: 'lq-e-2-2', title: 'Movement Habit', description: 'Walk or train outdoors 10 minutes every day for 3 days.', steps: ['Put on shoes and step outside.','Walk for exactly 10 minutes. No phone scrolling. Just walk and observe.','Repeat for 3 days in a row. Log each day.'], xp: 40, pillar: 'body' },
       { id: 'lq-e-2-3', title: 'AI Learning Streak', description: 'Study one AI concept (15 min) every day for 3 days. The Khalifate learns daily.', steps: ['Pick one topic: what is ChatGPT, how do LLMs work, or what is a neural net.','Read one article or watch one video for 15 minutes.','Write one sentence summarizing what you learned. Repeat for 3 days.'], xp: 40, pillar: 'money' },
     ],
     reward: { gold: 60, statPoints: 1, message: 'Your vow has been recorded. The System watches.' },
@@ -334,7 +334,7 @@ const RAW_LEVEL_QUESTS = [
     description: 'Habits are forged in repetition. Your will is the hammer.',
     quests: [
       { id: 'lq-e-6-1', title: 'All Prayers Week', description: 'All 5 prayers on time for 7 consecutive days.', steps: ['Set 5 prayer reminders on your phone.','Pray each salah within 15 minutes of its time.','Do this for 7 days. If you miss one, restart.'], xp: 100, pillar: 'deen' },
-      { id: 'lq-e-6-2', title: 'Movement Mastery', description: '30 minutes of outdoor movement (walk, explore, or climb) every day for 7 days.', steps: ['Go outside.','Walk, explore, or climb for 30 minutes.','Do this for 7 days. Log the route or duration each day.'], xp: 80, pillar: 'body' },
+      { id: 'lq-e-6-2', title: 'Movement Mastery', description: '30 minutes of outdoor training (walk, ruck, or calisthenics) every day for 7 days.', steps: ['Go outside.','Walk, ruck, or do calisthenics for 30 minutes.','Do this for 7 days. Log the route or duration each day.'], xp: 80, pillar: 'body' },
       { id: 'lq-e-6-3', title: 'Spending Awareness', description: 'Categorize all expenses for 7 days.', steps: ['Open a notes app or spreadsheet.','Every time you spend money, write the amount and category: food, transport, bills, entertainment, etc.','Review after 7 days. See where your money actually goes.'], xp: 80, pillar: 'money' },
     ],
     reward: { gold: 100, statPoints: 1, message: 'Your habits are being forged in fire.' },
@@ -354,7 +354,7 @@ const RAW_LEVEL_QUESTS = [
     description: 'Never miss twice. This is the secret of the strong.',
     quests: [
       { id: 'lq-e-8-1', title: '14-Day Deen Streak', description: 'Complete all daily Deen quests for 14 days.', steps: ['Open the app every day.','Complete every Deen quest shown that day.','Do this for 14 days. If you miss one, restart.'], xp: 120, pillar: 'deen' },
-      { id: 'lq-e-8-2', title: '14-Day Adventure Streak', description: 'Complete all daily Adventure quests for 14 days.', steps: ['Open the app every day.','Complete every Adventure quest shown that day.','Do this for 14 days. If you miss one, restart.'], xp: 100, pillar: 'body' },
+      { id: 'lq-e-8-2', title: '14-Day Training Streak', description: 'Complete all daily Body quests for 14 days.', steps: ['Open the app every day.','Complete every Body quest shown that day.','Do this for 14 days. If you miss one, restart.'], xp: 100, pillar: 'body' },
       { id: 'lq-e-8-3', title: '14-Day Money Streak', description: 'Complete all daily Money quests for 14 days.', steps: ['Open the app every day.','Complete every Money quest shown that day.','Do this for 14 days. If you miss one, restart.'], xp: 100, pillar: 'money' },
     ],
     reward: { gold: 120, statPoints: 2, message: 'Streaks are proof of your discipline. Keep them alive.' },
@@ -374,7 +374,7 @@ const RAW_LEVEL_QUESTS = [
     description: 'You have proven yourself. The Khalifate begins. First AI project deployment is mandatory.',
     quests: [
       { id: 'lq-e-10-1', title: 'The 21-Day Challenge', description: 'Complete ALL daily quests across all pillars for 21 consecutive days.', steps: ['Open the app every single day.','Complete every daily quest shown: Deen, Adventure, and Money.','Do this for 21 days. If you miss even one quest, restart.'], xp: 200, pillar: 'deen' },
-      { id: 'lq-e-10-2', title: 'Adventure Test', description: 'Walk 5,000 steps on uneven ground, climb one set of stairs 10 times, and spend 15 minutes outside without a phone.', steps: ['Walk 5,000 steps on grass, trail, gravel, or any uneven surface.','Find stairs. Climb them 10 times.','Sit or walk outside for 15 minutes with your phone in airplane mode.'], xp: 150, pillar: 'body' },
+      { id: 'lq-e-10-2', title: 'First Forge Test', description: 'Walk 5,000 steps, climb one set of stairs 10 times, do 20 push-ups and 20 squats, and spend 15 minutes outside without a phone.', steps: ['Walk 5,000 steps on grass, gravel, or any uneven surface.','Find stairs. Climb them 10 times.','Do 20 push-ups and 20 squats. Then sit or walk outside for 15 minutes with your phone in airplane mode.'], xp: 150, pillar: 'body' },
       { id: 'lq-e-10-3', title: 'Launch First AI-Assisted Service', description: 'Offer a service or product powered by AI tools to one real person — even a friend — and deliver results. Shipping value is the Khalifate\'s first weapon.', steps: ['Pick one thing you can do with AI help: write a resume, design a flyer, research a topic, or draft emails.','Message one person offering to help them with it for free or for a small fee.','Use AI to deliver the result. Send it. Get feedback.'], xp: 200, pillar: 'money' },
     ],
     reward: { gold: 200, statPoints: 3, rankUp: 'D', message: 'RANK UP! You are now a D-Rank Apprentice. The Khalifate begins.' },
@@ -397,7 +397,7 @@ const RAW_LEVEL_QUESTS = [
     level: 14, rank: 'D', title: 'The Warrior\'s Adventure',
     description: 'Your outdoor readiness is an amanah. Strengthen it as the strong believer is better.',
     quests: [
-      { id: 'lq-d-14-1', title: '30-Day Outdoor Discipline', description: 'Spend 30 minutes outside every day for 30 days: walk, hike, climb, or explore. Minimum 30 min/day.', steps: ['Go outside every day.','Spend 30 minutes walking, hiking, climbing stairs, or exploring.','Do this for 30 days. Log each day. Rain or shine.'], xp: 180, pillar: 'body' },
+      { id: 'lq-d-14-1', title: '30-Day Outdoor Discipline', description: 'Spend 30 minutes outside every day for 30 days: walk, ruck, climb stairs, or train. Minimum 30 min/day.', steps: ['Go outside every day.','Spend 30 minutes walking, rucking, climbing stairs, or training.','Do this for 30 days. Log each day. Rain or shine.'], xp: 180, pillar: 'body' },
       { id: 'lq-d-14-2', title: 'Nutrition Overhaul', description: 'Eat clean (no processed food) for 14 days.', steps: ['For 14 days, eat only food that was cooked at home or whole foods: rice, dal, vegetables, eggs, fruit, nuts.','Avoid packaged snacks, chips, soda, instant noodles, and restaurant food.','Log what you ate for 3 days to prove discipline.'], xp: 150, pillar: 'body' },
       { id: 'lq-d-14-3', title: 'Sleep Mastery', description: 'Sleep by 9:30pm and wake without alarm for 14 days.', steps: ['Start winding down at 9:00pm.','Be in bed by 9:30pm with all screens off.','Try to wake at Fajr without an alarm. If you fail, use a soft alarm. Do this for 14 days.'], xp: 150, pillar: 'body' },
     ],
@@ -418,7 +418,7 @@ const RAW_LEVEL_QUESTS = [
     description: 'Consistency is the mark of the serious. Amateurs practice until they get it right. Professionals practice until they cannot get it wrong.',
     quests: [
       { id: 'lq-d-17-1', title: '30-Day Deen Streak', description: 'Complete daily Deen quests for 30 days.', steps: ['Open the app every day.','Complete every Deen quest shown.','Do this for 30 days. If you miss one, restart.'], xp: 200, pillar: 'deen' },
-      { id: 'lq-d-17-2', title: '30-Day Adventure Streak', description: 'Complete daily Adventure quests for 30 days.', steps: ['Open the app every day.','Complete every Adventure quest shown.','Do this for 30 days. If you miss one, restart.'], xp: 180, pillar: 'body' },
+      { id: 'lq-d-17-2', title: '30-Day Training Streak', description: 'Complete daily Body quests for 30 days.', steps: ['Open the app every day.','Complete every Body quest shown.','Do this for 30 days. If you miss one, restart.'], xp: 180, pillar: 'body' },
       { id: 'lq-d-17-3', title: '30-Day Money Streak', description: 'Complete daily Money quests for 30 days.', steps: ['Open the app every day.','Complete every Money quest shown.','Do this for 30 days. If you miss one, restart.'], xp: 180, pillar: 'money' },
     ],
     reward: { gold: 200, statPoints: 2, message: 'Consistency is your superpower.' },
@@ -438,7 +438,7 @@ const RAW_LEVEL_QUESTS = [
     description: 'You are no longer a generalist. Specialization creates mastery.',
     quests: [
       { id: 'lq-d-22-1', title: 'Deen Specialization', description: 'Choose one Islamic science (fiqh, tafsir, hadith, seerah) and study it for 30 days.', steps: ['Pick one topic: fiqh of salah, tafsir of Juz Amma, 40 hadith of Nawawi, or seerah of Madinah.','Find one book, course, or video series on it.','Study it for 15 minutes every day for 30 days. Write one sentence of notes each day.'], xp: 220, pillar: 'deen' },
-      { id: 'lq-d-22-2', title: 'Adventure Specialization', description: 'Choose one outdoor domain (hiking, navigation, climbing, or endurance) and focus for 30 days.', steps: ['Pick one skill: map reading, compass use, stair climbing, or long-distance walking.','Practice it 3 times per week for 30 days.','Log each session: what you did, what you learned, and what to improve.'], xp: 200, pillar: 'body' },
+      { id: 'lq-d-22-2', title: 'Training Specialization', description: 'Choose one training domain (running, calisthenics, rucking, or mobility) and focus for 30 days.', steps: ['Pick one skill: push-up progression, squat progression, ruck walking, or mobility flow.','Practice it 3 times per week for 30 days.','Log each session: what you did, what you learned, and what to improve.'], xp: 200, pillar: 'body' },
       { id: 'lq-d-22-3', title: 'Money Specialization', description: 'Choose one wealth domain (investing, business, skills) and focus for 30 days.', steps: ['Pick one domain: stock analysis, freelance writing, AI automation, or e-commerce.','Study or practice it for 30 minutes, 3 times per week for 30 days.','Ship one real output: a stock note, a portfolio, a client pitch, or a product listing.'], xp: 200, pillar: 'money' },
     ],
     reward: { gold: 250, statPoints: 3, message: 'Specialization unlocks mastery.' },
@@ -448,7 +448,7 @@ const RAW_LEVEL_QUESTS = [
     description: 'You have outgrown D-Rank. Ship one AI product and the C-Rank awaits.',
     quests: [
       { id: 'lq-d-25-1', title: 'The 45-Day Gauntlet', description: 'Complete ALL daily quests for 45 consecutive days.', steps: ['Open the app every single day.','Complete every daily quest shown.','Do this for 45 days. One miss = restart.'], xp: 300, pillar: 'deen' },
-      { id: 'lq-d-25-2', title: 'Adventure Test: D-Rank', description: 'Hike 5km on trail or uneven ground, carry a weighted pack for 20 minutes, and complete 20 minutes of outdoor movement.', steps: ['Walk 5km on a trail, park path, or uneven ground.','Fill a backpack with 2-5kg and carry it for 20 minutes.','Do 20 more minutes of outdoor movement: walking, climbing stairs, or exploring.'], xp: 250, pillar: 'body' },
+      { id: 'lq-d-25-2', title: 'Forge Test: D-Rank', description: 'Ruck 5km on ground or stairs, carry a weighted pack for 20 minutes, and complete 20 minutes of outdoor training.', steps: ['Walk 5km on ground, a park path, or stairs.','Fill a backpack with 2-5kg and carry it for 20 minutes.','Do 20 more minutes of outdoor training: walking, climbing stairs, or calisthenics.'], xp: 250, pillar: 'body' },
       { id: 'lq-d-25-3', title: 'Close First AI-Assisted Sale', description: 'Make your first sale or earn your first income using AI tools to deliver value. Revenue is the only validation. The Khalifate\'s first income must reach the Ummah.', steps: ['Pick a service you can deliver with AI help: writing, research, design, translation, or data work.','Find one client: friend, family, Fiverr, LinkedIn, or WhatsApp group.','Deliver the work using AI tools. Collect payment. Screenshot or note the amount.'], xp: 300, pillar: 'money' },
     ],
     reward: { gold: 300, statPoints: 4, rankUp: 'C', message: 'RANK UP! You are now a C-Rank Builder. The Khalifate begins to take form.' },
@@ -462,7 +462,7 @@ const RAW_LEVEL_QUESTS = [
     description: 'The best way to learn is to teach. Share what you have gained.',
     quests: [
       { id: 'lq-c-27-1', title: 'Teach Deen', description: 'Teach one Islamic concept to someone else. Record or write it.', xp: 250, pillar: 'deen' },
-      { id: 'lq-c-27-2', title: 'Teach Outdoor Movement', description: 'Take someone on an outdoor walk, hike, or exploration. Teach them to notice their surroundings.', xp: 220, pillar: 'body' },
+      { id: 'lq-c-27-2', title: 'Teach Outdoor Movement', description: 'Take someone on an outdoor training walk or ruck. Teach them to move with intention and observe their surroundings.', xp: 220, pillar: 'body' },
       { id: 'lq-c-27-3', title: 'Teach Finance', description: 'Explain one financial concept to a friend or family member.', xp: 220, pillar: 'money' },
     ],
     reward: { gold: 250, statPoints: 3, message: 'Teaching cements your knowledge.' },
@@ -472,7 +472,7 @@ const RAW_LEVEL_QUESTS = [
     description: 'Adventure, mind, and soul as one. Readiness to serve. Devotion to lead. The Mujahid\'s oath binds you to excellence.',
     quests: [
       { id: 'lq-c-30-1', title: 'The Oath of Discipline', description: 'Commit to 60 days of perfect daily quest completion.', xp: 350, pillar: 'deen' },
-      { id: 'lq-c-30-2', title: 'The Adventure Trial', description: 'Complete an outdoor challenge: 5km hike, 1-hour trail walk, or climb a significant hill. The pathfinder is forged in the wild.', xp: 300, pillar: 'body' },
+      { id: 'lq-c-30-2', title: 'The Forge Trial', description: 'Complete a training challenge: 5km ruck, 1-hour strength circuit, or climb a significant hill. The Khalifa is forged in the fire of training.', xp: 300, pillar: 'body' },
       { id: 'lq-c-30-3', title: 'The Wealth Pledge', description: 'Set up automatic investing, AI revenue stream, and charity. The Khalifate\'s wealth must flow automatically.', xp: 300, pillar: 'money' },
     ],
     reward: { gold: 400, statPoints: 4, jobChange: 'mujahid', message: 'JOB CHANGE: You are now a Mujahid. Adventure, mind, and soul as one.' },
@@ -492,7 +492,7 @@ const RAW_LEVEL_QUESTS = [
     description: 'True power is lifting others. Build community around your growth.',
     quests: [
       { id: 'lq-c-36-1', title: 'Study Circle', description: 'Start or join a weekly Islamic study circle (online or in person).', xp: 300, pillar: 'deen' },
-      { id: 'lq-c-36-2', title: 'Outdoor Community', description: 'Explore outdoors with a partner or group 3 times this month.', xp: 250, pillar: 'body' },
+      { id: 'lq-c-36-2', title: 'Outdoor Community', description: 'Train outdoors with a partner or group 3 times this month.', xp: 250, pillar: 'body' },
       { id: 'lq-c-36-3', title: 'Financial Accountability', description: 'Find an accountability partner for financial goals. Check in weekly.', xp: 250, pillar: 'money' },
     ],
     reward: { gold: 300, statPoints: 3, message: 'Community multiplies your barakah.' },
@@ -512,7 +512,7 @@ const RAW_LEVEL_QUESTS = [
     description: 'Lead community, spar, build income stream. The Guardian is the shield of those in his care.',
     quests: [
       { id: 'lq-c-40-1', title: 'The 60-Day Crusade', description: 'Complete ALL daily quests for 60 consecutive days.', xp: 400, pillar: 'deen' },
-      { id: 'lq-c-40-2', title: 'The Adventure Crusade', description: 'Complete a 10K trek or a multi-terrain outdoor challenge. The Guardian does not retreat from the trail.', xp: 350, pillar: 'body' },
+      { id: 'lq-c-40-2', title: 'The Forge Crusade', description: 'Complete a 10K ruck or a heavy loaded-carry circuit. The Guardian does not retreat from the forge.', xp: 350, pillar: 'body' },
       { id: 'lq-c-40-3', title: 'The Wealth Crusade', description: 'Achieve 6 months of expenses saved + 3 income streams (at least one AI-driven). The Khalifate is diversified.', xp: 350, pillar: 'money' },
     ],
     reward: { gold: 400, statPoints: 5, rankUp: 'B', message: 'RANK UP! You are now a B-Rank Guardian. The Ummah\'s shield is forged.' },
@@ -536,7 +536,7 @@ const RAW_LEVEL_QUESTS = [
     description: 'Command others with justice. Lead a community. Build for the Ummah. The Qa\'id leads in the name of Allah.',
     quests: [
       { id: 'lq-b-50-1', title: "The Qa'id's Devotion", description: 'Pray Tahajjud + Witr for 30 consecutive days. The leader\'s night prayer sustains his day.', xp: 400, pillar: 'deen' },
-      { id: 'lq-b-50-2', title: "The Qa'id's Strength", description: 'Complete a 3-hour trek with elevation gain, climb a rocky incline, and carry a weighted pack for 30 minutes. The Khalifa\'s body is unbreakable.', xp: 350, pillar: 'body' },
+      { id: 'lq-b-50-2', title: "The Qa'id's Strength", description: 'Complete a 3-hour ruck with elevation gain, climb a rocky incline, and carry a weighted pack for 30 minutes. The Khalifa\'s body is unbreakable.', xp: 350, pillar: 'body' },
       { id: 'lq-b-50-3', title: "The Qa'id's Wealth", description: 'Achieve positive cash flow from your AI business or halal investment. The Khalifate\'s wealth flows from honest work.', xp: 350, pillar: 'money' },
     ],
     reward: { gold: 450, statPoints: 5, jobChange: 'qa-id', message: 'JOB CHANGE: You are now a Qa\'id. Command with justice. Build for the Ummah.' },
@@ -546,7 +546,7 @@ const RAW_LEVEL_QUESTS = [
     description: 'Power without strategy is wasted. Plan your conquest.',
     quests: [
       { id: 'lq-b-53-1', title: 'Strategic Worship', description: 'Plan your week around peak spiritual times: Tahajjud, Jumuah, last third of night.', xp: 350, pillar: 'deen' },
-      { id: 'lq-b-53-2', title: 'Strategic Training', description: 'Design and follow a 30-day outdoor progression plan: distances, elevations, and terrain types.', xp: 300, pillar: 'body' },
+      { id: 'lq-b-53-2', title: 'Strategic Training', description: 'Design and follow a 30-day training progression plan: distances, elevations, and load types.', xp: 300, pillar: 'body' },
       { id: 'lq-b-53-3', title: 'Strategic Wealth', description: 'Create a 5-year financial independence plan with milestones.', xp: 300, pillar: 'money' },
     ],
     reward: { gold: 350, statPoints: 4, message: 'Strategy turns effort into conquest.' },
@@ -556,7 +556,7 @@ const RAW_LEVEL_QUESTS = [
     description: 'Your habits command other habits. You are a general of discipline.',
     quests: [
       { id: 'lq-b-56-1', title: 'Command Your Shadows', description: 'Maintain 5+ automatic habits simultaneously for 30 days.', xp: 400, pillar: 'deen' },
-      { id: 'lq-b-56-2', title: 'Adventure Command', description: 'Lead an outdoor group activity: a hike, nature walk, or exploration. Lead by example.', xp: 350, pillar: 'body' },
+      { id: 'lq-b-56-2', title: 'Training Command', description: 'Lead an outdoor group training session: a ruck walk, calisthenics circuit, or strength class. Lead by example.', xp: 350, pillar: 'body' },
       { id: 'lq-b-56-3', title: 'Wealth Command', description: 'Automate your entire financial system: earning, saving, investing, giving.', xp: 350, pillar: 'money' },
     ],
     reward: { gold: 400, statPoints: 5, shadowUnlock: 'general-shadow', message: 'General Shadow extracted. Your discipline commands armies.' },
@@ -566,7 +566,7 @@ const RAW_LEVEL_QUESTS = [
     description: 'Your outdoor ability is not for you alone. It is for the ummah.',
     quests: [
       { id: 'lq-b-60-1', title: 'Ummah Service', description: 'Volunteer 10+ hours for an Islamic or community organization this month.', xp: 400, pillar: 'deen' },
-      { id: 'lq-b-60-2', title: 'Strength for Service', description: 'Use your outdoor ability to help someone: carry their load on a hike, help them navigate, or guide them through terrain.', xp: 350, pillar: 'body' },
+      { id: 'lq-b-60-2', title: 'Strength for Service', description: 'Use your strength to help someone: carry their load on a ruck, help them train, or guide them through a hard session.', xp: 350, pillar: 'body' },
       { id: 'lq-b-60-3', title: 'Wealth for Ummah', description: 'Donate significantly to an ummah cause. Make it hurt a little.', xp: 350, pillar: 'money' },
     ],
     reward: { gold: 400, statPoints: 5, message: 'The ummah is your family. Protect and serve.' },
@@ -586,7 +586,7 @@ const RAW_LEVEL_QUESTS = [
     description: 'Knights serve. The Khalifa ascends. Empire employing Muslims. 100+ person event. Elite outdoor endurance. The Khalifate is ready.',
     quests: [
       { id: 'lq-b-70-1', title: 'The 90-Day War', description: 'Complete ALL daily quests for 90 consecutive days. The Khalifate is consistent.', xp: 500, pillar: 'deen' },
-      { id: 'lq-b-70-2', title: 'The Adventure War', description: 'Complete a half-day trek (4+ hours), summit a hill or mountain, or navigate 10km in wilderness. The Khalifa is expedition-ready.', xp: 450, pillar: 'body' },
+      { id: 'lq-b-70-2', title: 'The Forge War', description: 'Complete a half-day ruck (4+ hours), summit a hill or mountain, or carry a heavy load for 10km. The Khalifa is forged for burden.', xp: 450, pillar: 'body' },
       { id: 'lq-b-70-3', title: 'The Wealth War', description: 'Achieve 12 months of expenses saved + 5 income streams + AI business employing Muslims. The Khalifate\'s treasury is built.', xp: 450, pillar: 'money' },
     ],
     reward: { gold: 500, statPoints: 6, rankUp: 'A', message: 'RANK UP! You are now an A-Rank Strategist. The Khalifate awaits.' },
@@ -600,7 +600,7 @@ const RAW_LEVEL_QUESTS = [
     description: 'Leaders create other leaders. Your legacy is measured by those you elevate.',
     quests: [
       { id: 'lq-a-73-1', title: 'Mentorship Program', description: 'Formally mentor one person in Deen, Adventure, or Money for 30 days.', xp: 450, pillar: 'deen' },
-      { id: 'lq-a-73-2', title: 'Lead by Outdoor Endurance', description: 'Lead a group outdoor expedition consistently for a month. The Khalifa walks first and checks on everyone behind him.', xp: 400, pillar: 'body' },
+      { id: 'lq-a-73-2', title: 'Lead by Outdoor Endurance', description: 'Lead a group outdoor training session consistently for a month. The Khalifa walks first and checks on everyone behind him.', xp: 400, pillar: 'body' },
       { id: 'lq-a-73-3', title: 'Wealth Mentorship', description: 'Guide someone to their first investment or income stream.', xp: 400, pillar: 'money' },
     ],
     reward: { gold: 450, statPoints: 5, message: 'Leaders create leaders. This is your legacy.' },
@@ -610,7 +610,7 @@ const RAW_LEVEL_QUESTS = [
     description: 'The Khalifate does not follow the System. The System follows the Khalifate. The Ummah\'s General is forged.',
     quests: [
       { id: 'lq-a-76-1', title: "The Khalifa's Prayer", description: 'Pray Tahajjud with deep khushoo for 45+ minutes for 30 days. The Khalifate\'s night prayer is the source of all power.', xp: 500, pillar: 'deen' },
-      { id: 'lq-a-76-2', title: "The Khalifa's Adventure", description: 'Achieve elite outdoor endurance: complete a multi-hour expedition, solo trek, or lead a wilderness group. The Khalifa moves with purpose through any terrain.', xp: 450, pillar: 'body' },
+      { id: 'lq-a-76-2', title: "The Khalifa's Forge", description: 'Achieve elite strength: complete a multi-hour training session, solo ruck, or lead a training group. The Khalifa moves with purpose through any load.', xp: 450, pillar: 'body' },
       { id: 'lq-a-76-3', title: "The Khalifa's Wealth", description: 'Achieve financial independence or build an AI business that employs Muslims. The Khalifate\'s wealth funds the Ummah.', xp: 450, pillar: 'money' },
     ],
     reward: { gold: 600, statPoints: 6, jobChange: 'khalifa', message: 'JOB CHANGE: You are now a Khalifa. The Ummah\'s General has awakened.' },
@@ -620,7 +620,7 @@ const RAW_LEVEL_QUESTS = [
     description: 'Conquer yourself first. Then conquer the world.',
     quests: [
       { id: 'lq-a-80-1', title: 'Inner Jihad', description: 'Identify and defeat your greatest personal flaw. 30-day battle.', xp: 500, pillar: 'deen' },
-      { id: 'lq-a-80-2', title: 'Adventure Conquest', description: 'Conquer a major outdoor challenge: multi-day trek, wilderness navigation, or expedition leadership.', xp: 450, pillar: 'body' },
+      { id: 'lq-a-80-2', title: 'Forge Conquest', description: 'Conquer a major training challenge: multi-day ruck, heavy loaded carry, or strength milestone.', xp: 450, pillar: 'body' },
       { id: 'lq-a-80-3', title: 'Wealth Conquest', description: 'Build a system that generates halal wealth without your direct daily effort.', xp: 450, pillar: 'money' },
     ],
     reward: { gold: 500, statPoints: 6, message: 'The greatest conquest is the conquest of self.' },
@@ -630,7 +630,7 @@ const RAW_LEVEL_QUESTS = [
     description: 'Your outdoor endurance is the ummah\'s endurance. Your wealth is the ummah\'s wealth.',
     quests: [
       { id: 'lq-a-85-1', title: 'Ummah Project', description: 'Lead or fund a project that benefits 100+ Muslims.', xp: 500, pillar: 'deen' },
-      { id: 'lq-a-85-2', title: 'Outdoor for Ummah', description: 'Create an outdoor program or hiking group for Muslims. Nature is the Ummah\'s training ground.', xp: 450, pillar: 'body' },
+      { id: 'lq-a-85-2', title: 'Outdoor for Ummah', description: 'Create an outdoor training program or strength group for Muslims. The Ummah\'s body is a training ground.', xp: 450, pillar: 'body' },
       { id: 'lq-a-85-3', title: 'Wealth for Ummah', description: 'Create a fund, business, or investment that employs or benefits Muslims.', xp: 450, pillar: 'money' },
     ],
     reward: { gold: 500, statPoints: 6, message: 'The ummah rises with you.' },
@@ -640,7 +640,7 @@ const RAW_LEVEL_QUESTS = [
     description: 'Nothing stops you. Not fear. Not fatigue. Not failure. You rise every time.',
     quests: [
       { id: 'lq-a-90-1', title: 'The 120-Day Legend', description: 'Complete ALL daily quests for 120 consecutive days.', xp: 600, pillar: 'deen' },
-      { id: 'lq-a-90-2', title: 'Legendary Endurance', description: 'Maintain legendary outdoor endurance for 1 year without major breaks. The wilderness is your training ground.', xp: 500, pillar: 'body' },
+      { id: 'lq-a-90-2', title: 'Legendary Endurance', description: 'Maintain legendary outdoor endurance for 1 year without major breaks. The forge is your training ground.', xp: 500, pillar: 'body' },
       { id: 'lq-a-90-3', title: 'Legendary Wealth', description: 'Achieve complete financial independence (passive income > expenses).', xp: 500, pillar: 'money' },
     ],
     reward: { gold: 600, statPoints: 7, message: 'You are unstoppable. The System bows to your will.' },
@@ -650,7 +650,7 @@ const RAW_LEVEL_QUESTS = [
     description: 'Ummah project. Marathon. Mentorship. The Khalifate proves itself on the world stage.',
     quests: [
       { id: 'lq-a-99-1', title: 'The Final Trial', description: 'Complete ALL daily quests for 180 consecutive days. The Khalifate is consistent for a generation.', xp: 700, pillar: 'deen' },
-      { id: 'lq-a-99-2', title: 'The Adventure Apex', description: 'Achieve an outdoor endurance feat that 99% of humans cannot do: a major summit, solo trek, or expedition. The Khalifate is expedition-ready.', xp: 600, pillar: 'body' },
+      { id: 'lq-a-99-2', title: 'The Forge Apex', description: 'Achieve a strength feat that 99% of humans cannot do: a major summit carry, solo ruck, or elite lift. The Khalifate is forged for burden.', xp: 600, pillar: 'body' },
       { id: 'lq-a-99-3', title: 'The Wealth Apex', description: 'Build generational wealth that outlives you and benefits the Ummah for centuries. The Khalifate\'s legacy.', xp: 600, pillar: 'money' },
     ],
     reward: { gold: 700, statPoints: 8, rankUp: 'S', message: 'RANK UP! You are now an S-Rank Monarch. The Khalifate is complete.' },
@@ -664,7 +664,7 @@ const RAW_LEVEL_QUESTS = [
     description: 'The Khalifate is complete. The System now serves the Ummah. "Arise."',
     quests: [
       { id: 'lq-s-100-1', title: 'The Eternal Quest', description: 'Maintain all habits for 365 consecutive days. Become the habit. The Khalifate is consistent for a year.', xp: 1000, pillar: 'deen' },
-      { id: 'lq-s-100-2', title: 'The Eternal Adventure', description: 'Maintain elite outdoor readiness for life. Terrain, navigation, and endurance become lifelong amanah.', xp: 800, pillar: 'body' },
+      { id: 'lq-s-100-2', title: 'The Eternal Strength', description: 'Maintain elite training for life. Strength, conditioning, and recovery become lifelong amanah.', xp: 800, pillar: 'body' },
       { id: 'lq-s-100-3', title: 'The Eternal Legacy', description: 'Build a legacy project (institution, AI fund, business) that benefits Muslims for generations. The Khalifate\'s shadow extends to the Day of Judgment.', xp: 800, pillar: 'money' },
     ],
     reward: { gold: 1000, statPoints: 10, shadowUnlock: 'monarch-army', message: 'THE MONARCH IS CROWNED. "ARISE." Your Khalifate is eternal.' },
@@ -674,7 +674,7 @@ const RAW_LEVEL_QUESTS = [
     description: 'There is no end. Only deeper levels.',
     quests: [
       { id: 'lq-s-105-1', title: 'Infinite Worship', description: 'Add one new act of worship and maintain it for 90 days.', xp: 500, pillar: 'deen' },
-      { id: 'lq-s-105-2', title: 'Infinite Endurance', description: 'Set and achieve a new outdoor milestone every month for a year: distance, elevation, or terrain conquered.', xp: 450, pillar: 'body' },
+      { id: 'lq-s-105-2', title: 'Infinite Endurance', description: 'Set and achieve a new training milestone every month for a year: distance, elevation, or load conquered.', xp: 450, pillar: 'body' },
       { id: 'lq-s-105-3', title: 'Infinite Wealth', description: '10x your net worth through halal means.', xp: 450, pillar: 'money' },
     ],
     reward: { gold: 500, statPoints: 5, message: 'The dungeon is infinite. Your growth is infinite.' },
@@ -684,7 +684,7 @@ const RAW_LEVEL_QUESTS = [
     description: 'You are the Shadow Monarch. Your habits are your army. Your discipline is your power.',
     quests: [
       { id: 'lq-s-110-1', title: 'Absolute Mastery', description: 'Maintain perfect consistency across all pillars for 1 year.', xp: 1000, pillar: 'deen' },
-      { id: 'lq-s-110-2', title: 'Absolute Power', description: 'Achieve an outdoor endurance feat in the top 1% of your age group: distance, elevation, or expedition difficulty.', xp: 800, pillar: 'body' },
+      { id: 'lq-s-110-2', title: 'Absolute Power', description: 'Achieve a strength feat in the top 1% of your age group: distance, elevation, or load carried.', xp: 800, pillar: 'body' },
       { id: 'lq-s-110-3', title: 'Absolute Wealth', description: 'Build a halal empire that employs 10+ Muslims and funds ummah projects.', xp: 800, pillar: 'money' },
     ],
     reward: { gold: 1000, statPoints: 10, message: 'You are the Shadow Monarch. "ARISE."' },
@@ -704,7 +704,7 @@ const RAW_LEVEL_QUESTS = [
     description: 'The fire never dies. The steel never cools. You are the forge itself.',
     quests: [
       { id: 'lq-s-130-1', title: 'Unbroken Dhikr Chain', description: 'Maintain continuous awareness of Allah for 30 days — dhikr between every action, every transition, every breath.', xp: 1300, pillar: 'deen' },
-      { id: 'lq-s-130-2', title: 'Combat Mastery', description: 'Achieve wilderness mastery: navigation, survival, and terrain skills to instructor level. You must be able to teach others to survive.', xp: 1100, pillar: 'body' },
+      { id: 'lq-s-130-2', title: 'Combat Mastery', description: 'Achieve strength and resilience mastery: load carriage, conditioning, and recovery to instructor level. You must be able to teach others to endure.', xp: 1100, pillar: 'body' },
       { id: 'lq-s-130-3', title: 'Wealth Multiplication', description: '10x one existing income stream through AI tools, automation, or strategic leverage. No new hours — only scale.', xp: 1100, pillar: 'money' },
     ],
     reward: { gold: 1300, statPoints: 13, message: 'The Eternal Forge produces steel that outlasts empires.' },
@@ -714,7 +714,7 @@ const RAW_LEVEL_QUESTS = [
     description: 'You no longer serve only your household. You are a shield for the entire Ummah.',
     quests: [
       { id: 'lq-s-140-1', title: 'Community Institution', description: 'Found or lead one Islamic institution that serves 50+ Muslims weekly: halaqa, study circle, outdoor group, or relief effort.', xp: 1400, pillar: 'deen' },
-      { id: 'lq-s-140-2', title: 'Protector\'s Physique', description: 'Maintain outdoor strength, endurance, and navigation standards that would allow you to guide and protect your family through any terrain.', xp: 1200, pillar: 'body' },
+      { id: 'lq-s-140-2', title: 'Protector\'s Physique', description: 'Maintain strength, endurance, and resilience standards that would allow you to guide and protect your family through any burden.', xp: 1200, pillar: 'body' },
       { id: 'lq-s-140-3', title: 'Ummah Treasury', description: 'Establish a dedicated fund that distributes 10% of your AI income to ummah causes automatically, every month, without decision fatigue.', xp: 1200, pillar: 'money' },
     ],
     reward: { gold: 1400, statPoints: 14, message: 'The Ummah\'s Shield does not rust.' },
@@ -724,7 +724,7 @@ const RAW_LEVEL_QUESTS = [
     description: 'Kingdoms are built one brick at a time. You have laid the foundation. Now build the walls.',
     quests: [
       { id: 'lq-s-150-1', title: 'Multi-Generational Quran', description: 'Teach Quran to at least 3 people who will teach others. Start a chain that outlasts your life.', xp: 1500, pillar: 'deen' },
-      { id: 'lq-s-150-2', title: 'Legacy Adventure', description: 'Document your complete outdoor protocol so your children and students can replicate your results.', xp: 1300, pillar: 'body' },
+      { id: 'lq-s-150-2', title: 'Legacy Training', description: 'Document your complete training protocol so your children and students can replicate your results.', xp: 1300, pillar: 'body' },
       { id: 'lq-s-150-3', title: 'Empire Infrastructure', description: 'Build the operational backbone of your empire: team, systems, documentation, and succession plan.', xp: 1300, pillar: 'money' },
     ],
     reward: { gold: 1500, statPoints: 15, message: 'Kingdom Builder. Your walls stand against time.' },
@@ -744,7 +744,7 @@ const RAW_LEVEL_QUESTS = [
     description: 'You do not build for today. You build for centuries.',
     quests: [
       { id: 'lq-s-170-1', title: 'Written Legacy', description: 'Write or record a complete work of Islamic knowledge that can benefit Muslims for 100+ years.', xp: 1700, pillar: 'deen' },
-      { id: 'lq-s-170-2', title: 'Adventure Legacy', description: 'Establish a permanent outdoor practice in your community: a hiking club, nature group, or wilderness skills class that operates without you.', xp: 1500, pillar: 'body' },
+      { id: 'lq-s-170-2', title: 'Training Legacy', description: 'Establish a permanent training practice in your community: a strength club, conditioning group, or mobility class that operates without you.', xp: 1500, pillar: 'body' },
       { id: 'lq-s-170-3', title: 'Economic Legacy', description: 'Build a business or investment structure that will outlast you and continue employing Muslims after your death.', xp: 1500, pillar: 'money' },
     ],
     reward: { gold: 1700, statPoints: 17, message: 'The Architect of Ages signs his name in stone.' },
@@ -754,7 +754,7 @@ const RAW_LEVEL_QUESTS = [
     description: 'The greatest enemy was never outside. It was the nafs. You have conquered it.',
     quests: [
       { id: 'lq-s-180-1', title: 'Complete Nafs Mastery', description: 'Identify your 3 greatest spiritual weaknesses and document the systems that keep them under control for 1 year.', xp: 1800, pillar: 'deen' },
-      { id: 'lq-s-180-2', title: 'Pain Immunity', description: 'Complete an outdoor challenge that tests your mental fortitude: solo night hike, 24-hour fast + trek, cold exposure protocol, or endurance navigation.', xp: 1600, pillar: 'body' },
+      { id: 'lq-s-180-2', title: 'Pain Immunity', description: 'Complete a training challenge that tests your mental fortitude: solo night ruck, 24-hour fast + loaded carry, cold exposure protocol, or endurance session.', xp: 1600, pillar: 'body' },
       { id: 'lq-s-180-3', title: 'Wealth Detachment', description: 'Live for 30 days on 50% of your normal spending while maintaining all obligations. Wealth is a tool, not a master.', xp: 1600, pillar: 'money' },
     ],
     reward: { gold: 1800, statPoints: 18, message: 'The Conqueror of Self has no rival.' },
@@ -784,7 +784,7 @@ const RAW_LEVEL_QUESTS = [
     description: 'Trials do not test you. They reveal what was already there.',
     quests: [
       { id: 'lq-s-250-1', title: 'Trial by Fire', description: 'Maintain all pillars perfectly through a major life disruption: relocation, loss, illness, or conflict. No excuses. No breaks.', xp: 2500, pillar: 'deen' },
-      { id: 'lq-s-250-2', title: 'Iron Adventure', description: 'Achieve and maintain outdoor endurance standards in the top 5% of natural athletes for 1 year: hiking distance, elevation gain, navigation speed, and loaded carry.', xp: 2200, pillar: 'body' },
+      { id: 'lq-s-250-2', title: 'Iron Strength', description: 'Achieve and maintain strength standards in the top 5% of natural athletes for 1 year: ruck distance, elevation gain, lift numbers, and loaded carry.', xp: 2200, pillar: 'body' },
       { id: 'lq-s-250-3', title: 'Iron Wealth', description: 'Build reserves that can fund your entire lifestyle for 5 years without any new income. The Khalifate is antifragile.', xp: 2200, pillar: 'money' },
     ],
     reward: { gold: 2500, statPoints: 25, message: 'The Unbreakable Will bends reality.' },
@@ -814,7 +814,7 @@ const RAW_LEVEL_QUESTS = [
     description: 'Your knowledge must leave your head and enter the Ummah. One student at a time. One nation at a time.',
     quests: [
       { id: 'lq-s-400-1', title: 'Scholarly Lineage', description: 'Establish a formal teaching chain: you teach 10, each teaches 10. Reach 100+ Muslims with structured knowledge.', xp: 4000, pillar: 'deen' },
-      { id: 'lq-s-400-2', title: 'Adventure Inheritance', description: 'Train 10 people to elite outdoor readiness: route planning, navigation, safety protocols, salah timing in the field, and the ability to teach others. Your strength multiplies through them.', xp: 3500, pillar: 'body' },
+      { id: 'lq-s-400-2', title: 'Training Inheritance', description: 'Train 10 people to elite training readiness: session planning, progression, safety protocols, salah timing in the field, and the ability to teach others. Your strength multiplies through them.', xp: 3500, pillar: 'body' },
       { id: 'lq-s-400-3', title: 'Economic Inheritance', description: 'Mentor 10 Muslims to financial independence through AI-powered income. Each must be able to replicate your system.', xp: 3500, pillar: 'money' },
     ],
     reward: { gold: 4000, statPoints: 40, message: 'The Teacher of Nations outlives empires.' },
@@ -824,7 +824,7 @@ const RAW_LEVEL_QUESTS = [
     description: 'Nothing stops you. Not age. Not circumstance. Not opinion. You are a force of nature.',
     quests: [
       { id: 'lq-s-450-1', title: 'Immovable Devotion', description: 'Pray Tahajjud every night for 2 years without a single miss. Even travel. Even illness. Even war.', xp: 4500, pillar: 'deen' },
-      { id: 'lq-s-450-2', title: 'Immovable Strength', description: 'Set an outdoor milestone at age 40+ that exceeds your age-25 best: distance, elevation, or expedition difficulty. Time does not weaken the Force.', xp: 4000, pillar: 'body' },
+      { id: 'lq-s-450-2', title: 'Immovable Strength', description: 'Set a strength milestone at age 40+ that exceeds your age-25 best: distance, elevation, or load carried. Time does not weaken the Force.', xp: 4000, pillar: 'body' },
       { id: 'lq-s-450-3', title: 'Immovable Wealth', description: 'Build an income stream that survives your death and continues growing for 50+ years. The Force does not stop.', xp: 4000, pillar: 'money' },
     ],
     reward: { gold: 4500, statPoints: 45, message: 'The Unstoppable Force reshapes the world.' },
@@ -834,7 +834,7 @@ const RAW_LEVEL_QUESTS = [
     description: 'Level 500. Half a thousand. The System has no record of anyone reaching this height. You are the first.',
     quests: [
       { id: 'lq-s-500-1', title: 'The Eternal Night Prayer', description: 'Pray Tahajjud for 500 consecutive nights. Each night is a brick in the palace of Jannah.', xp: 5000, pillar: 'deen' },
-      { id: 'lq-s-500-2', title: 'The Eternal Adventure', description: 'Maintain elite outdoor readiness for 10 consecutive years without a break longer than 3 days. Adventure is a lifelong amanah.', xp: 4500, pillar: 'body' },
+      { id: 'lq-s-500-2', title: 'The Eternal Forge', description: 'Maintain elite training for 10 consecutive years without a break longer than 3 days. The forge is a lifelong amanah.', xp: 4500, pillar: 'body' },
       { id: 'lq-s-500-3', title: 'The Eternal Empire', description: 'Build an empire that employs 50+ Muslims, funds 10+ ummah projects, and operates without your daily presence.', xp: 4500, pillar: 'money' },
     ],
     reward: { gold: 5000, statPoints: 50, message: 'HALF-MILLENNIUM MONARCH. The System bows. The Ummah rises.' },
@@ -854,7 +854,7 @@ const RAW_LEVEL_QUESTS = [
     description: 'The world changes. You do not. Not because you are rigid. Because you are rooted in truth.',
     quests: [
       { id: 'lq-s-700-1', title: 'Rooted in Tawhid', description: 'Teach tawhid to 1000+ Muslims through any medium: writing, speaking, video, or institution. Each soul is a victory.', xp: 7000, pillar: 'deen' },
-      { id: 'lq-s-700-2', title: 'Rooted in Strength', description: 'Your outdoor training has produced 100+ people who can navigate, endure, and protect themselves and their families through any terrain. Count them. Name them.', xp: 6500, pillar: 'body' },
+      { id: 'lq-s-700-2', title: 'Rooted in Strength', description: 'Your training has produced 100+ people who can endure, carry, and protect themselves and their families through any burden. Count them. Name them.', xp: 6500, pillar: 'body' },
       { id: 'lq-s-700-3', title: 'Rooted in Wealth', description: 'Your economic systems have created 100+ jobs for Muslims. Each job is a family fed. Each family is an ummah preserved.', xp: 6500, pillar: 'money' },
     ],
     reward: { gold: 7000, statPoints: 70, message: 'The Immovable is the foundation of the Ummah.' },
@@ -892,241 +892,241 @@ const RAW_LEVEL_QUESTS = [
 ];
 
 const ADVENTURE_LEVEL_QUEST_OVERRIDES = {
-  '1:lq-e-1-2:Adventure Activation': {
-    title: 'Adventure Activation',
-    description: 'Walk 1,000 steps on a new route and note 3 landmarks. The adventurer begins by learning the land Allah placed under his feet.',
+  '1:lq-e-1-2:First Forge Activation': {
+    title: 'First Forge Activation',
+    description: "Walk 1,000 steps and complete 10 push-ups + 10 bodyweight squats. The Khalifa's body is forged with the first rep on the earth Allah placed under his feet.",
   },
   '2:lq-e-2-2:Movement Habit': {
-    title: 'Explorer Habit',
-    description: 'Explore outdoors for 10 minutes every day for 3 days. Record one useful observation each day: route, people, terrain, safety, or quiet reflection.',
+    title: 'Training Habit',
+    description: 'Train outdoors for 10 minutes every day for 3 days. Record one observation each day: breathing, posture, route, or quiet reflection.',
   },
   '3:lq-e-3-2:Hydration Discipline': {
-    title: 'Trail Hydration Check',
-    description: 'Carry water on every outdoor walk for 5 days and log how much you drank. Adventure begins with preparation, not impulse.',
+    title: 'Forge Hydration Check',
+    description: 'Carry 1L of water every day for 5 days and log how much you drank. Training begins with preparation, not impulse.',
   },
   '4:lq-e-4-2:Strength Seed': {
-    title: 'Local Terrain Survey',
-    description: 'Walk outside every day for 7 days and identify one hill, park, trail, stair route, or open ground you can use for future expeditions.',
+    title: 'First Strength Standard',
+    description: 'Walk outside every day for 7 days and identify one ground - park, stairs, open field, or open space - you can use for daily push-ups, squats, and ruck walks.',
   },
   '5:lq-e-5-2:Sleep Discipline': {
-    title: 'Dawn Route Preparation',
-    description: 'Prepare clothes, water, and route the night before, then complete one early outdoor walk within 30 minutes after Fajr for 10 days.',
+    title: 'Dawn Training Preparation',
+    description: 'Prepare clothes, water, and training plan the night before, then complete one early push-up + squat session within 30 minutes after Fajr for 10 days.',
   },
   '6:lq-e-6-2:Movement Mastery': {
-    title: 'Seven-Day Explorer Loop',
-    description: 'Complete 30 minutes of outdoor exploration every day for 7 days: walk, climb stairs, visit a park, or scout a new route.',
+    title: 'Seven-Day Training Loop',
+    description: 'Complete 30 minutes of outdoor training every day for 7 days: walk, climb stairs, do calisthenics, or run a new loop.',
   },
   '7:lq-e-7-2:Nutrition Awareness': {
-    title: 'Trail Ration Discipline',
-    description: 'Prepare a simple halal outdoor snack or meal plan for 5 days. No careless buying on the road. The explorer carries what he needs.',
+    title: 'Training Fuel Discipline',
+    description: 'Prepare a simple halal training meal plan for 5 days. No careless buying on the road. The Khalifa carries the fuel his training demands.',
   },
-  '8:lq-e-8-2:14-Day Adventure Streak': {
-    title: '14-Day Adventure Streak',
-    description: 'Complete all daily Adventure quests for 14 days. Streaks prove you can leave comfort repeatedly.',
+  '8:lq-e-8-2:14-Day Training Streak': {
+    title: '14-Day Training Streak',
+    description: 'Complete all daily Body quests for 14 days. Streaks prove you can return to the forge repeatedly.',
   },
   '9:lq-e-9-2:Early Sleep Mastery': {
-    title: 'Sunrise Scout',
-    description: 'Complete 3 sunrise or early-morning outdoor sessions within 14 days. Observe light, route safety, and one place worth revisiting.',
+    title: 'Sunrise Training',
+    description: 'Complete 3 sunrise or early-morning training sessions within 14 days: push-ups, squats, and a walk. Observe breathing, posture, and one standard worth beating.',
   },
-  '10:lq-e-10-2:Adventure Test': {
-    title: 'E-Rank Adventure Test',
-    description: 'Walk 5,000 steps on mixed terrain, climb stairs or a hill, and spend 15 minutes outside without phone distraction. Submit one route note.',
+  '10:lq-e-10-2:First Forge Test': {
+    title: 'E-Rank Forge Test',
+    description: 'Walk 5,000 steps, climb stairs or a hill 10 times, complete 20 push-ups + 20 squats, and spend 15 minutes outside without phone distraction. Submit one training note.',
   },
   '14:lq-d-14-1:30-Day Outdoor Discipline': {
-    title: '30-Day Outdoor Discipline',
-    description: 'Spend 30 minutes outside every day for 30 days: walk, hike, climb, scout routes, or explore useful places for future content.',
+    title: '30-Day Training Discipline',
+    description: 'Spend 30 minutes outside every day for 30 days: walk, climb stairs, train calisthenics, or run a loop. Build a body that answers every call.',
   },
   '14:lq-d-14-2:Nutrition Overhaul': {
-    title: 'Adventure Kit Audit',
-    description: 'Build a basic adventure kit: water, cap, first-aid basics, power bank, prayer mat or clean prayer plan, and weather-ready clothing.',
+    title: 'Training Kit Audit',
+    description: 'Build a basic training kit: water, proper shoes, resistance band or weighted pack, prayer mat or clean prayer plan, and weather-ready clothing.',
   },
   '14:lq-d-14-3:Sleep Mastery': {
-    title: 'Weekly Route Library',
-    description: 'Create a list of 7 local adventure routes with distance, difficulty, transport, prayer options, and safety notes.',
+    title: 'Weekly Training Plan Library',
+    description: 'Create a list of 7 weekly training sessions with target reps, distance, intensity, prayer options, and recovery notes.',
   },
-  '17:lq-d-17-2:30-Day Adventure Streak': {
-    title: '30-Day Adventure Streak',
-    description: 'Complete daily Adventure quests for 30 days. Build consistency across streets, parks, hills, routes, and weather.',
+  '17:lq-d-17-2:30-Day Training Streak': {
+    title: '30-Day Training Streak',
+    description: 'Complete daily Body quests for 30 days. Build consistency across push-ups, squats, ruck walks, and weather.',
   },
   '20:lq-d-20-2:Morning Routine Lock': {
-    title: 'Fajr-to-Field Routine',
-    description: 'Execute a complete morning route routine for 21 days: Fajr, adhkar, route check, outdoor movement, and one observation logged.',
+    title: 'Fajr-to-Forge Routine',
+    description: 'Execute a complete morning training routine for 21 days: Fajr, adhkar, mobility drill, push-ups + squats, and one observation logged.',
   },
-  '22:lq-d-22-2:Adventure Specialization': {
-    title: 'Adventure Specialization',
-    description: 'Choose one outdoor domain - hiking, navigation, climbing, camping prep, cycling, or terrain photography - and train it for 30 days.',
+  '22:lq-d-22-2:Training Specialization': {
+    title: 'Training Specialization',
+    description: 'Choose one training domain - running, calisthenics, rucking, mobility, weighted carry, or strength circuits - and train it for 30 days.',
   },
-  '25:lq-d-25-2:Adventure Test: D-Rank': {
-    title: 'D-Rank Adventure Test',
-    description: 'Complete a 5km trail or uneven-ground route, carry a loaded pack for 20 minutes, and document the route for future repeat use.',
+  '25:lq-d-25-2:Forge Test: D-Rank': {
+    title: 'D-Rank Forge Test',
+    description: 'Complete a 5km ruck on ground or stairs, carry a loaded pack for 20 minutes, and log the session for future repeat use.',
   },
   '27:lq-c-27-2:Teach Outdoor Movement': {
-    title: 'Teach Route Awareness',
-    description: 'Take someone on an outdoor walk, hike, or exploration. Teach route awareness, safety, prayer planning, and respect for the environment.',
+    title: 'Teach Training Basics',
+    description: 'Take someone on an outdoor walk or training session. Teach breathing, posture, push-up and squat form, prayer planning, and respect for the body Allah gave you.',
   },
-  '30:lq-c-30-2:The Adventure Trial': {
-    title: 'C-Rank Adventure Trial',
-    description: 'Complete one outdoor challenge: 5km hike, 1-hour trail walk, hill climb, or navigation walk. Record lessons for your adventure archive.',
+  '30:lq-c-30-2:The Forge Trial': {
+    title: 'C-Rank Forge Trial',
+    description: 'Complete one training challenge: 5km ruck, 1-hour strength circuit, hill climb, or loaded carry. Record lessons for your training archive.',
   },
   '33:lq-c-33-2:Elite Recovery': {
-    title: 'Adventure Recovery Protocol',
-    description: 'Build a recovery protocol for adventure days: hydration, sleep, stretching, foot care, gear cleaning, and next-route notes.',
+    title: 'Training Recovery Protocol',
+    description: 'Build a recovery protocol for training days: hydration, sleep, stretching, mobility, protein, and next-session notes.',
   },
   '36:lq-c-36-2:Outdoor Community': {
-    title: 'Outdoor Community',
-    description: 'Explore outdoors with a partner or group 3 times this month. Keep it halal, safe, punctual with salah, and beneficial.',
+    title: 'Training Community',
+    description: 'Train outdoors with a partner or group 3 times this month. Keep it halal, safe, punctual with salah, and beneficial.',
   },
   '40:lq-c-40-2:Movement Mastery': {
-    title: 'Outdoor Skill Mastery',
-    description: 'Master one adventure skill: map reading, orienteering, knots, fire safety, weather reading, basic first aid, or route photography.',
+    title: 'Training Skill Mastery',
+    description: 'Master one training skill: handstand push-up progression, pistol squat, muscle-up, loaded carry, or mobility flow.',
   },
-  '40:lq-c-40-2:The Adventure Crusade': {
-    title: 'C-Rank Adventure Crusade',
-    description: 'Complete a 10km trek or multi-terrain outdoor challenge. Document distance, time, terrain, risk points, and one lesson for others.',
+  '40:lq-c-40-2:The Forge Crusade': {
+    title: 'C-Rank Forge Crusade',
+    description: 'Complete a 10km ruck or heavy loaded-carry circuit. Document distance, time, load, effort, and one lesson for others.',
   },
   '47:lq-b-47-2:Protect Your Health': {
-    title: 'Adventure Safety Audit',
-    description: 'Audit your adventure readiness: footwear, hydration, first aid, weather plan, emergency contact, prayer plan, and route risk level.',
+    title: 'Training Safety Audit',
+    description: 'Audit your training readiness: footwear, mobility, warm-up, load progression, recovery, prayer plan, and injury risk.',
   },
   '50:lq-b-50-2:The Qa\'id\'s Strength': {
-    title: "The Qa'id's Expedition",
-    description: 'Complete a 3-hour trek with elevation gain, a rocky incline or stair climb, and a loaded pack. Lead yourself with discipline.',
+    title: "The Qa'id's Forge",
+    description: 'Complete a 3-hour ruck with elevation gain, a rocky incline or stair climb, and a loaded pack. Lead yourself with discipline.',
   },
   '53:lq-b-53-2:Strategic Training': {
-    title: 'Strategic Adventure Plan',
-    description: 'Design and follow a 30-day adventure progression plan: routes, distances, elevation, skills, weather windows, and content notes.',
+    title: 'Strategic Training Plan',
+    description: 'Design and follow a 30-day training progression plan: routes, distances, loads, reps, weather windows, and recovery notes.',
   },
-  '56:lq-b-56-2:Adventure Command': {
-    title: 'Adventure Command',
-    description: 'Lead an outdoor group activity: hike, nature walk, route scouting, or exploration. Lead with safety, salah timing, and service.',
+  '56:lq-b-56-2:Training Command': {
+    title: 'Training Command',
+    description: 'Lead an outdoor group training session: ruck walk, calisthenics circuit, strength class, or mobility flow. Lead with safety, salah timing, and service.',
   },
   '60:lq-b-60-2:Strength for Service': {
-    title: 'Adventure for Service',
-    description: 'Use outdoor skill to help someone: guide a route, carry load, teach navigation, plan a safe walk, or introduce them to nature.',
+    title: 'Strength for Service',
+    description: 'Use your strength to help someone: carry their load, teach a lift, guide a training session, or support a struggling brother.',
   },
   '65:lq-b-65-2:Sick Discipline': {
-    title: 'Low-Energy Adventure Protocol',
-    description: 'Create and test a minimum viable adventure protocol for difficult days: balcony sunlight, short walk, gear prep, or route study.',
+    title: 'Low-Energy Training Protocol',
+    description: 'Create and test a minimum viable training protocol for difficult days: mobility on the balcony, short walk, light bodyweight work, or breathing.',
   },
-  '70:lq-b-70-2:The Adventure War': {
-    title: 'B-Rank Adventure Gate',
-    description: 'Complete a half-day trek, summit a hill or mountain, or navigate 10km using planned waypoints. The Khalifa is expedition-ready.',
+  '70:lq-b-70-2:The Forge War': {
+    title: 'B-Rank Forge Gate',
+    description: 'Complete a half-day ruck, summit a hill or mountain, or carry a heavy load for 10km using planned waypoints. The Khalifa is forged for burden.',
   },
   '73:lq-a-73-2:Lead by Outdoor Endurance': {
-    title: 'Lead an Adventure Circle',
-    description: 'Lead a group outdoor expedition consistently for a month. Include safety brief, prayer timing, route notes, and post-trip reflection.',
+    title: 'Lead a Training Circle',
+    description: 'Lead a group outdoor training session consistently for a month. Include safety brief, prayer timing, warm-up, the workout, and post-session reflection.',
   },
-  '76:lq-a-76-2:The Khalifa\'s Adventure': {
-    title: "The Khalifa's Adventure",
-    description: 'Complete an elite outdoor project: multi-hour expedition, solo trek, wilderness route, or guided group journey with documented lessons.',
+  '76:lq-a-76-2:The Khalifa\'s Forge': {
+    title: "The Khalifa's Forge",
+    description: 'Complete an elite training project: multi-hour strength session, solo ruck, loaded carry, or guided group workout with documented lessons.',
   },
-  '80:lq-a-80-2:Adventure Conquest': {
-    title: 'Adventure Conquest',
-    description: 'Conquer a major outdoor challenge: multi-day trek plan, wilderness navigation, summit attempt, cycling route, or expedition leadership.',
+  '80:lq-a-80-2:Forge Conquest': {
+    title: 'Forge Conquest',
+    description: 'Conquer a major training challenge: multi-day ruck plan, heavy loaded carry, strength milestone, running PR, or leading a hard session.',
   },
   '85:lq-a-85-2:Outdoor for Ummah': {
-    title: 'Adventure for Ummah',
-    description: 'Create an outdoor program, hiking group, nature walk, or route guide for Muslims. Make nature a lawful training ground and reflection space.',
+    title: 'Training for Ummah',
+    description: 'Create an outdoor training program, strength class, ruck group, or mobility session for Muslims. Make the body a lawful training ground and reflection space.',
   },
   '90:lq-a-90-2:Legendary Endurance': {
-    title: 'Legendary Adventure Consistency',
-    description: 'Maintain serious outdoor adventure consistency for 1 year: monthly milestone, weekly route, route archive, and safety discipline.',
+    title: 'Legendary Training Consistency',
+    description: 'Maintain serious training consistency for 1 year: monthly milestone, weekly session, training archive, and recovery discipline.',
   },
-  '99:lq-a-99-2:The Adventure Apex': {
-    title: 'A-Rank Adventure Apex',
-    description: 'Achieve an outdoor feat most people never attempt: major summit, solo trek, expedition route, or published adventure guide.',
+  '99:lq-a-99-2:The Forge Apex': {
+    title: 'A-Rank Forge Apex',
+    description: 'Achieve a training feat most people never attempt: major summit carry, solo ruck, elite lift, or published training guide.',
   },
-  '100:lq-s-100-2:The Eternal Adventure': {
-    title: 'The Eternal Adventure',
-    description: 'Design your lifetime adventure doctrine: terrain standards, safety rules, content principles, family participation, and Ummah benefit.',
+  '100:lq-s-100-2:The Eternal Strength': {
+    title: 'The Eternal Strength',
+    description: 'Design your lifetime training doctrine: strength standards, conditioning rules, recovery principles, family participation, and Ummah benefit.',
   },
   '105:lq-s-105-2:Infinite Endurance': {
-    title: 'Infinite Adventure Milestones',
-    description: 'Set and complete one new adventure milestone every month for a year: distance, elevation, terrain, navigation, content, or leadership.',
+    title: 'Infinite Training Milestones',
+    description: 'Set and complete one new training milestone every month for a year: distance, load, reps, strength standard, or leadership.',
   },
   '110:lq-s-110-2:Absolute Power': {
-    title: 'Absolute Expedition Standard',
-    description: 'Complete an adventure feat in the top 1% of your circle: distance, elevation, expedition difficulty, route design, or leadership complexity.',
+    title: 'Absolute Strength Standard',
+    description: 'Complete a training feat in the top 1% of your circle: distance, load, lift difficulty, rep standard, or leadership complexity.',
   },
   '120:lq-s-120-2:Elite Athletic Maintenance': {
-    title: 'Elite Adventure Maintenance',
-    description: 'Maintain elite outdoor endurance and navigation readiness for 90 consecutive days with route logs, gear care, and safety discipline.',
+    title: 'Elite Training Maintenance',
+    description: 'Maintain elite strength and conditioning for 90 consecutive days with session logs, recovery care, and progression discipline.',
   },
   '130:lq-s-130-2:Combat Mastery': {
-    title: 'Wilderness Mastery',
-    description: 'Achieve wilderness mastery: navigation, shelter basics, weather judgment, first aid, route planning, and teaching others to stay safe.',
+    title: 'Training Mastery',
+    description: 'Achieve training mastery: strength progressions, conditioning, mobility, recovery, and teaching others to train safely.',
   },
   '140:lq-s-140-2:Protector\'s Physique': {
-    title: "Protector's Expedition Readiness",
-    description: 'Maintain outdoor endurance, navigation, and risk-awareness standards that let you guide family or community through demanding terrain.',
+    title: "Protector's Forge Readiness",
+    description: 'Maintain strength, conditioning, and loaded-carry standards that let you guide family or community through demanding loads and long days.',
   },
-  '150:lq-s-150-2:Legacy Adventure': {
-    title: 'Legacy Adventure Protocol',
-    description: 'Document your complete adventure protocol so family, students, and Muslims can replicate it safely: routes, gear, adab, salah, and risks.',
+  '150:lq-s-150-2:Legacy Training': {
+    title: 'Legacy Training Protocol',
+    description: 'Document your complete training protocol so family, students, and Muslims can replicate it safely: sessions, loads, adab, salah, and recovery.',
   },
   '160:lq-s-160-2:Lifetime Endurance': {
-    title: 'Lifetime Adventure Protocol',
-    description: 'Design an outdoor adventure protocol you can maintain until age 70 with modest gear. Test it for 90 days and refine it.',
+    title: 'Lifetime Training Protocol',
+    description: 'Design a training protocol you can maintain until age 70 with modest gear. Test it for 90 days and refine it.',
   },
-  '170:lq-s-170-2:Adventure Legacy': {
-    title: 'Permanent Adventure Practice',
-    description: 'Establish a permanent outdoor practice in your community: hiking club, nature group, route archive, or wilderness skills class.',
+  '170:lq-s-170-2:Training Legacy': {
+    title: 'Permanent Training Practice',
+    description: 'Establish a permanent training practice in your community: strength club, ruck group, conditioning class, or mobility session.',
   },
   '180:lq-s-180-2:Pain Immunity': {
-    title: 'Fortitude Expedition',
-    description: 'Complete an adventure that tests mental fortitude: solo night walk, long fast plus trek, cold-rain route, or demanding navigation day.',
+    title: 'Fortitude Session',
+    description: 'Complete a training session that tests mental fortitude: solo night ruck, long fast plus training, cold-rain session, or demanding loaded carry.',
   },
   '190:lq-s-190-2:Genetic Investment': {
-    title: 'Family Adventure Inheritance',
-    description: 'Build a family adventure system: child-safe routes, spouse-friendly walks, emergency rules, nature adab, and recurring outdoor memories.',
+    title: 'Family Training Inheritance',
+    description: 'Build a family training system: child-safe sessions, spouse-friendly training, recovery rules, training adab, and recurring strength memories.',
   },
   '200:lq-s-200-2:Automatic Strength': {
-    title: 'Automatic Adventure',
-    description: 'Maintain perfect outdoor adventure consistency for 180 days: weekly route, monthly milestone, safety checklist, and route archive.',
+    title: 'Automatic Training',
+    description: 'Maintain perfect training consistency for 180 days: weekly session, monthly milestone, recovery checklist, and training archive.',
   },
-  '250:lq-s-250-2:Iron Adventure': {
-    title: 'Iron Adventure Standard',
-    description: 'Achieve and maintain top-tier outdoor adventure standards for 1 year: hiking distance, elevation, navigation speed, and loaded carry.',
+  '250:lq-s-250-2:Iron Strength': {
+    title: 'Iron Strength Standard',
+    description: 'Achieve and maintain top-tier strength standards for 1 year: ruck distance, elevation gain, lift numbers, and loaded carry.',
   },
   '300:lq-s-300-2:Time Compression': {
-    title: 'Adventure Time Mastery',
-    description: 'Complete an adventure protocol inside a compressed schedule for 30 days: route, prayer, work, family duty, and documentation without chaos.',
+    title: 'Training Time Mastery',
+    description: 'Complete a training protocol inside a compressed schedule for 30 days: session, prayer, work, family duty, and recovery without chaos.',
   },
   '350:lq-s-350-2:Steward\'s Health': {
-    title: "Steward's Outdoor Amanah",
-    description: 'Maintain outdoor readiness for 1 year while stewarding wealth and service. You cannot guide others if your own routes collapse.',
+    title: "Steward's Body Amanah",
+    description: 'Maintain training readiness for 1 year while stewarding wealth and service. You cannot guide others if your own body collapses.',
   },
-  '400:lq-s-400-2:Adventure Inheritance': {
-    title: 'Adventure Inheritance',
-    description: 'Train 10 Muslims to B-rank outdoor standards: route planning, navigation, safety, salah timing, and teaching others.',
+  '400:lq-s-400-2:Training Inheritance': {
+    title: 'Training Inheritance',
+    description: 'Train 10 Muslims to B-rank training standards: session planning, progression, safety, salah timing, and teaching others.',
   },
   '450:lq-s-450-2:Immovable Strength': {
-    title: 'Immovable Adventure',
-    description: 'Set an outdoor milestone at age 40+ that exceeds an earlier benchmark: distance, elevation, expedition difficulty, or route leadership.',
+    title: 'Immovable Training',
+    description: 'Set a training milestone at age 40+ that exceeds an earlier benchmark: distance, load, lift difficulty, or session leadership.',
   },
-  '500:lq-s-500-2:The Eternal Adventure': {
-    title: 'The Eternal Adventure',
-    description: 'Maintain elite outdoor readiness for 10 consecutive years without a break longer than 3 days. Adventure becomes legacy, not hobby.',
+  '500:lq-s-500-2:The Eternal Forge': {
+    title: 'The Eternal Forge',
+    description: 'Maintain elite training for 10 consecutive years without a break longer than 3 days. The forge becomes legacy, not hobby.',
   },
   '600:lq-s-600-2:Timeless Strength': {
-    title: 'Timeless Adventure Mentorship',
-    description: 'Train someone to exceed your current outdoor capability in navigation, endurance, route design, or expedition leadership.',
+    title: 'Timeless Training Mentorship',
+    description: 'Train someone to exceed your current strength in lifts, ruck distance, conditioning, or session leadership.',
   },
   '700:lq-s-700-2:Rooted in Strength': {
-    title: 'Rooted in Adventure',
-    description: 'Build an outdoor system that produces 100+ Muslims who can navigate, endure, reflect, and protect themselves through terrain.',
+    title: 'Rooted in Training',
+    description: 'Build a training system that produces 100+ Muslims who can carry, endure, reflect, and protect themselves through any burden.',
   },
   '800:lq-s-800-2:Legacy of Steel': {
-    title: 'Legacy of the Open Trail',
-    description: 'Document and publish a complete adventure system for Muslims used by 100+ people worldwide: routes, safety, adab, and reflection.',
+    title: 'Legacy of the Forge',
+    description: 'Document and publish a complete training system for Muslims used by 100+ people worldwide: sessions, safety, adab, and reflection.',
   },
   '900:lq-s-900-2:Apex Power': {
-    title: 'Apex Adventure Impact',
-    description: 'Your adventure system has produced 1000+ Muslims in better outdoor confidence, route skill, and reflection. Document the proof.',
+    title: 'Apex Strength Impact',
+    description: 'Your training system has produced 1000+ Muslims in better strength, conditioning, and discipline. Document the proof.',
   },
   '999:lq-s-999-2:Infinite Power': {
-    title: 'Infinite Adventure Legacy',
-    description: 'Level 999: build an adventure legacy that outlives you - maps, guides, teaching chains, family routes, and Ummah benefit.',
+    title: 'Infinite Strength Legacy',
+    description: 'Level 999: build a training legacy that outlives you - programs, guides, teaching chains, family sessions, and Ummah benefit.',
   },
 };
 
@@ -1147,56 +1147,56 @@ function getMissionQuestForLevel(level) {
       desc: lvl => `Level ${lvl}. The Khalifate is not a number. It is a project. Build it before you level.`,
       q1: { title: 'Worship as Foundation', desc: lvl => `At level ${lvl}, worship is not an extra. It is the foundation. Maintain all daily worship practices with zero misses for 30 days.`, pillar: 'deen' },
       q2: { title: 'Build the Mission', desc: lvl => `At level ${lvl}, take one concrete action to advance your primary Khalifate venture. Ship something real. The level waits for the mission.`, pillar: 'money' },
-      q3: { title: 'Strengthen the Vessel', desc: lvl => `At level ${lvl}, your body must carry the mission for decades. Add one new outdoor or endurance standard and hold it for 30 days.`, pillar: 'body' },
+      q3: { title: 'Strengthen the Vessel', desc: lvl => `At level ${lvl}, your body must carry the mission for decades. Add one new strength standard - push, pull, squat, or carry - and hold it for 30 days.`, pillar: 'body' },
     },
     {
       title: lvl => `Sovereign Duty ${lvl}`,
       desc: lvl => `Level ${lvl}. Sovereign means self-ruling. Your systems must serve the Ummah without your daily hand.`,
       q1: { title: 'Systematize Worship', desc: lvl => `At level ${lvl}, build one worship system that runs without willpower: automated reminders, family rhythm, or accountability chain.`, pillar: 'deen' },
       q2: { title: 'Automate Impact', desc: lvl => `At level ${lvl}, automate or delegate one operational task in your venture. Free your hands for higher strategy.`, pillar: 'money' },
-      q3: { title: 'Teach One', desc: lvl => `At level ${lvl}, teach one Muslim one skill from your mission. Multiply yourself.`, pillar: 'body' },
+      q3: { title: 'Teach One', desc: lvl => `At level ${lvl}, teach one Muslim one strength or mobility drill from your training. Multiply your forge through them.`, pillar: 'body' },
     },
     {
       title: lvl => `Divine Proof ${lvl}`,
       desc: lvl => `Level ${lvl}. The Divine does not ask for levels. The Divine asks for impact. Prove yours.`,
       q1: { title: 'Impact Audit', desc: lvl => `At level ${lvl}, audit your real-world impact: how many Muslims benefited from your work this month? Document it.`, pillar: 'deen' },
       q2: { title: 'Revenue Proof', desc: lvl => `At level ${lvl}, your venture must generate revenue or save costs. Numbers do not lie. Show the proof.`, pillar: 'money' },
-      q3: { title: 'Endurance Under Load', desc: lvl => `At level ${lvl}, complete one outdoor session while carrying your work load: plan, phone, or material. The Khalifa works in the field.`, pillar: 'body' },
+      q3: { title: 'Endurance Under Load', desc: lvl => `At level ${lvl}, complete one loaded carry session with your work load: ruck with pack, sandbag, or weighted vest. The Khalifa trains under burden.`, pillar: 'body' },
     },
     {
       title: lvl => `The Infinite Gate ${lvl}`,
       desc: lvl => `Level ${lvl}. Another gate. Another mission checkpoint. The infinite path demands infinite proof.`,
       q1: { title: 'Gate of Worship', desc: lvl => `At level ${lvl}, add one layer of worship depth: tafsir study, dhikr count, or Quran memorization. Maintain for 30 days.`, pillar: 'deen' },
       q2: { title: 'Gate of Wealth', desc: lvl => `At level ${lvl}, cross one financial threshold in your venture: new client, new market, or new product. The gate opens with proof.`, pillar: 'money' },
-      q3: { title: 'Gate of Strength', desc: lvl => `At level ${lvl}, conquer one new terrain or distance standard you have never attempted. The gate rewards the brave.`, pillar: 'body' },
+      q3: { title: 'Gate of Strength', desc: lvl => `At level ${lvl}, conquer one new strength standard you have never attempted: heavier carry, more reps, or a harder progression. The gate rewards the brave.`, pillar: 'body' },
     },
     {
       title: lvl => `Shadow March ${lvl}`,
       desc: lvl => `Level ${lvl}. Your Shadow Army is your automated systems. March them forward.`,
       q1: { title: 'Shadow Worship', desc: lvl => `At level ${lvl}, make one worship habit so automatic that you do it before conscious thought. 30 days, zero misses.`, pillar: 'deen' },
       q2: { title: 'Shadow Wealth', desc: lvl => `At level ${lvl}, build one revenue or savings system that operates while you sleep. Document the automation.`, pillar: 'money' },
-      q3: { title: 'Shadow Strength', desc: lvl => `At level ${lvl}, establish one outdoor routine so consistent that missing it feels stranger than doing it. 30 days.`, pillar: 'body' },
+      q3: { title: 'Shadow Strength', desc: lvl => `At level ${lvl}, establish one training routine so consistent that missing it feels stranger than doing it. 30 days.`, pillar: 'body' },
     },
     {
       title: lvl => `The Ummah's Checkpoint ${lvl}`,
       desc: lvl => `Level ${lvl}. The Ummah does not need your level. The Ummah needs your work. Checkpoint: show the work.`,
       q1: { title: 'Serve One', desc: lvl => `At level ${lvl}, serve one Muslim in a way they cannot repay: mentorship, funding, connection, or relief. Document the service.`, pillar: 'deen' },
       q2: { title: 'Ummah Revenue', desc: lvl => `At level ${lvl}, direct 10% of your venture's revenue or your income to an ummah cause. Make it systematic, not spontaneous.`, pillar: 'money' },
-      q3: { title: 'Ummah Strength', desc: lvl => `At level ${lvl}, use your outdoor readiness to serve: guide a route, carry a load, or protect someone. Strength exists to serve.`, pillar: 'body' },
+      q3: { title: 'Ummah Strength', desc: lvl => `At level ${lvl}, use your strength to serve: carry someone's load, lead a training session, or protect a family. Strength exists to serve.`, pillar: 'body' },
     },
     {
       title: lvl => `Crown of Proof ${lvl}`,
       desc: lvl => `Level ${lvl}. The crown is not given. It is earned by mission completion. Prove your right to wear it.`,
       q1: { title: 'Proof of Worship', desc: lvl => `At level ${lvl}, lead one family or community member in a worship practice for 30 days. Leadership begins at home.`, pillar: 'deen' },
       q2: { title: 'Proof of Wealth', desc: lvl => `At level ${lvl}, close one business milestone: sale, partnership, investment, or launch. The crown demands revenue.`, pillar: 'money' },
-      q3: { title: 'Proof of Strength', desc: lvl => `At level ${lvl}, achieve one outdoor milestone that scares you slightly. The crown is forged in discomfort.`, pillar: 'body' },
+      q3: { title: 'Proof of Strength', desc: lvl => `At level ${lvl}, achieve one strength milestone that scares you slightly: a new PR, a longer ruck, or a harder progression. The crown is forged in discomfort.`, pillar: 'body' },
     },
     {
       title: lvl => `The Eternal Checkpoint ${lvl}`,
       desc: lvl => `Level ${lvl}. Eternity is built one checkpoint at a time. Prove this one.`,
       q1: { title: 'Eternal Worship', desc: lvl => `At level ${lvl}, memorize one new verse or hadith and teach it to someone within the week. Knowledge that moves is eternal.`, pillar: 'deen' },
       q2: { title: 'Eternal Wealth', desc: lvl => `At level ${lvl}, build one asset — content, system, or relationship — that will benefit Muslims after your death.`, pillar: 'money' },
-      q3: { title: 'Eternal Strength', desc: lvl => `At level ${lvl}, document your complete outdoor protocol so others can replicate it. Strength that is shared is eternal.`, pillar: 'body' },
+      q3: { title: 'Eternal Strength', desc: lvl => `At level ${lvl}, document your complete training protocol so others can replicate it. Strength that is shared is eternal.`, pillar: 'body' },
     },
     {
       title: lvl => `Forge of Mission ${lvl}`,
@@ -1210,7 +1210,7 @@ function getMissionQuestForLevel(level) {
       desc: lvl => `Level ${lvl}. The Khalifa does not chase levels. He chases mission completion. Checkpoint.`,
       q1: { title: "Khalifa's Worship", desc: lvl => `At level ${lvl}, worship with such consistency that others set their schedules by yours. Be the clock of the community.`, pillar: 'deen' },
       q2: { title: "Khalifa's Wealth", desc: lvl => `At level ${lvl}, your venture must employ, serve, or benefit one more Muslim than last month. Growth is responsibility.`, pillar: 'money' },
-      q3: { title: "Khalifa's Strength", desc: lvl => `At level ${lvl}, lead one outdoor session for family or community. The Khalifa walks first and checks on everyone behind him.`, pillar: 'body' },
+      q3: { title: "Khalifa's Strength", desc: lvl => `At level ${lvl}, lead one training session for family or community. The Khalifa trains first and checks on everyone behind him.`, pillar: 'body' },
     },
   ];
 
@@ -1266,11 +1266,11 @@ export const JOB_CHANGE_QUESTS = [
     name: "The Mujahid's Oath",
     rank: 'C',
     levelRequired: 30,
-    description: 'Adventure, mind, and soul as one. Strength to protect. Devotion to lead. The Mujahid\'s oath binds you to excellence.',
+    description: 'Body, mind, and soul as one. Strength to protect. Devotion to lead. The Mujahid\'s oath binds you to excellence.',
     steps: [
       { id: 'jc-mujahid-1', text: '60 days perfect daily quest completion', completed: false },
       { id: 'jc-mujahid-2', text: 'Ship one AI product/feature OR close one AI-related sale', completed: false },
-      { id: 'jc-mujahid-3', text: 'Complete a major outdoor trial (4+ hour trek / summit climb / wilderness navigation)', completed: false },
+      { id: 'jc-mujahid-3', text: 'Complete a major training block (4+ hour ruck / summit carry / loaded march)', completed: false },
       { id: 'jc-mujahid-4', text: 'Automate all finances + sadaqah', completed: false },
     ],
     reward: { gold: 800, statPoints: 8, title: 'Mujahid' },
@@ -1283,7 +1283,7 @@ export const JOB_CHANGE_QUESTS = [
     description: 'Command others with justice. Lead a community. Build for the Ummah. The Qa\'id leads in the name of Allah.',
     steps: [
       { id: 'jc-qa-id-1', text: '30 days Tahajjud + Witr', completed: false },
-      { id: 'jc-qa-id-2', text: 'Achieve elite outdoor milestone (8+ hour expedition / multi-terrain trek / lead group hike)', completed: false },
+      { id: 'jc-qa-id-2', text: 'Achieve elite strength milestone (8+ hour ruck / heavy loaded carry / lead a training group)', completed: false },
       { id: 'jc-qa-id-3', text: 'Positive cash flow from AI business or halal investment', completed: false },
       { id: 'jc-qa-id-4', text: 'Lead a community project serving 10+ Muslims', completed: false },
     ],
@@ -1297,7 +1297,7 @@ export const JOB_CHANGE_QUESTS = [
     description: 'The Khalifate does not follow the System. The System follows the Khalifate. The Ummah\'s General is forged.',
     steps: [
       { id: 'jc-khalifa-1', text: '30 days of 45+ min Tahajjud', completed: false },
-      { id: 'jc-khalifa-2', text: 'Complete elite expedition feat (full-day trek / solo wilderness navigation / multi-day camping)', completed: false },
+      { id: 'jc-khalifa-2', text: 'Complete elite strength feat (full-day ruck / solo loaded carry / multi-day training block)', completed: false },
       { id: 'jc-khalifa-3', text: 'Achieve financial independence OR build AI business employing 5+ Muslims', completed: false },
       { id: 'jc-khalifa-4', text: 'Mentor 3 people to D-rank or higher (raise the Ummah)', completed: false },
     ],
@@ -1314,7 +1314,7 @@ export const REDEMPTION_QUEST_TEMPLATES = [
     requiredDays: 3,
     quests: [
       { id: 'rq-1-1', title: 'Double Daily Quests', description: 'Complete DOUBLE the normal daily quests today. The exiled Khalifate returns twice as hard.', steps: ['Look at today\'s daily quests in the app.','Complete every single one.','Then complete them all again: pray on time twice more, walk double the steps, do double the AI study.'], xp: 100, pillar: 'deen' },
-      { id: 'rq-1-2', title: 'Terrain Penance', description: 'Walk 10,000 steps exploring new terrain and spend 1 continuous hour outside. Adventure discipline pays the soul\'s debt.', steps: ['Walk until your step counter shows 10,000. Use a route you have never walked before.','Then stay outside for 1 full hour: sit under a tree, walk more, or pray in a park.','Do not check social media during the hour. Just breathe and move.'], xp: 100, pillar: 'body' },
+      { id: 'rq-1-2', title: 'Forge Penance', description: 'Walk 10,000 steps, do 50 push-ups and 50 squats, and spend 1 continuous hour in training. The forge pays the soul\'s debt.', steps: ['Walk until your step counter shows 10,000, then do 50 push-ups and 50 squats.','Then train outside for 1 full hour: ruck, calisthenics, or pray and move in a park.','Do not check social media during the hour. Just breathe and forge.'], xp: 100, pillar: 'body' },
       { id: 'rq-1-3', title: 'Create + Teach', description: 'Create one AI-powered asset today AND teach one Muslim one thing about Islam. The Khalifate\'s return is double impact.', steps: ['Use ChatGPT or Claude to create one useful thing: a resume, a flyer, a summary, or a plan.','Message one Muslim and teach them one thing: a verse, a hadith, or one fact about salah.','Send both. Screenshot or note what you sent.'], xp: 100, pillar: 'money' },
     ],
     reward: { clearDebuff: true, gold: 50, message: 'You returned from exile. Your purpose is restored.' },
@@ -1326,7 +1326,7 @@ export const REDEMPTION_QUEST_TEMPLATES = [
     requiredDays: 7,
     quests: [
       { id: 'rq-2-1', title: 'Triple Daily Quests', description: 'Complete TRIPLE the normal daily quests for 3 days. The Reckoning demands more than you think you can give.', steps: ['For 3 days, open the app.','Complete every daily quest.','Then complete them again. Then a third time. Same day.'], xp: 200, pillar: 'deen' },
-      { id: 'rq-2-2', title: 'The Adventurer\'s Trial', description: 'Complete an outdoor challenge (hike, climb, or trek) for 3 consecutive days. No excuses. The Khalifate returns route-ready.', steps: ['Day 1: Walk 5,000 steps outside.','Day 2: Walk 7,000 steps and climb stairs or a hill.','Day 3: Walk 10,000 steps on a new route. Log each day.'], xp: 200, pillar: 'body' },
+      { id: 'rq-2-2', title: 'Reclaim the Forge', description: 'Complete a training challenge (ruck, calisthenics, or loaded carry) for 3 consecutive days. No excuses. The Khalifate returns forge-ready.', steps: ['Day 1: Walk 5,000 steps outside, then 30 push-ups.','Day 2: Walk 7,000 steps, climb stairs or a hill, then 30 squats.','Day 3: Walk 10,000 steps with a weighted pack. Log each day.'], xp: 200, pillar: 'body' },
       { id: 'rq-2-3', title: 'Full Audit + Deliver Teaching', description: 'Complete a full financial audit, create a new budget, AND deliver one Islamic teaching (khutbah / class / video). The Khalifate returns to the Ummah.', steps: ['List every source of income and every expense from the last 30 days.','Create a simple budget: income minus fixed costs, savings, sadaqah.','Teach one Islamic topic to one person or record a 2-minute video on your phone.'], xp: 200, pillar: 'money' },
     ],
     reward: { clearDebuff: true, gold: 150, statPoints: 2, message: 'You survived the Reckoning. You are reborn for the Khalifate.' },
