@@ -32,6 +32,7 @@ import { AlertTriangle, Skull, Zap, Coins, Sparkles, Activity, Swords, Shield, C
 import { calculateUmmahBurden, getCurrentMilestone } from '../data/ummah';
 import { PILLAR_LABELS, getPillarDisplayKey } from '../utils/pillarDisplay';
 import { runEndgameCycle } from '../logic/endgame';
+import { applyPhysicalPowerSideEffects } from '../logic/physicalPowerSideEffects';
 
 const rankColorMap = {
   'text-gray-400': '#9ca3af',
@@ -98,7 +99,6 @@ export default function Dashboard({ state, setState, ready = true }) {
     return state.levelQuests.find(lq => !lq.completed);
   }, [state.levelQuests]);
 
-  // Handle daily quest completion
   const handleCompleteDaily = (questUniqueId) => {
     setState(prev => {
       let next = completeDailyQuest(prev, questUniqueId);
@@ -106,6 +106,7 @@ export default function Dashboard({ state, setState, ready = true }) {
       // Apply shadow + streak bonuses
       const quest = prev.dailyQuests.find(q => q.uniqueId === questUniqueId);
       if (quest) {
+        next = applyPhysicalPowerSideEffects(next, quest);
         const bonuses = getShadowBonuses(next);
         let multiplier = bonuses.allXp;
         if (quest.pillar === 'deen') multiplier *= bonuses.deenXp;
@@ -170,6 +171,11 @@ export default function Dashboard({ state, setState, ready = true }) {
   const handleCompleteLevelSubQuest = (levelQuestIndex, questIndex) => {
     setState(prev => {
       let next = completeLevelQuest(prev, levelQuestIndex, questIndex);
+      const levelQuest = prev.levelQuests[levelQuestIndex];
+      const quest = levelQuest?.quests?.[questIndex];
+      if (quest) {
+        next = applyPhysicalPowerSideEffects(next, quest);
+      }
       next = recalculateOverallLevel(next);
       next = { ...next, flowState: checkFlowState(next.history || [], rank.key) };
       next = runEndgame(next);
@@ -181,6 +187,10 @@ export default function Dashboard({ state, setState, ready = true }) {
   const handleCompleteRedemption = (redemptionId) => {
     setState(prev => {
       let next = completeRedemptionQuest(prev, redemptionId);
+      const quest = prev.redemptionQuests.find(rq => rq.id === redemptionId);
+      if (quest) {
+        next = applyPhysicalPowerSideEffects(next, quest);
+      }
       next = { ...next, flowState: checkFlowState(next.history || [], rank.key) };
       next = runEndgame(next);
       return next;
@@ -207,6 +217,10 @@ export default function Dashboard({ state, setState, ready = true }) {
     setState(prev => {
       let next = completeCustomQuest(prev, questUniqueId, today);
       if (next === prev) return prev;
+      const quest = prev.customQuests.find(q => q.uniqueId === questUniqueId || q.id === questUniqueId);
+      if (quest) {
+        next = applyPhysicalPowerSideEffects(next, quest);
+      }
       next = recalculateOverallLevel(next);
       next = { ...next, flowState: checkFlowState(next.history || [], rank.key) };
       next = runEndgame(next);
