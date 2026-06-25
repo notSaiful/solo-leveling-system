@@ -1382,7 +1382,17 @@ export const WEEKLY_DUNGEON_TEMPLATES = {
   },
   S_III: {
     deen: { title: "The Divine Command", description: 'Complete the entire Quran with deep reflection + Lead 1000+ Muslims in knowledge or worship + Establish a permanent Islamic institution', xp: 5000, steps: ['Complete Quran with written reflection (114 surahs)', 'Lead/govern 1000+ Muslims in deen', 'Build permanent Islamic institution (school, waqf, or platform)'] },
-    body: { title: "The Divine Crucible", description: 'Boss: The body is a temple. Forge it until it outlasts empires. Extreme endurance across all domains.', xp: 5000, steps: ['Ironman-level endurance test: complete within 24 hours', 'Build a national outdoor training program that produces 100+ Muslims at expedition-level readiness', 'Document a complete field manual for Ummah-wide distribution'] },
+    body: {
+      title: "The Khalifa's Crucible",
+      description: "Boss: The Khalifa's Crucible. The body is the Ummah's last instrument — forge it past breaking. Pass ALL four standards. The Khalifate does not pass on weakness.",
+      xp: 5000,
+      steps: [
+        'Strength peak: 2.5×BW squat work sets ×3, 3.5×BW deadlift for reps, weighted pull-up +100% BW — the Khalifa\'s frame bears what no man\'s should.',
+        'Power peak: farmer\'s carry 2.5×BW × 100 m, sled drag, sandbag carry — move impossible loads across impossible ground.',
+        'Endurance peak: Ironman-distance — 3.8 km swim, 180 km bike, 42 km run within 17 hours. The body does not break.',
+        'Resilience & command: build a national physical-training program producing 100+ Muslims at S-rank combat readiness; document a complete training field manual for Ummah-wide distribution.',
+      ],
+    },
     money: { title: "The Divine Treasury", description: 'Wealth is an amanah. Build systems that fund the Ummah for 100+ years without your presence.', xp: 5000, steps: ['100-year autonomous wealth system operational', 'Funds 500+ ummah projects per year without your input', 'Mentor 50+ Muslims to financial independence'] },
     ummah: { title: 'Ummah of Ages', description: 'The Ummah is one body. You have healed, strengthened, and funded 10,000+ Muslims. This is the Khalifate at its apex.', xp: 5000, steps: ['Direct impact: 10,000+ Muslims benefited', 'Economic engine: 500+ Muslim jobs created', 'Legacy system: operates for 25+ years after you step back'] },
   },
