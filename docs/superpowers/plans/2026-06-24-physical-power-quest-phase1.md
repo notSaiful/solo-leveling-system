@@ -1052,35 +1052,45 @@ Read each target section first to mirror the exact field shape (`level, rank, ti
 `src/data/questCatalog.levelquests.test.js`:
 ```js
 import { describe, it, expect } from 'vitest';
-import { LEVEL_QUESTS, JOB_CHANGE_QUESTS, REDEMPTION_QUEST_TEMPLATES } from './questCatalog';
+import { LEVEL_QUESTS, REDEMPTION_QUEST_TEMPLATES } from './questCatalog';
 import { JOB_CHANGE_GATES } from './jobChangeGates';
 
-const ROAMING = /roam|wander|trek|expedition|hike|trail|scout|wilderness|adventure foundation|warrior adventure/i;
+// Broadened to actually catch the adventure/roaming wording in the source — the
+// narrow original missed 'Terrain Penance', 'Adventure discipline', "The Adventurer's Trial".
+// 'adventur' covers adventure/adventurer/adventures; 'explor' covers explore/exploring/exploration;
+// 'terrain' covers terrain. NOTE: 'training' is SAFE (does not match 'trail').
+const ROAMING = /roam|wander|trek|expedition|hike|trail|scout|wilderness|adventur|explor|terrain/i;
 
 describe('body level/story quests rethemed', () => {
-  it('no body level-quest title contains roaming/adventure wording', () => {
+  it('no body level-quest title or description contains roaming/adventure wording', () => {
     for (const lq of LEVEL_QUESTS) {
       for (const q of (lq.quests || [])) {
         if (q.pillar !== 'body') continue;
         expect(q.title).not.toMatch(ROAMING);
+        expect(q.description).not.toMatch(ROAMING);
       }
     }
   });
   it('job-change gates body steps are retitled to Power', () => {
     const bodySteps = JOB_CHANGE_GATES.flatMap(g => (g.steps || []).filter(s => s.pillar === 'body'));
+    expect(bodySteps.length).toBeGreaterThan(0);
     for (const s of bodySteps) {
-      expect(s.title).not.toMatch(/adventure/i);
+      expect(s.title).not.toMatch(/adventur/i);
       expect(s.title).toMatch(/power|forge|strength/i);
     }
   });
-  it('redemption body template is rethemed', () => {
-    const bodyRed = REDEMPTION_QUEST_TEMPLATES.find(t => t.pillar === 'body');
-    expect(bodyRed).toBeTruthy();
-    expect(bodyRed.title).not.toMatch(ROAMING);
+  it('redemption body sub-quests are rethemed', () => {
+    // Templates have NO top-level `pillar` field — the body content lives in their `quests[]` sub-quests.
+    const bodyReds = REDEMPTION_QUEST_TEMPLATES.flatMap(t => (t.quests || []).filter(q => q.pillar === 'body'));
+    expect(bodyReds.length).toBeGreaterThan(0);
+    for (const q of bodyReds) {
+      expect(q.title).not.toMatch(ROAMING);
+      expect(q.description).not.toMatch(ROAMING);
+    }
   });
 });
 ```
-(Confirm export names `LEVEL_QUESTS`, `JOB_CHANGE_QUESTS`, `REDEMPTION_QUEST_TEMPLATES`, `JOB_CHANGE_GATES` by reading the files — adjust the imports to match actual exports.)
+(Export names confirmed: `LEVEL_QUESTS` and `REDEMPTION_QUEST_TEMPLATES` from `./questCatalog`; `JOB_CHANGE_GATES` from `./jobChangeGates`. `JOB_CHANGE_QUESTS` is intentionally NOT imported — it is rethemed for consistency per Step 3 but is not test-asserted.)
 
 - [ ] **Step 2: Run test to verify it fails**
 
@@ -1089,7 +1099,15 @@ Expected: FAIL — body level-quest titles still contain roaming/adventure wordi
 
 - [ ] **Step 3: Implement**
 
-Rework the four target sections in `questCatalog.js` and the body steps in `jobChangeGates.js` per the content spec. Preserve all non-body content and all reward/steps structure. Keep the forge/khalifa voice: disciplined, zero-softness, strength-for-service.
+Rework the target sections in `questCatalog.js` and the body steps in `jobChangeGates.js` per the content spec. Preserve all non-body content, all `id` fields, and all reward/steps structure (only retheme `title`/`description`/`steps` TEXT — never `id`, `xp`, `rank`, `reward`). Keep the forge/khalifa voice: disciplined, zero-softness, strength-for-service, no emojis.
+
+**CRITICAL — override key coupling (read before editing level quests).** `LEVEL_QUESTS` is built at `questCatalog.js:1238` by mapping each body sub-quest through `ADVENTURE_LEVEL_QUEST_OVERRIDES[`${levelQuest.level}:${quest.id}:${quest.title}`]` — the KEY uses the SOURCE title from `RAW_LEVEL_QUESTS` (or S-rank generated). When an override exists, its `title`/`description` REPLACE the source's, so the FINAL display title is the override's title (and the test sees the final list). Consequence: if you change a SOURCE title in `RAW_LEVEL_QUESTS` for a quest that HAS an override, you MUST also update that override's KEY to the new source title, or the override silently drops. Safe approach: retheme BOTH the override's title+description (the display values) AND the source title+description; whenever you retheme a source title that has an override, update the override key `${level}:${id}:${newSourceTitle}` to match. Then GREP the final `LEVEL_QUESTS` body quests (or just run the test) to confirm no ROAMING word remains in any body quest's final title or description. Body level-quest sources to cover: `RAW_LEVEL_QUESTS` (line 278) body sub-quests, `ADVENTURE_LEVEL_QUEST_OVERRIDES` (line 894) body entries, and `getMissionQuestForLevel` (line 1138) body archetype (feeds `S_RANK_GENERATED_QUESTS`).
+
+**jobChangeGates.js body steps (10 total).** The test requires EVERY body step title to (a) not match `/adventur/i` and (b) match `/power|forge|strength/i`. Currently only `'Guardian's Strength'` (day 2 of the C-gate) already passes; the other 9 fail (they contain "Adventure" or lack power/forge/strength). Retitle all 10 body steps so each contains power/forge/strength and contains no "adventure"/"adventurer". Also retheme each body step's `description` from roaming language (trek/hike/trail/wilderness/expedition/scramble/navigation/compass) to training language (strength/power/endurance/resilience work). Preserve `day`, `pillar`, `xp`.
+
+**JOB_CHANGE_QUESTS (questCatalog.js:1249) — consistency, untested.** Retheme the adventure/roaming wording in `description` fields (e.g. job-mujahid: "Adventure, mind, and soul as one...") and `steps[].text` fields (e.g. "4+ hour trek / summit climb / wilderness navigation", "8+ hour expedition / multi-terrain trek / lead group hike") to physical-power training wording. These steps have no `pillar` field — retheme by content (the outdoor/trek/hike/expedition phrases), preserve `id`/`completed`.
+
+**ROAMING word list to avoid in body level-quest titles+descriptions and body redemption sub-quests:** roam, wander, trek, expedition, hike, trail, scout, wilderness, adventure, adventurer, explore/exploring/exploration, terrain. ("training", "outdoor", "run", "ruck", "jump", "squat", "push", "pull", "carry", "plank", "mobility", "strength", "power", "forge", "endurance", "resilience" are all SAFE.)
 
 - [ ] **Step 4: Run test to verify it passes**
 
