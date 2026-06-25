@@ -11,6 +11,8 @@
  *  6. Shadow extraction = habit automation (less willpower at high ranks)
  *  ============================================================ */
 
+import { getGateForRank } from './physicsGates';
+
 // ─── RANK CONFIGURATION ───
 export const RANK_CONFIG = {
   E: { minLevel: 0,  maxLevel: 10,  title: 'Hunter Candidate', name: 'Al-Bahith', color: 'text-gray-400',  hexColor: '#9ca3af', statPointsPerLevel: 1, dailyQuestsPerPillar: 2, xpMultiplier: 1.0 },
@@ -1338,43 +1340,43 @@ export const REDEMPTION_QUEST_TEMPLATES = [
 export const WEEKLY_DUNGEON_TEMPLATES = {
   E: {
     deen: { title: "The Seeker's Trial", description: 'Complete 1 Juz of Quran + Study 1 seerah leadership lesson + Teach one thing', xp: 200, steps: ['Read 1 Juz', 'Study seerah story on leadership', 'Practice prophetic trait'] },
-    body: { title: "The Seeker's Trail", description: 'Boss: Complete ALL standards. No partial credit. Walk, explore, and touch the earth.', xp: 200, steps: ['Walk 5,000 steps exploring new terrain', 'Spend 20 continuous minutes outside with no phone', 'Touch grass, sand, or soil barefoot for 5 minutes'] },
+    body: { title: getGateForRank('E').name, description: `Boss: Pass ${getGateForRank('E').name}. Complete ALL four standards — strength, power, endurance, resilience. No partial credit. The forge demands everything.`, xp: 200, steps: getGateForRank('E').events.map(ev => `${ev.label}: ${ev.standard}`) },
     money: { title: "The Apprentice's Challenge", description: 'Save 1000 rupees + Study one AI concept + Give sadaqah', xp: 200, steps: ['Save 1000 rupees', 'Study 1 AI concept (30 min)', 'Extra sadaqah'] },
     ummah: { title: 'Ummah Seed', description: 'Help one Muslim with one real problem this week. The Khalifate begins with one person.', xp: 200, steps: ['Help 1 Muslim with 1 real problem', 'Give sincere advice to 1 Muslim', 'Make dua for the Ummah by name (3 people)'] },
   },
   D: {
     deen: { title: "The Devotee's Dungeon", description: 'Memorize 1 page + Lead prayer once + Study seerah for 30 min', xp: 300, steps: ['Memorize 1 page of Quran', 'Lead family prayer', 'Seerah study 30 min (leadership focus)'] },
-    body: { title: "The Explorer's Gate", description: 'Boss: Complete ALL standards. No partial credit. Move through terrain under load.', xp: 300, steps: ['Hike 5km on trail, park, or uneven ground', 'Climb an elevation gain (hill, stairs, or rock)', 'Cold water exposure: face dunk or cold finish shower'] },
+    body: { title: getGateForRank('D').name, description: `Boss: Pass ${getGateForRank('D').name}. Complete ALL four standards — strength, power, endurance, resilience. No partial credit. The forge demands everything.`, xp: 300, steps: getGateForRank('D').events.map(ev => `${ev.label}: ${ev.standard}`) },
     money: { title: "The Architect's Dungeon", description: 'Create one AI-powered asset + Study one paper + No impulse buys for 7 days', xp: 300, steps: ['Create 1 AI-powered asset (content, template, system)', 'Study 1 AI paper/blog', 'No impulse buys x7 days'] },
     ummah: { title: 'Ummah Sprout', description: 'Teach one person one Islamic concept this week. The Khalifate teaches before he commands.', xp: 300, steps: ['Teach 1 person 1 Islamic concept', 'Share 1 beneficial Islamic post', 'Pray 1 prayer for the Ummah in sujood'] },
   },
   C: {
     deen: { title: "The Elite's Trial", description: 'Complete 1 Juz with reflection + Fast Monday/Thursday + Teach a seerah lesson', xp: 400, steps: ['1 Juz + written reflection', 'Fast Mon/Thu', 'Teach seerah lesson to family/community'] },
-    body: { title: "The Pathfinder's Trial", description: 'Boss: Endurance and navigation under stress. Must pass ALL standards.', xp: 400, steps: ['Trail hike 1 hour on uneven ground', 'Night walk 20 minutes under stars', 'Weighted pack carry for 20 minutes'] },
+    body: { title: getGateForRank('C').name, description: `Boss: Pass ${getGateForRank('C').name}. Complete ALL four standards — strength, power, endurance, resilience. No partial credit. The forge demands everything.`, xp: 400, steps: getGateForRank('C').events.map(ev => `${ev.label}: ${ev.standard}`) },
     money: { title: "The Builder's Challenge", description: 'Launch one AI-assisted income stream + Full portfolio review + Strategic charity', xp: 400, steps: ['Launch 1 AI-assisted income stream or offer', 'Full portfolio + Shariah review', 'Strategic sadaqah (with intention)'] },
     ummah: { title: 'Ummah Sapling', description: 'Organize or lead one small community gathering this week. The Khalifate builds institutions.', xp: 400, steps: ['Organize 1 small Islamic gathering', 'Lead 1 study circle / halaqa', 'Recruit 1 Muslim to your Khalifate mission'] },
   },
   B: {
     deen: { title: "The Knight's Crusade", description: 'Tahajjud 3 nights + Complete 3 Juz + Organize community halaqa on seerah', xp: 500, steps: ['Tahajjud x3', 'Read 3 Juz', 'Community halaqa on seerah'] },
-    body: { title: "The Trailblazer's Gate", description: 'Boss: Multi-terrain mastery under fatigue. Must pass ALL standards.', xp: 500, steps: ['2-hour trek with elevation gain', 'Navigate 3km using only compass and landmarks', 'Rock climb, boulder, or scramble a rocky incline'] },
+    body: { title: getGateForRank('B').name, description: `Boss: Pass ${getGateForRank('B').name}. Complete ALL four standards — strength, power, endurance, resilience. No partial credit. The forge demands everything.`, xp: 500, steps: getGateForRank('B').events.map(ev => `${ev.label}: ${ev.standard}`) },
     money: { title: "The Knight's Treasury", description: 'Scale AI income stream + Ummah impact project + Deep portfolio analysis', xp: 500, steps: ['Scale 1 AI income stream', 'Deep portfolio analysis', 'Ummah impact project (1 launched)'] },
     ummah: { title: 'Ummah Branch', description: 'Lead family/community Islamic practice for a week. The Khalifate leads in the home first.', xp: 500, steps: ['Lead family prayer/dhikr x7', 'Mentor 1 Muslim in deen or AI/wealth', 'Fund 1 sadaqah jariyah project'] },
   },
   A: {
     deen: { title: "The General's Campaign", description: 'Tahajjud 5 nights + Complete 5 Juz with reflection + Deliver khutbah/lesson on akhlaq', xp: 600, steps: ['Tahajjud x5', '5 Juz + written reflection', 'Deliver khutbah on prophetic akhlaq'] },
-    body: { title: "The Expedition", description: 'Boss: Expedition-level performance. Must pass ALL standards.', xp: 600, steps: ['Half-day trek (4+ hours) on mountain or wilderness trail', 'Summit attempt or significant peak reach', 'Lead a group of 2+ on an outdoor excursion'] },
+    body: { title: getGateForRank('A').name, description: `Boss: Pass ${getGateForRank('A').name}. Complete ALL four standards — strength, power, endurance, resilience. No partial credit. The forge demands everything.`, xp: 600, steps: getGateForRank('A').events.map(ev => `${ev.label}: ${ev.standard}`) },
     money: { title: "The General's Empire", description: 'Launch or scale AI business + Achieve FI milestone + Major ummah project funding', xp: 600, steps: ['Launch or scale AI business', 'FI milestone hit', 'Major ummah project funded'] },
     ummah: { title: 'Ummah Trunk', description: 'Lead or fund project benefiting 100+ Muslims. The Khalifate operates at scale.', xp: 600, steps: ['Lead/fund project for 100+ Muslims', 'Volunteer 10+ hours for ummah cause', 'Strategic charity with system-level impact'] },
   },
   S: {
     deen: { title: "The Monarch's Dominion", description: 'Complete 10 Juz + Tahajjud every night + Record a seerah teaching legacy', xp: 800, steps: ['10 Juz', 'Tahajjud x7 nights', 'Record seerah teaching (video/book)'] },
-    body: { title: "The Monarch's Wilderness", description: 'Boss: Elite expedition performance across all domains. Must pass ALL standards.', xp: 800, steps: ['Full-day expedition (8+ hours) across multiple terrain types', 'Solo wilderness navigation 10km with map and compass', 'Lead a community outdoor program for 1 month'] },
+    body: { title: getGateForRank('S').name, description: `Boss: Pass ${getGateForRank('S').name}. Complete ALL four standards — strength, power, endurance, resilience. No partial credit. The forge demands everything.`, xp: 800, steps: getGateForRank('S').events.map(ev => `${ev.label}: ${ev.standard}`) },
     money: { title: "The Monarch's Treasury", description: 'Generational wealth plan + Major ummah fund + Mentor 3 to financial independence', xp: 800, steps: ['Generational wealth plan (100 years)', 'Major ummah fund (multi-crore)', 'Mentor 3 Muslims to FI'] },
     ummah: { title: 'Ummah Root', description: 'Build institution/business employing 10+ Muslims. The Khalifate creates economic structures for the Ummah.', xp: 800, steps: ['Build institution employing 10+ Muslims', 'Organize 100+ person Ummah event', 'Establish 1 multi-generational Ummah fund'] },
   },
   S_II: {
     deen: { title: "The Sovereign's Decree", description: 'Complete 20 Juz + Tahajjud + Qiyam for 30 nights + Author a book or course on Islamic governance', xp: 2500, steps: ['20 Juz with tafsir notes', 'Tahajjud + Qiyam x30 nights', 'Author 1 book or course on Islamic governance'] },
-    body: { title: "The Sovereign's Expedition", description: 'Boss: Transcontinental endurance. The Khalifate must endure any climate, any terrain.', xp: 2500, steps: ['Multi-day expedition (24+ hours) with overnight camping', 'Terrain: mountain, desert, or jungle crossing 25km+', 'Lead 5+ people through the complete expedition'] },
+    body: { title: "The Sovereign's Apex", description: "Boss: The Sovereign's Apex. The body is forged until it outlasts empires. Pass ALL four standards — the Ummah cannot wait for the weak.", xp: 2500, steps: ['Multi-day heavy ruck: 25 kg / 15 km across two consecutive days — the Sovereign carries the Ummah\'s weight without setting it down', 'Loaded carry: farmer\'s carry 2×BW × 50 m, sled drag, sandbag carry — strength that holds under fatigue', '2×BW squat work sets ×5, deadlift 3×BW for reps, weighted pull-up +75% BW — the bar does not bend the Khalifa', 'Half-marathon < 1:45 same week as the strength block, then lead 5+ Muslims through the full training — forge others as you were forged'] },
     money: { title: "The Sovereign's Vault", description: 'Build a waqf or endowment that funds 100+ ummah projects per year. Permanent wealth for the Ummah.', xp: 2500, steps: ['Establish waqf or endowment (registered)', 'Annual distribution: 100+ ummah projects funded', 'Self-sustaining: no personal capital injection needed'] },
     ummah: { title: 'Ummah Empire', description: 'Build an organization that directly benefits 1000+ Muslims annually. The Sovereign builds nations.', xp: 2500, steps: ['Organization serves 1000+ Muslims per year', 'Employ 50+ Muslims with halal livelihoods', 'Create 1 multi-generational institution (10+ year plan)'] },
   },
