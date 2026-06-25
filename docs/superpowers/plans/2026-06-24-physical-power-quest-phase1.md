@@ -1168,11 +1168,26 @@ Expected: FAIL — body dungeons still named "The Seeker's Trail" etc.
 
 - [ ] **Step 3: Implement**
 
-Replace the body entries in `WEEKLY_DUNGEON_TEMPLATES` with Physics-Gate-sourced quest sets. At module top:
+Replace ONLY the `body` entries in `WEEKLY_DUNGEON_TEMPLATES` with Physics-Gate-sourced dungeons; keep `deen`/`money`/`ummah` entries byte-for-byte unchanged. At the top of `src/data/questCatalog.js` add:
 ```js
-import { getGateForRank, gateToDungeonQuests } from './physicsGates';
+import { getGateForRank } from './physicsGates';
 ```
-Then for each rank's body dungeon, use `gateToDungeonQuests(getGateForRank(rank), equipment)` — but since templates are static data (no per-user equipment at module load), default `equipment` to `'barbell'` and let the runtime dungeon initializer (which already reads templates) pick the gate. Simplest: set each rank's `body` to `gateToDungeonQuests(getGateForRank(rank), 'barbell')` and keep the existing `deen`/`money`/`ummah` dungeon entries untouched. Match whatever wrapper shape (`title`, `quests`, `rank`) the existing `body` entry uses — read it first.
+Do NOT import or use `gateToDungeonQuests` — it returns an ARRAY of per-event quest objects (`{id,title,description,baseXp,tags,...}`) with NO `steps` field. That is the WRONG shape: `getWeeklyDungeonForRank` (questCatalog.js ~line 1444) does `template.steps.map(...)`, so a `body` entry without a `steps` array of strings would crash dungeon initialization at runtime. Build the body entry yourself in the existing template shape.
+
+CRITICAL — preserve the existing body-entry shape exactly: `{ title, description, xp, steps: [string, ...] }`. The runtime spreads `...template` (carrying `title`/`description`/`xp`) and maps `template.steps` (so `steps` MUST be an array of strings). For each rank E, D, C, B, A, S, set the body entry to:
+```js
+body: {
+  title: getGateForRank(rank).name,
+  description: `Boss: Pass ${getGateForRank(rank).name}. Complete ALL four standards — strength, power, endurance, resilience. No partial credit. The forge demands everything.`,
+  xp: <KEEP THE EXISTING RANK XP — E:200, D:300, C:400, B:500, A:600, S:800>,
+  steps: getGateForRank(rank).events.map(ev => `${ev.label}: ${ev.standard}`),
+},
+```
+This makes `title` = the Physics Gate name (satisfies the test's `JSON.stringify(body)` contains `gate.name`), uses only training language in title/description/steps (the gate event standards are already free of every ROAMING word — verified), keeps `xp` unchanged (preserves dungeon balance), and makes `steps` an array of 4 strings (one per gate event: strength/power/endurance/resilience). Forge-Master voice: zero softness, no emojis, strength-for-service.
+
+S_II sub-tier: there is NO Physics Gate for `S_II` — `getGateForRank('S_II')` falls back to `PHYSICS_GATES[0]` (Newton's Gate), which is WRONG. Do NOT use the gate for S_II. Hand-author the S_II body entry: a physical-power `title` free of ROAMING words (the test bans "sovereign's expedition", so use e.g. `"The Sovereign's Apex"`), a boss `description` in the forge voice, `xp: 2500` (unchanged), and 4 physical-power `steps` that escalate beyond S (e.g. multi-day heavy ruck + loaded carry + 2×BW squat work + half-marathon-level endurance + lead others in training). The test does not check S_II, but high-level S-rank users see it at runtime, so it must be rethemed (the current "The Sovereign's Expedition" must go).
+
+After editing, sanity-check `getWeeklyDungeonForRank('E').body.steps` is an array of 4 strings (not undefined) and `.body.title` is `"Newton's Gate"` — the runtime depends on the shape. Keep `deen`/`money`/`ummah` entries untouched.
 
 - [ ] **Step 4: Run test to verify it passes**
 
