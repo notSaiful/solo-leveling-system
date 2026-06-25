@@ -18,8 +18,8 @@ cssclasses:
 
 > **Project Type:** Gamified Self-Development Web App (PWA + iOS)
 > **Target User:** Muslim man, India, seeking disciplined self-improvement
-> **Current Status:** Production-ready web app + automated IPA builder (Schema v3)
-> **Last Updated:** 2026-06-23
+> **Current Status:** Production-ready web app + automated IPA builder (Schema v3 / Physical Power Phase 1)
+> **Last Updated:** 2026-06-25
 > **Vault Root:** This folder is an Obsidian vault. Open it in Obsidian to browse project knowledge.
 
 ---
@@ -222,6 +222,10 @@ XP is scaled by rank via `getEffectiveXp` (xpMultiplier column). Stat points awa
   - A: Quantum Gate (PR attempt, compete, train to D-rank)
   - S: The Monarch's Apex (half-marathon, elite composition 90+ days, lead community fitness)
 
+### 4.19 Physical Power & Power Log (v9)
+- **Power Log Component:** Mounted in Legion tab. Displays lifts (Squat, Deadlift, Press, Bench, Row, Pull-up) with training maxes, history, and bodyweight. Prompts for baseline seeding and equipment choice (barbell/bodyweight/mixed/kettlebell) on first launch.
+- **Side Effects Integration:** Completing body-pillar daily/level/redemption/custom quests with tag `strength`/`nutrition`/`sleep` or track `strength`/`resilience` automatically updates `strengthLog` (advancing progression milestones) and `recovery` (protein/sleep logs).
+
 ---
 
 ## 5. AI Integration — The Forge-Master
@@ -371,7 +375,8 @@ bash build-ios-ipa.sh
 | 52 | Remove Log/voice pipeline — delete `LogTab`, `useVoiceLog`, `activityParser`, `activityCatalog`, `logEngine` (+tests); default landing tab → Missions | ✅ |
 | 53 | Guided Mode default — `guidedMode.enabled` defaults `true` + BUILD_VERSION migration forces it on once for existing users (future manual toggles respected) | ✅ |
 | 54 | Rewire endgame into quests — `runEndgameCycle` moved to `src/logic/endgame.js`, called from Dashboard.jsx quest-completion handlers (try/catch-wrapped) | ✅ |
-| 55 | Fix cross-device sync XP/gold loss — `stateMerge.js` replayed missing history against the already-unioned `merged.history`, so `applyHistoryReward`'s "already in history" guard skipped every missing event; reordered to replay against `base.history`, then union (pre-existing regression from commit 06bc77b) | ✅ |
+| 55 | Fix cross-device sync XP/gold loss — `stateMerge.js` replayed missing history against the already-unioned `merged.history`, so `applyHistoryReward`'s "already in history" guard flagged every missing event as processed and skipped it. Reordered to replay against `base.history` only, then union. | ✅ |
+| 56 | Physical Power retheme Phase 1 — body pillar renamed to 'Physical Power'; daily quest pools, level-story quests, weekly dungeons (Physics Gates), job-gate steps, and body redemption templates fully rethemed; created <PowerLog /> with equipment-adaptation (barbell/bodyweight/mixed/kettlebell) and baseline seeding; wired side effects linking body quest completion to strength logs (progressive overload) and recovery tracking (protein/sleep logs) in Dashboard.jsx | ✅ |
 
 ---
 
