@@ -394,14 +394,14 @@ const RAW_LEVEL_QUESTS = [
     reward: { gold: 150, statPoints: 2, shadowUnlock: 'devotee-path', message: 'The Devotee\'s Path is open to you.' },
   },
   {
-    level: 14, rank: 'D', title: 'The Warrior\'s Adventure',
+    level: 14, rank: 'D', title: 'The Warrior\'s Forge',
     description: 'Your outdoor readiness is an amanah. Strengthen it as the strong believer is better.',
     quests: [
       { id: 'lq-d-14-1', title: '30-Day Outdoor Discipline', description: 'Spend 30 minutes outside every day for 30 days: walk, ruck, climb stairs, or train. Minimum 30 min/day.', steps: ['Go outside every day.','Spend 30 minutes walking, rucking, climbing stairs, or training.','Do this for 30 days. Log each day. Rain or shine.'], xp: 180, pillar: 'body' },
       { id: 'lq-d-14-2', title: 'Nutrition Overhaul', description: 'Eat clean (no processed food) for 14 days.', steps: ['For 14 days, eat only food that was cooked at home or whole foods: rice, dal, vegetables, eggs, fruit, nuts.','Avoid packaged snacks, chips, soda, instant noodles, and restaurant food.','Log what you ate for 3 days to prove discipline.'], xp: 150, pillar: 'body' },
       { id: 'lq-d-14-3', title: 'Sleep Mastery', description: 'Sleep by 9:30pm and wake without alarm for 14 days.', steps: ['Start winding down at 9:00pm.','Be in bed by 9:30pm with all screens off.','Try to wake at Fajr without an alarm. If you fail, use a soft alarm. Do this for 14 days.'], xp: 150, pillar: 'body' },
     ],
-    reward: { gold: 180, statPoints: 2, shadowUnlock: 'warrior-body', message: 'The Warrior\'s Adventure is forged.' },
+    reward: { gold: 180, statPoints: 2, shadowUnlock: 'warrior-body', message: 'The Warrior\'s Forge is lit.' },
   },
   {
     level: 15, rank: 'D', title: "The Architect's Mind",
@@ -469,13 +469,13 @@ const RAW_LEVEL_QUESTS = [
   },
   {
     level: 30, rank: 'C', title: "The Mujahid's Oath",
-    description: 'Adventure, mind, and soul as one. Readiness to serve. Devotion to lead. The Mujahid\'s oath binds you to excellence.',
+    description: 'Body, mind, and soul as one. Readiness to serve. Devotion to lead. The Mujahid\'s oath binds you to excellence.',
     quests: [
       { id: 'lq-c-30-1', title: 'The Oath of Discipline', description: 'Commit to 60 days of perfect daily quest completion.', xp: 350, pillar: 'deen' },
       { id: 'lq-c-30-2', title: 'The Forge Trial', description: 'Complete a training challenge: 5km ruck, 1-hour strength circuit, or climb a significant hill. The Khalifa is forged in the fire of training.', xp: 300, pillar: 'body' },
       { id: 'lq-c-30-3', title: 'The Wealth Pledge', description: 'Set up automatic investing, AI revenue stream, and charity. The Khalifate\'s wealth must flow automatically.', xp: 300, pillar: 'money' },
     ],
-    reward: { gold: 400, statPoints: 4, jobChange: 'mujahid', message: 'JOB CHANGE: You are now a Mujahid. Adventure, mind, and soul as one.' },
+    reward: { gold: 400, statPoints: 4, jobChange: 'mujahid', message: 'JOB CHANGE: You are now a Mujahid. Body, mind, and soul as one.' },
   },
   {
     level: 33, rank: 'C', title: 'The Shadow Army Grows',
@@ -891,7 +891,7 @@ const RAW_LEVEL_QUESTS = [
   },
 ];
 
-const ADVENTURE_LEVEL_QUEST_OVERRIDES = {
+const PHYSICAL_POWER_LEVEL_QUEST_OVERRIDES = {
   '1:lq-e-1-2:First Forge Activation': {
     title: 'First Forge Activation',
     description: "Walk 1,000 steps and complete 10 push-ups + 10 bodyweight squats. The Khalifa's body is forged with the first rep on the earth Allah placed under his feet.",
@@ -1239,7 +1239,7 @@ export const LEVEL_QUESTS = [...RAW_LEVEL_QUESTS, ...S_RANK_GENERATED_QUESTS].ma
   ...levelQuest,
   quests: (levelQuest.quests || []).map(quest => {
     if (quest.pillar !== 'body') return quest;
-    const override = ADVENTURE_LEVEL_QUEST_OVERRIDES[`${levelQuest.level}:${quest.id}:${quest.title}`];
+    const override = PHYSICAL_POWER_LEVEL_QUEST_OVERRIDES[`${levelQuest.level}:${quest.id}:${quest.title}`];
     return override ? { ...quest, ...override } : quest;
   }),
 }));

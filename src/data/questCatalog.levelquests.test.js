@@ -35,4 +35,13 @@ describe('body level/story quests rethemed', () => {
       expect(q.description).not.toMatch(ROAMING);
     }
   });
+  it('no body-containing level-quest top-level title/description/reward message contains roaming wording', () => {
+    for (const lq of LEVEL_QUESTS) {
+      const hasBody = (lq.quests || []).some(q => q.pillar === 'body');
+      if (!hasBody) continue;
+      expect(lq.title).not.toMatch(ROAMING);
+      if (lq.description) expect(lq.description).not.toMatch(ROAMING);
+      if (lq.reward && lq.reward.message) expect(lq.reward.message).not.toMatch(ROAMING);
+    }
+  });
 });
