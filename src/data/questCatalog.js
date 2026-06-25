@@ -373,7 +373,7 @@ const RAW_LEVEL_QUESTS = [
     level: 10, rank: 'E', title: "The Apprentice's Oath",
     description: 'You have proven yourself. The Khalifate begins. First AI project deployment is mandatory.',
     quests: [
-      { id: 'lq-e-10-1', title: 'The 21-Day Challenge', description: 'Complete ALL daily quests across all pillars for 21 consecutive days.', steps: ['Open the app every single day.','Complete every daily quest shown: Deen, Adventure, and Money.','Do this for 21 days. If you miss even one quest, restart.'], xp: 200, pillar: 'deen' },
+      { id: 'lq-e-10-1', title: 'The 21-Day Challenge', description: 'Complete ALL daily quests across all pillars for 21 consecutive days.', steps: ['Open the app every single day.','Complete every daily quest shown: Deen, Physical Power, and Money.','Do this for 21 days. If you miss even one quest, restart.'], xp: 200, pillar: 'deen' },
       { id: 'lq-e-10-2', title: 'First Forge Test', description: 'Walk 5,000 steps, climb one set of stairs 10 times, do 20 push-ups and 20 squats, and spend 15 minutes outside without a phone.', steps: ['Walk 5,000 steps on grass, gravel, or any uneven surface.','Find stairs. Climb them 10 times.','Do 20 push-ups and 20 squats. Then sit or walk outside for 15 minutes with your phone in airplane mode.'], xp: 150, pillar: 'body' },
       { id: 'lq-e-10-3', title: 'Launch First AI-Assisted Service', description: 'Offer a service or product powered by AI tools to one real person — even a friend — and deliver results. Shipping value is the Khalifate\'s first weapon.', steps: ['Pick one thing you can do with AI help: write a resume, design a flyer, research a topic, or draft emails.','Message one person offering to help them with it for free or for a small fee.','Use AI to deliver the result. Send it. Get feedback.'], xp: 200, pillar: 'money' },
     ],
@@ -599,7 +599,7 @@ const RAW_LEVEL_QUESTS = [
     level: 73, rank: 'A', title: 'The Leader',
     description: 'Leaders create other leaders. Your legacy is measured by those you elevate.',
     quests: [
-      { id: 'lq-a-73-1', title: 'Mentorship Program', description: 'Formally mentor one person in Deen, Adventure, or Money for 30 days.', xp: 450, pillar: 'deen' },
+      { id: 'lq-a-73-1', title: 'Mentorship Program', description: 'Formally mentor one person in Deen, Physical Power, or Money for 30 days.', xp: 450, pillar: 'deen' },
       { id: 'lq-a-73-2', title: 'Lead by Outdoor Endurance', description: 'Lead a group outdoor training session consistently for a month. The Khalifa walks first and checks on everyone behind him.', xp: 400, pillar: 'body' },
       { id: 'lq-a-73-3', title: 'Wealth Mentorship', description: 'Guide someone to their first investment or income stream.', xp: 400, pillar: 'money' },
     ],
@@ -1334,7 +1334,7 @@ export const REDEMPTION_QUEST_TEMPLATES = [
 ];
 
 // ─── WEEKLY DUNGEON TEMPLATES (Scaled by rank) ───
-// 4th pillar: Ummah Service runs alongside Deen/Adventure/Money.
+// 4th pillar: Ummah Service runs alongside Deen/Physical Power/Money.
 export const WEEKLY_DUNGEON_TEMPLATES = {
   E: {
     deen: { title: "The Seeker's Trial", description: 'Complete 1 Juz of Quran + Study 1 seerah leadership lesson + Teach one thing', xp: 200, steps: ['Read 1 Juz', 'Study seerah story on leadership', 'Practice prophetic trait'] },
