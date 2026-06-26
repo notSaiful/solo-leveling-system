@@ -5,9 +5,9 @@ export default function XpBar({ current, max, color, label, level }) {
 
   return (
     <div className="w-full">
-      <div className="flex justify-between text-xs mb-1 tracking-wider">
-        <span className="text-cyan-300/60">{label} <span className="text-cyan-100 font-bold">Lv.{level}</span></span>
-        <span className="text-cyan-500/40">{current.toLocaleString()} / {max.toLocaleString()} XP</span>
+      <div className="flex justify-between text-[10px] mb-1 tracking-wider font-orbitron">
+        <span className="text-slate-400">{label} <span className="text-slate-200 font-bold">Lv.{level}</span></span>
+        <span className="text-slate-500">{current.toLocaleString()} / {max.toLocaleString()} XP</span>
       </div>
       <div className="xp-bar-bg relative">
         <motion.div
@@ -15,10 +15,8 @@ export default function XpBar({ current, max, color, label, level }) {
           style={{ backgroundColor: color, width: `${progress}%` }}
           initial={{ width: 0 }}
           animate={{ width: `${progress}%` }}
-          transition={{ duration: 1, ease: 'easeOut' }}
-        >
-          <div className="absolute right-0 top-0 bottom-0 w-2 bg-white/30 blur-[2px]" />
-        </motion.div>
+          transition={{ duration: 0.8, ease: 'easeOut' }}
+        />
       </div>
     </div>
   );

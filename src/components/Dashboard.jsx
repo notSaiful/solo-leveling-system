@@ -236,60 +236,47 @@ export default function Dashboard({ state, setState, ready = true }) {
     <div className="max-w-2xl md:max-w-3xl lg:max-w-4xl mx-auto p-2 sm:p-4 space-y-4 sm:space-y-6 relative z-10">
       {/* Status Window - Khalifa Monarch Style */}
       <div className="glass-panel-khalifa p-6 relative overflow-hidden">
-        {/* Decorative Corner Brackets */}
-        <div className="absolute top-3 left-3 w-6 h-6 border-l-2 border-t-2 border-khalifa-gold/50" />
-        <div className="absolute top-3 right-3 w-6 h-6 border-r-2 border-t-2 border-khalifa-gold/50" />
-        <div className="absolute bottom-3 left-3 w-6 h-6 border-l-2 border-b-2 border-khalifa-gold/50" />
-        <div className="absolute bottom-3 right-3 w-6 h-6 border-r-2 border-b-2 border-khalifa-gold/50" />
-
-        {/* Background Decorative Star */}
-        <div className="absolute -right-20 -bottom-20 w-64 h-64 opacity-[0.03] pointer-events-none">
-          <svg viewBox="0 0 100 100" fill="currentColor" className="text-khalifa-gold">
-            <path d="M50 0l11.756 36.18h38.244L69.065 58.541l11.756 36.18L50 72.18l-30.821 22.541 11.756-36.18L0 36.18h38.244z" />
-          </svg>
-        </div>
-
         <div className="flex flex-col sm:flex-row items-center gap-8">
           <RankBadge level={state.user.overallLevel} />
           <div className="flex-1 w-full space-y-4">
             <div className="flex items-center justify-between mb-2">
-              <div className="system-header text-glow-khalifa text-khalifa-gold/80">Forge Status</div>
+              <div className="system-header text-slate-300 font-bold">Forge Status</div>
               <div className="font-orbitron text-[10px] text-khalifa-steel tracking-widest">{new Date().toLocaleDateString('en-CA')}</div>
             </div>
 
             <XpBar
               current={state.pillars.deen.xp + state.pillars.body.xp + state.pillars.money.xp}
               max={xpForNextLevel(state.user.overallLevel) * 3}
-              color="#EAB308"
+              color="#D97706"
               label="OVERALL POWER"
               level={state.user.overallLevel}
             />
 
             <div className="grid grid-cols-1 gap-3 mt-4">
-              <XpBar current={state.pillars.deen.xp} max={xpForNextLevel(state.pillars.deen.level)} color="#3B82F6" label="DEEN" level={state.pillars.deen.level} />
+              <XpBar current={state.pillars.deen.xp} max={xpForNextLevel(state.pillars.deen.level)} color="#0EA5E9" label="DEEN" level={state.pillars.deen.level} />
               <XpBar current={state.pillars.body.xp} max={xpForNextLevel(state.pillars.body.level)} color="#F59E0B" label="BODY" level={state.pillars.body.level} />
-              <XpBar current={state.pillars.money.xp} max={xpForNextLevel(state.pillars.money.level)} color="#EAB308" label="MONEY" level={state.pillars.money.level} />
+              <XpBar current={state.pillars.money.xp} max={xpForNextLevel(state.pillars.money.level)} color="#D97706" label="MONEY" level={state.pillars.money.level} />
             </div>
           </div>
         </div>
       </div>
 
       {/* Weekly Pillar Focus Selector */}
-      <div className="glass-panel p-3 border border-yellow-500/30 bg-yellow-950/10">
+      <div className="glass-panel p-3 border border-slate-800/80 bg-slate-950/20">
         <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2 text-yellow-400 text-sm font-semibold">
-            <Star size={16} /> WEEKLY FOCUS
+          <div className="flex items-center gap-2 text-slate-300 text-sm font-semibold">
+            <Star size={16} className="text-khalifa-gold" /> WEEKLY FOCUS
           </div>
           {state.weeklyFocus && (
             <button
               onClick={() => setState(prev => ({ ...prev, weeklyFocus: null }))}
-              className="text-[10px] text-yellow-600 hover:text-yellow-400 uppercase tracking-wider px-2 py-1 rounded hover:bg-yellow-900/20 transition-colors"
+              className="text-[10px] text-slate-500 hover:text-slate-300 uppercase tracking-wider px-2 py-1 rounded hover:bg-slate-800 transition-colors"
             >
               Clear
             </button>
           )}
         </div>
-        <div className="text-[10px] text-yellow-500/60 mb-2 uppercase tracking-wider">
+        <div className="text-[10px] text-slate-500 mb-2 uppercase tracking-wider">
           {state.weeklyFocus
             ? `${pillarLabels[state.weeklyFocus] || state.weeklyFocus} quests earn +50% XP this week`
             : 'Select a pillar to focus this week for +50% XP'}
@@ -304,8 +291,8 @@ export default function Dashboard({ state, setState, ready = true }) {
                 onClick={() => setState(prev => ({ ...prev, weeklyFocus: p }))}
                 className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border transition-colors ${
                   active
-                    ? 'bg-yellow-700/40 border-yellow-500/50 text-yellow-200'
-                    : 'bg-yellow-950/20 border-yellow-800/30 text-yellow-500/60 hover:text-yellow-300 hover:border-yellow-700/40'
+                    ? 'bg-khalifa-gold/15 border-khalifa-gold/40 text-slate-100'
+                    : 'bg-slate-900/40 border-slate-800/60 text-slate-500 hover:text-slate-300 hover:border-slate-700'
                 }`}
                 style={active ? { borderColor: pillarColors[p] } : {}}
               >
@@ -319,40 +306,33 @@ export default function Dashboard({ state, setState, ready = true }) {
 
       {/* Flow State Banner */}
       {flowDisplay && (
-        <div className="glass-panel p-3 border border-cyan-500/40 bg-cyan-950/20 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-cyan-400">
-            <Zap size={18} className="animate-pulse" />
+        <div className="glass-panel p-3 border border-slate-800/80 bg-slate-950/20 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-khalifa-blue">
+            <Zap size={18} />
             <span className="font-semibold text-sm tracking-wider">{flowDisplay.text}</span>
           </div>
-          <span className="text-xs text-cyan-600">{flowDisplay.timeLeft}</span>
+          <span className="text-xs text-slate-500">{flowDisplay.timeLeft}</span>
         </div>
       )}
 
       {/* Streak Bonus */}
       {streakBonus.multiplier > 1 && (
-        <div className={`glass-panel p-3 border border-yellow-500/40 bg-yellow-950/20 flex items-center justify-between`}>
-          <div className="flex items-center gap-2 text-yellow-400">
+        <div className={`glass-panel p-3 border border-slate-800/80 bg-slate-950/20 flex items-center justify-between`}>
+          <div className="flex items-center gap-2 text-khalifa-gold">
             <Sparkles size={18} />
             <span className="font-semibold text-sm">{streakBonus.label} STREAK</span>
-            <span className="text-xs text-yellow-600">+{Math.round((streakBonus.multiplier - 1) * 100)}% XP</span>
+            <span className="text-xs text-slate-500">+{Math.round((streakBonus.multiplier - 1) * 100)}% XP</span>
           </div>
-          <span className="text-xs text-yellow-600">{bestStreak} days</span>
+          <span className="text-xs text-slate-500">{bestStreak} days</span>
         </div>
       )}
 
-
-      {/* Gold Display */}
-      <div className="flex items-center justify-between glass-panel p-3">
-        <div className="flex items-center gap-2 text-yellow-400">
-          <Coins size={18} />
-          <span className="font-bold">{state.gold.toLocaleString()}</span>
-          <span className="text-[10px] text-yellow-600 uppercase tracking-wider">Gold</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1 text-xs text-cyan-500/40">
-            <Activity size={12} />
-            <span>Streak: {bestStreak}</span>
-          </div>
+      {/* Streak and Status Panel */}
+      <div className="flex items-center justify-between glass-panel p-3 border border-slate-800/80 bg-slate-950/20">
+        <div className="flex items-center gap-2 text-slate-400 text-xs">
+          <Activity size={14} className="text-khalifa-blue" />
+          <span className="font-orbitron uppercase tracking-wider">Pillar Streak:</span>
+          <span className="font-mono font-bold text-slate-200">{bestStreak} days</span>
         </div>
       </div>
 
@@ -399,8 +379,8 @@ export default function Dashboard({ state, setState, ready = true }) {
 
       {/* Active Job Change Gate */}
       {state.jobChangeGates?.some(g => !g.completed && !g.failed) && (
-        <div className="glass-panel p-3 border border-blue-500/30 bg-blue-950/10">
-          <div className="flex items-center gap-2 text-blue-400 text-sm font-semibold mb-2">
+        <div className="glass-panel p-3 border border-slate-800 bg-slate-950/20">
+          <div className="flex items-center gap-2 text-khalifa-blue text-sm font-semibold mb-2">
             <Lock size={16} /> JOB CHANGE GATE
           </div>
           {state.jobChangeGates.filter(g => !g.completed && !g.failed).map(gate => {
@@ -409,21 +389,21 @@ export default function Dashboard({ state, setState, ready = true }) {
             const stepData = gate.steps[currentStep];
             return (
               <div key={gate.gateId} className="space-y-2">
-                <div className="text-xs text-cyan-300">{gate.title} (Rank {gate.rank}) — Day {gate.day}/{gate.totalDays}</div>
-                <div className="text-xs text-cyan-500/60">{currentStep}/{gate.steps.length} steps completed</div>
-                <div className="w-full bg-cyan-900/30 rounded-full h-1.5">
+                <div className="text-xs text-slate-200">{gate.title} (Rank {gate.rank}) — Day {gate.day}/{gate.totalDays}</div>
+                <div className="text-xs text-slate-500">{currentStep}/{gate.steps.length} steps completed</div>
+                <div className="w-full bg-slate-900 rounded-full h-[3px]">
                   <div
-                    className="bg-blue-500 rounded-full h-1.5 transition-all"
+                    className="bg-khalifa-blue rounded-full h-[3px] transition-all"
                     style={{ width: `${(currentStep / gate.steps.length) * 100}%` }}
                   />
                 </div>
                 {stepData && (
-                  <div className="mt-2 rounded-lg border border-blue-700/30 bg-blue-950/10 p-2">
-                    <div className="text-xs text-blue-300 font-semibold">{stepData.title}</div>
-                    <div className="text-xs text-cyan-500/60">{stepData.description}</div>
+                  <div className="mt-2 rounded-lg border border-slate-800 bg-slate-900/10 p-2">
+                    <div className="text-xs text-slate-300 font-semibold">{stepData.title}</div>
+                    <div className="text-xs text-slate-500">{stepData.description}</div>
                     <button
                       onClick={() => setState(prev => completeGateStep(prev, gate.gateId, currentStep))}
-                      className="mt-2 flex items-center gap-1 text-xs px-2 py-1 rounded bg-blue-900/30 border border-blue-500/40 text-blue-300 hover:bg-blue-800/40 transition-colors"
+                      className="mt-2 flex items-center gap-1 text-xs px-2 py-1 rounded bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 transition-colors"
                     >
                       <CheckCircle2 size={12} /> Complete Step
                     </button>
@@ -437,16 +417,16 @@ export default function Dashboard({ state, setState, ready = true }) {
 
       {/* Active Seerah Chain */}
       {state.seerahChains?.some(c => !c.completed && !c.failed) && (
-        <div className="glass-panel p-3 border border-amber-500/30 bg-amber-950/10">
-          <div className="flex items-center gap-2 text-amber-400 text-sm font-semibold mb-2">
+        <div className="glass-panel p-3 border border-slate-800 bg-slate-950/20">
+          <div className="flex items-center gap-2 text-khalifa-gold text-sm font-semibold mb-2">
             <BookOpen size={16} /> SEERAH QUEST CHAIN
           </div>
           {state.seerahChains.filter(c => !c.completed && !c.failed).map(chain => (
             <div key={chain.chainId} className="space-y-1">
-              <div className="text-xs text-cyan-300">{chain.traitName} — Day {chain.day}/{chain.totalDays}</div>
-              <div className="w-full bg-cyan-900/30 rounded-full h-1.5">
+              <div className="text-xs text-slate-200">{chain.traitName} — Day {chain.day}/{chain.totalDays}</div>
+              <div className="w-full bg-slate-900 rounded-full h-[3px]">
                 <div
-                  className="bg-amber-500 rounded-full h-1.5 transition-all"
+                  className="bg-khalifa-gold rounded-full h-[3px] transition-all"
                   style={{ width: `${(chain.day / chain.totalDays) * 100}%` }}
                 />
               </div>
@@ -457,8 +437,8 @@ export default function Dashboard({ state, setState, ready = true }) {
 
       {/* Monarch Trials */}
       {state.monarchTrials?.active && (
-        <div className="glass-panel p-3 border border-yellow-500/30 bg-yellow-950/10">
-          <div className="flex items-center gap-2 text-yellow-400 text-sm font-semibold mb-2">
+        <div className="glass-panel p-3 border border-slate-800 bg-slate-950/20">
+          <div className="flex items-center gap-2 text-khalifa-gold text-sm font-semibold mb-2">
             <Crown size={16} /> MONARCH TRIAL
           </div>
           {(() => {
@@ -477,16 +457,16 @@ export default function Dashboard({ state, setState, ready = true }) {
                 )));
             return (
               <div className="space-y-1">
-                <div className="text-xs text-cyan-300">Stage {trial.stage}: {stageDef.name}</div>
-                <div className="text-xs text-cyan-500/60">{progress}% complete</div>
-                <div className="w-full bg-cyan-900/30 rounded-full h-1.5">
+                <div className="text-xs text-slate-200">Stage {trial.stage}: {stageDef.name}</div>
+                <div className="text-xs text-slate-500">{progress}% complete</div>
+                <div className="w-full bg-slate-900 rounded-full h-[3px]">
                   <div
-                    className="bg-yellow-500 rounded-full h-1.5 transition-all"
+                    className="bg-khalifa-gold rounded-full h-[3px] transition-all"
                     style={{ width: `${progress}%` }}
                   />
                 </div>
                 {trial.stage === 4 && (
-                  <div className="text-[10px] text-yellow-500/60 mt-1">40 days of complete mastery. Zero misses across all 3 pillars.</div>
+                  <div className="text-[10px] text-slate-500 mt-1">40 days of complete mastery. Zero misses across all 3 pillars.</div>
                 )}
               </div>
             );
@@ -504,51 +484,51 @@ export default function Dashboard({ state, setState, ready = true }) {
           return { ...obj, completed: userObj?.completed || false, completedAt: userObj?.completedAt || null };
         });
         return (
-          <div className="glass-panel p-3 border border-emerald-500/30 bg-emerald-950/10">
+          <div className="glass-panel p-3 border border-slate-800 bg-slate-950/20">
             <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2 text-emerald-400 text-sm font-semibold">
-                <Crown size={16} /> KHALIFATE OBJECTIVES
+              <div className="flex items-center gap-2 text-slate-300 text-sm font-semibold">
+                <Crown size={16} className="text-khalifa-gold" /> KHALIFATE OBJECTIVES
               </div>
-              <div className="text-[10px] px-2 py-0.5 rounded border border-emerald-500/30 bg-emerald-900/20 text-emerald-300">
+              <div className="text-[10px] px-2 py-0.5 rounded border border-slate-800 bg-slate-900/30 text-slate-300">
                 {progress.completed}/{progress.required} complete
               </div>
             </div>
-            <div className="text-xs text-emerald-500/70 mb-2">
+            <div className="text-xs text-slate-500 mb-2">
               {activeGate.subtitle}
             </div>
-            <div className="w-full bg-cyan-900/30 rounded-full h-1.5 mb-3">
+            <div className="w-full bg-slate-900 rounded-full h-[3px] mb-3">
               <div
-                className="bg-emerald-500 rounded-full h-1.5 transition-all"
+                className="bg-khalifa-blue rounded-full h-[3px] transition-all"
                 style={{ width: `${progress.percent}%` }}
               />
             </div>
             <div className="space-y-2">
               {allObjectives.map(obj => (
-                <div key={obj.id} className={`flex items-start gap-2 rounded-lg border p-2 ${obj.completed ? 'border-emerald-700/30 bg-emerald-950/10' : 'border-cyan-800/20 bg-cyan-950/10'}`}>
+                <div key={obj.id} className={`flex items-start gap-2 rounded-lg border p-2 ${obj.completed ? 'border-slate-800 bg-slate-900/10' : 'border-slate-800/60 bg-slate-950/30'}`}>
                   <button
                     onClick={() => {
                       if (obj.completed) return;
                       setState(prev => completeKhalifateObjective(prev, obj.id));
                     }}
-                    className={`mt-0.5 flex-shrink-0 w-4 h-4 rounded border flex items-center justify-center transition-colors ${obj.completed ? 'bg-emerald-500 border-emerald-500' : 'border-cyan-600 hover:border-emerald-400'}`}
+                    className={`mt-0.5 flex-shrink-0 w-4 h-4 rounded border flex items-center justify-center transition-colors ${obj.completed ? 'bg-khalifa-blue border-khalifa-blue' : 'border-slate-700 hover:border-slate-500'}`}
                   >
                     {obj.completed && <CheckCircle2 size={12} className="text-black" />}
                   </button>
                   <div className="flex-1 min-w-0">
-                    <div className={`text-xs font-semibold ${obj.completed ? 'text-emerald-400 line-through opacity-60' : 'text-cyan-300'}`}>{obj.label}</div>
-                    <div className="text-[10px] text-cyan-500/60 leading-tight">{obj.description}</div>
+                    <div className={`text-xs font-semibold ${obj.completed ? 'text-slate-400 line-through opacity-60' : 'text-slate-200'}`}>{obj.label}</div>
+                    <div className="text-[10px] text-slate-500 leading-tight">{obj.description}</div>
                     {obj.completed && obj.completedAt && (
-                      <div className="text-[9px] text-emerald-500/50 mt-0.5">Completed {new Date(obj.completedAt).toLocaleDateString()}</div>
+                      <div className="text-[9px] text-slate-500 mt-0.5">Completed {new Date(obj.completedAt).toLocaleDateString()}</div>
                     )}
                   </div>
-                  <span className={`text-[9px] px-1.5 py-0.5 rounded border flex-shrink-0 ${obj.pillar === 'deen' ? 'border-cyan-700/30 text-cyan-400' : obj.pillar === 'money' ? 'border-yellow-700/30 text-yellow-400' : obj.pillar === 'body' ? 'border-rose-700/30 text-rose-400' : 'border-purple-700/30 text-purple-400'}`}>
+                  <span className={`text-[9px] px-1.5 py-0.5 rounded border flex-shrink-0 border-slate-800 text-slate-400`}>
                     {obj.pillar}
                   </span>
                 </div>
               ))}
             </div>
             {progress.percent >= 100 && (
-              <div className="mt-2 text-xs text-emerald-400 font-semibold text-center">
+              <div className="mt-2 text-xs text-khalifa-blue font-semibold text-center">
                 🚪 Gate Open. Level ascension unlocked.
               </div>
             )}
@@ -558,15 +538,15 @@ export default function Dashboard({ state, setState, ready = true }) {
 
       {/* Equipment Status */}
       {state.equipment && Object.values(state.equipment).some(Boolean) && (
-        <div className="glass-panel p-3 border border-amber-500/30 bg-amber-950/10">
+        <div className="glass-panel p-3 border border-slate-800 bg-slate-950/20">
           <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2 text-amber-400 text-sm font-semibold">
-              <Wrench size={16} /> EQUIPMENT
+            <div className="flex items-center gap-2 text-slate-300 text-sm font-semibold">
+              <Wrench size={16} className="text-khalifa-gold" /> EQUIPMENT
             </div>
             {(() => {
               const setBonus = getSetBonusStatus(state);
               return setBonus.active ? (
-                <div className="text-[10px] px-2 py-0.5 rounded-full border border-amber-500/30 bg-amber-900/20 text-amber-300">
+                <div className="text-[10px] px-2 py-0.5 rounded-full border border-slate-800 bg-slate-900/30 text-slate-300">
                   {setBonus.label} +10%
                 </div>
               ) : null;
@@ -576,22 +556,22 @@ export default function Dashboard({ state, setState, ready = true }) {
             {['weapon', 'armor', 'ring'].map(slot => {
               const item = state.equipment?.[slot];
               return (
-                <div key={slot} className={`rounded-lg p-2 border ${item ? 'bg-amber-950/20 border-amber-700/30' : 'bg-cyan-950/10 border-cyan-800/20'}`}>
-                  <div className="text-[10px] text-cyan-500/60 uppercase capitalize">{slot}</div>
-                  <div className={`text-xs truncate ${item ? getItemColorClass(item) : 'text-cyan-200'}`}>
+                <div key={slot} className={`rounded-lg p-2 border ${item ? 'bg-slate-900/30 border-slate-800/60' : 'bg-slate-950/20 border-slate-800/50'}`}>
+                  <div className="text-[10px] text-slate-500 uppercase capitalize">{slot}</div>
+                  <div className={`text-xs truncate ${item ? getItemColorClass(item) : 'text-slate-300'}`}>
                     {item ? item.name : 'Empty'}
                   </div>
                   {item && (
                     <>
                       <div className="flex items-center justify-between mt-0.5">
-                        <span className="text-[9px] text-cyan-500/50">{getItemTierLabel(item)}</span>
+                        <span className="text-[9px] text-slate-500">{getItemTierLabel(item)}</span>
                         {item.enchantLevel > 0 && (
                           <span className="text-[9px] text-purple-400">+{item.enchantLevel}</span>
                         )}
                       </div>
-                      <div className="mt-1 w-full bg-cyan-900/30 rounded-full h-1">
+                      <div className="mt-1 w-full bg-slate-900 rounded-full h-[3px]">
                         <div
-                          className={`rounded-full h-1 transition-all ${item.durability > item.maxDurability * 0.3 ? 'bg-green-500' : 'bg-red-500'}`}
+                          className={`rounded-full h-[3px] transition-all ${item.durability > item.maxDurability * 0.3 ? 'bg-green-500' : 'bg-red-500'}`}
                           style={{ width: `${(item.durability / item.maxDurability) * 100}%` }}
                         />
                       </div>
@@ -606,35 +586,35 @@ export default function Dashboard({ state, setState, ready = true }) {
 
       {/* Active Skills */}
       {state.skills?.length > 0 && (
-        <div className="glass-panel p-3 border border-purple-500/30 bg-purple-950/10">
-          <div className="flex items-center gap-2 text-purple-400 text-sm font-semibold mb-2">
-            <Star size={16} /> SKILLS
+        <div className="glass-panel p-3 border border-slate-800 bg-slate-950/20">
+          <div className="flex items-center gap-2 text-slate-300 text-sm font-semibold mb-2">
+            <Star size={16} className="text-khalifa-gold" /> SKILLS
           </div>
           <div className="flex flex-wrap gap-2">
             {state.skills.map(skill => (
-              <span key={skill.id} className="text-[10px] px-2 py-1 rounded border border-purple-700/30 bg-purple-900/20 text-purple-300">
+              <span key={skill.id} className="text-[10px] px-2 py-1 rounded border border-slate-800 bg-slate-950/40 text-slate-300">
                 {skill.name} {skill.active && <span className="text-green-400">●</span>}
               </span>
             ))}
           </div>
           {state.skillPoints > 0 && (
-            <div className="text-xs text-purple-500/60 mt-1">{state.skillPoints} skill points available</div>
+            <div className="text-xs text-slate-500 mt-1">{state.skillPoints} skill points available</div>
           )}
         </div>
       )}
 
       {/* Solo Clear Bonus */}
       {state.weeklyStats?.soloClear && (
-        <div className="glass-panel p-3 border border-green-500/30 bg-green-950/10 flex items-center gap-2">
-          <Zap size={16} className="text-green-400" />
-          <div className="text-sm text-green-400 font-semibold">Solo Clear Bonus Active</div>
-          <div className="text-xs text-green-500/60">2x shadow extraction rate this week</div>
+        <div className="glass-panel p-3 border border-slate-800 bg-slate-950/20 flex items-center gap-2">
+          <Zap size={16} className="text-khalifa-blue" />
+          <div className="text-sm text-slate-300 font-semibold">Solo Clear Bonus Active</div>
+          <div className="text-xs text-slate-500">2x shadow extraction rate this week</div>
         </div>
       )}
 
       {/* Debuffs Warning */}
       {Object.entries(state.pillars).some(([_, p]) => isDebuffActive(p.activeDebuff)) && (
-        <div className="glass-panel p-4 border border-red-500/30 bg-red-950/10">
+        <div className="glass-panel p-4 border border-red-950 bg-red-950/5">
           <div className="flex items-center gap-2 text-red-400 font-semibold mb-2 text-sm tracking-wider">
             <Skull size={18} /> SYSTEM ALERT
           </div>
@@ -652,15 +632,15 @@ export default function Dashboard({ state, setState, ready = true }) {
         const extremePillars = getExtremeModeSummary(state);
         if (extremePillars.length === 0) return null;
         return (
-          <div className="glass-panel p-4 border border-orange-500/30 bg-orange-950/10">
+          <div className="glass-panel p-4 border border-orange-950 bg-orange-950/5">
             <div className="flex items-center gap-2 text-orange-400 font-semibold mb-2 text-sm tracking-wider">
               <Flame size={18} /> EXTREME MODE
             </div>
             {extremePillars.map(({ pillar, streak, severity }) => (
-              <div key={pillar} className={`text-sm flex items-center gap-2 ${severity === 'critical' ? 'text-red-300' : severity === 'severe' ? 'text-orange-300' : 'text-orange-300/70'}`}>
+              <div key={pillar} className={`text-sm flex items-center gap-2 ${severity === 'critical' ? 'text-red-300' : 'text-orange-300'}`}>
                 <AlertTriangle size={14} className={severity === 'critical' ? 'text-red-400' : 'text-orange-400'} />
                 {getPillarDisplayKey(pillar)}: {getExtremePillarLabel(streak)} — {streak} days of silence
-                <span className="text-[10px] ml-auto border border-orange-700/30 bg-orange-900/20 px-1.5 py-0.5 rounded">
+                <span className="text-[10px] ml-auto border border-orange-950 bg-orange-950/20 px-1.5 py-0.5 rounded">
                   Complete to break
                 </span>
               </div>
@@ -701,10 +681,10 @@ export default function Dashboard({ state, setState, ready = true }) {
       {/* Active Level Quest */}
       {activeLevelQuest && (
         <div className="space-y-3">
-          <h2 className="font-orbitron text-sm font-bold text-yellow-400 tracking-wider flex items-center gap-2">
+          <h2 className="font-orbitron text-sm font-bold text-khalifa-gold tracking-wider flex items-center gap-2">
             <Zap size={16} /> LEVEL QUEST: {activeLevelQuest.title}
           </h2>
-          <div className="text-xs text-cyan-500/50 mb-2">{activeLevelQuest.description}</div>
+          <div className="text-xs text-slate-500 mb-2">{activeLevelQuest.description}</div>
           {activeLevelQuest.quests.map((q, i) => (
             <QuestCard
               key={q.id}
@@ -722,8 +702,8 @@ export default function Dashboard({ state, setState, ready = true }) {
 
       {/* Today's Quests */}
       <div className="space-y-3">
-        <h2 className="font-orbitron text-sm font-bold text-cyan-300 tracking-wider flex items-center gap-2">
-          <Activity size={16} /> DAILY QUESTS
+        <h2 className="font-orbitron text-sm font-bold text-slate-200 tracking-wider flex items-center gap-2">
+          <Activity size={16} className="text-khalifa-blue" /> DAILY QUESTS
         </h2>
 
         {['deen', 'body', 'money'].map(pillar => {
@@ -743,7 +723,7 @@ export default function Dashboard({ state, setState, ready = true }) {
                   <span className="text-[10px] ml-1 opacity-60">🔥 {state.pillars[pillar].streak}</span>
                 )}
                 {state.streakFrozen?.[pillar] && (
-                  <span className="text-[10px] ml-1 text-yellow-400 font-semibold" title="Streak frozen — complete a quest today to save it. Miss today and it resets.">
+                  <span className="text-[10px] ml-1 text-khalifa-gold font-semibold" title="Streak frozen — complete a quest today to save it. Miss today and it resets.">
                     ⚠ FROZEN
                   </span>
                 )}
@@ -766,7 +746,7 @@ export default function Dashboard({ state, setState, ready = true }) {
         {/* Custom Quests */}
         {state.customQuests.length > 0 && (
           <div className="space-y-2">
-            <div className="text-xs text-cyan-500/40 font-semibold uppercase tracking-widest">Custom</div>
+            <div className="text-xs text-slate-500 font-semibold uppercase tracking-widest">Custom</div>
             {state.customQuests.map(quest => {
               const questKey = quest.uniqueId || quest.id;
               const completedToday = quest.lastCompleted === today ||

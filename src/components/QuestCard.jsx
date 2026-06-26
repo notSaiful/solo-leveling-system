@@ -10,9 +10,9 @@ const pillarIcons = {
 };
 
 const pillarColors = {
-  deen: 'border-khalifa-blue/20 hover:border-khalifa-blue/60 bg-khalifa-blue/5',
-  body: 'border-khalifa-amber/20 hover:border-khalifa-amber/60 bg-khalifa-amber/5',
-  money: 'border-khalifa-gold/20 hover:border-khalifa-gold/60 bg-khalifa-gold/5',
+  deen: 'border-slate-800/80 hover:border-khalifa-blue/30 bg-slate-950/40',
+  body: 'border-slate-800/80 hover:border-khalifa-amber/30 bg-slate-950/40',
+  money: 'border-slate-800/80 hover:border-khalifa-gold/30 bg-slate-950/40',
 };
 
 const pillarTextColors = {
@@ -51,25 +51,24 @@ export default function QuestCard({ quest, onComplete, rank, disabled = false, d
   return (
     <motion.div
       layout
-      whileHover={{ scale: 1.01 }}
-      whileTap={{ scale: 0.98 }}
+      whileHover={{ scale: 1.005 }}
+      whileTap={{ scale: 0.99 }}
       onClick={handleComplete}
       title={disabledReason}
       className={`quest-card flex flex-col gap-2 ${isCompleted ? 'opacity-40' : ''} ${disabled ? 'opacity-60 cursor-not-allowed' : ''} ${pillarColors[quest.pillar] || pillarColors.deen} ${
-        isRedemption ? 'border-red-500/40 bg-red-950/20' : ''
-      } ${isLevelQuest ? 'border-khalifa-gold/40 bg-khalifa-gold/10' : ''}`}
+        isRedemption ? 'border-red-950 bg-red-950/10' : ''
+      } ${isLevelQuest ? 'border-khalifa-gold/25 bg-khalifa-gold/5' : ''}`}
     >
       {/* Main Row */}
       <div className="flex items-center gap-3 sm:gap-4">
-        <div className={`p-2 sm:p-3 rounded-lg relative shrink-0 ${isCompleted ? 'bg-khalifa-void/50' : isRedemption ? 'bg-red-950/30' : isLevelQuest ? 'bg-khalifa-gold/20' : 'bg-khalifa-void/30'}`}>
-          <div className={`absolute inset-0 rounded-lg opacity-10 bg-gradient-to-br from-white to-transparent`} />
-          {isRedemption ? <Skull size={18} className={`sm:w-5 sm:h-5 ${isCompleted ? 'text-gray-600' : 'text-red-400'}`} /> :
-           isLevelQuest ? <Zap size={18} className={`sm:w-5 sm:h-5 ${isCompleted ? 'text-gray-600' : 'text-khalifa-gold'}`} /> :
-           <Icon size={18} className={`sm:w-5 sm:h-5 ${isCompleted ? 'text-gray-600' : pillarTextColors[quest.pillar] || 'text-khalifa-blue'}`} />}
+        <div className={`p-2 sm:p-2.5 rounded-lg shrink-0 ${isCompleted ? 'bg-slate-900/50' : isRedemption ? 'bg-red-950/30' : isLevelQuest ? 'bg-khalifa-gold/15' : 'bg-slate-900/40'}`}>
+          {isRedemption ? <Skull size={16} className={`sm:w-[18px] sm:h-[18px] ${isCompleted ? 'text-gray-600' : 'text-red-400'}`} /> :
+           isLevelQuest ? <Zap size={16} className={`sm:w-[18px] sm:h-[18px] ${isCompleted ? 'text-gray-600' : 'text-khalifa-gold'}`} /> :
+           <Icon size={16} className={`sm:w-[18px] sm:h-[18px] ${isCompleted ? 'text-gray-600' : pillarTextColors[quest.pillar] || 'text-khalifa-blue'}`} />}
         </div>
 
         <div className="flex-1 min-w-0">
-          <div className="font-semibold text-sm text-gray-100 truncate">
+          <div className="font-semibold text-sm text-gray-200 truncate">
             {quest.title}
             {isRedemption && <span className="ml-2 text-[10px] text-red-400 uppercase tracking-wider">[Redemption]</span>}
             {isLevelQuest && <span className="ml-2 text-[10px] text-khalifa-gold uppercase tracking-wider">[Level {quest.requiredLevel}]</span>}
@@ -90,7 +89,7 @@ export default function QuestCard({ quest, onComplete, rank, disabled = false, d
           {hasDescription && (
             <button
               onClick={toggleExpand}
-              className="p-1 rounded-full hover:bg-white/5 transition-colors"
+              className="p-1 rounded hover:bg-white/5 transition-colors"
               aria-label={isExpanded ? 'Collapse details' : 'Expand details'}
             >
               <motion.div
@@ -123,7 +122,7 @@ export default function QuestCard({ quest, onComplete, rank, disabled = false, d
             ) : disabled ? (
               <Lock size={18} className="sm:w-5 sm:h-5" />
             ) : (
-              <span className={`w-5 h-5 rounded-full border-2 ${isRedemption ? 'border-red-500/50' : isLevelQuest ? 'border-khalifa-gold/50' : 'border-khalifa-steel/50'}`} />
+              <span className={`w-[18px] h-[18px] rounded-full border ${isRedemption ? 'border-red-500/30' : isLevelQuest ? 'border-khalifa-gold/45' : 'border-slate-700'}`} />
             )}
           </button>
         </div>

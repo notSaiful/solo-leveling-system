@@ -248,28 +248,22 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-    <div className="min-h-screen pb-20 relative">
-      {/* Background effects */}
-      <FloatingParticles />
-      <div className="fixed inset-0 grid-bg pointer-events-none z-0" />
-      <div className="fixed inset-0 bg-gradient-to-b from-transparent via-black/20 to-transparent pointer-events-none z-0" />
-
+    <div className="min-h-screen pb-20 relative bg-khalifa-void">
       {/* System Messages */}
       <SectionErrorBoundary label="System Message">
         <SystemMessage notification={notification} onDismiss={dismiss} />
       </SectionErrorBoundary>
 
-       <header className="relative z-10 p-3 sm:p-4 border-b border-khalifa-gold/10 bg-khalifa-void/90 backdrop-blur-md">
+       <header className="relative z-10 p-3 sm:p-4 border-b border-slate-800 bg-khalifa-void/90 backdrop-blur-md">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2 sm:gap-3">
             <div className="relative">
-              <h1 className="font-playfair text-lg sm:text-xl font-bold text-khalifa-gold tracking-tight text-glow-khalifa">
+              <h1 className="font-orbitron text-lg sm:text-xl font-black text-slate-100 tracking-[0.25em]">
                 KHALIFA
               </h1>
-              <div className="absolute -bottom-1 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-khalifa-gold/40 to-transparent" />
             </div>
             {flowDisplay && (
-              <div className="flex items-center gap-1 bg-khalifa-blue/10 border border-khalifa-blue/30 px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs text-khalifa-blue animate-pulse">
+              <div className="flex items-center gap-1 bg-khalifa-blue/10 border border-khalifa-blue/30 px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs text-khalifa-blue font-bold uppercase tracking-wider">
                 <Zap size={10} className="sm:w-3 sm:h-3" />
                 <span className="hidden sm:inline">FLOW</span>
               </div>
@@ -277,7 +271,7 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className="flex items-center gap-1 text-[10px] sm:text-xs text-khalifa-gold/80 font-bold uppercase tracking-widest font-orbitron">
+            <div className="flex items-center gap-1 text-[10px] sm:text-xs text-khalifa-steel font-bold uppercase tracking-widest font-orbitron">
               {rank.title} · Level {state.user.overallLevel}
             </div>
           </div>
@@ -433,7 +427,7 @@ export default function App() {
       </SectionErrorBoundary>
 
       {/* Bottom Nav */}
-      <nav className="fixed bottom-0 left-0 right-0 z-20 bg-khalifa-void/95 border-t border-khalifa-gold/10 pb-safe backdrop-blur-lg">
+      <nav className="fixed bottom-0 left-0 right-0 z-20 bg-slate-950/95 border-t border-slate-900 pb-safe backdrop-blur-lg">
         <div className="max-w-2xl mx-auto flex justify-around items-center p-1 sm:p-2">
           {tabs.map(tab => {
             const Icon = tab.icon;
@@ -443,8 +437,8 @@ export default function App() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex flex-col items-center justify-center gap-1 px-2 sm:px-3 py-2 sm:py-2.5 rounded-xl transition-all min-w-[44px] min-h-[44px] sm:min-w-[56px] ${
                   activeTab === tab.id
-                    ? 'text-khalifa-gold bg-khalifa-gold/10 border border-khalifa-gold/20 shadow-[0_0_15px_rgba(234,179,8,0.1)]'
-                    : 'text-khalifa-steel hover:text-khalifa-gold/50'
+                    ? 'text-khalifa-gold bg-khalifa-gold/5 border border-khalifa-gold/20'
+                    : 'text-khalifa-steel hover:text-slate-300'
                 }`}
               >
                 <Icon size={20} className="shrink-0" />

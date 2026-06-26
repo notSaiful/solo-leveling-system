@@ -21,7 +21,7 @@ export default function PowerLog({ state, setState }) {
   // Custom rep max calculator state
   const [calcForm, setCalcForm] = useState({ lift: 'squat', weight: '', reps: '' });
 
-  // Baseline prompt form state (Task 14)
+  // Baseline prompt form state
   const [baselineEquip, setBaselineEquip] = useState('barbell');
   const [baselineBw, setBaselineBw] = useState('');
   const [baselines, setBaselines] = useState({
@@ -114,24 +114,24 @@ export default function PowerLog({ state, setState }) {
   };
 
   if (!equipment) {
-    // Setup / Baseline Prompt Panel (Task 14)
+    // Setup / Baseline Prompt Panel
     return (
-      <div className="glass-panel-khalifa p-4 border border-cyan-500/30">
-        <div className="flex items-center gap-2 text-cyan-400 text-sm font-semibold mb-3">
-          <Dumbbell size={16} /> PHYSICAL POWER INITIALIZATION
+      <div className="glass-panel p-4 border border-slate-800 bg-slate-950/20 max-w-2xl mx-auto">
+        <div className="flex items-center gap-2 text-slate-300 text-sm font-semibold mb-3">
+          <Dumbbell size={16} className="text-khalifa-blue" /> PHYSICAL POWER INITIALIZATION
         </div>
-        <p className="text-xs text-khalifa-steel/60 mb-4">
+        <p className="text-xs text-slate-500 mb-4">
           Before entering the forge, define your available gear and physical baseline. The system will calibrate your training loads accordingly.
         </p>
 
         <form onSubmit={handleBaselineSubmit} className="space-y-4">
           {/* Equipment Picker */}
           <div>
-            <label className="block text-[10px] text-cyan-500/60 uppercase font-orbitron mb-1">Equipment Level</label>
+            <label className="block text-[10px] text-slate-500 uppercase font-orbitron mb-1">Equipment Level</label>
             <select
               value={baselineEquip}
               onChange={(e) => setBaselineEquip(e.target.value)}
-              className="w-full bg-cyan-950/40 border border-cyan-800/30 rounded px-2 py-1 text-xs text-cyan-200 outline-none"
+              className="w-full bg-slate-900 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-slate-200 outline-none"
             >
               <option value="barbell">Barbell Focus (Gym / Loaded Lifts)</option>
               <option value="bodyweight">Bodyweight Focus (Calisthenics)</option>
@@ -142,7 +142,7 @@ export default function PowerLog({ state, setState }) {
 
           {/* Bodyweight */}
           <div>
-            <label className="block text-[10px] text-cyan-500/60 uppercase font-orbitron mb-1">Bodyweight (kg)</label>
+            <label className="block text-[10px] text-slate-500 uppercase font-orbitron mb-1">Bodyweight (kg)</label>
             <input
               type="number"
               step="0.1"
@@ -150,17 +150,17 @@ export default function PowerLog({ state, setState }) {
               placeholder="e.g. 72.5"
               value={baselineBw}
               onChange={(e) => setBaselineBw(e.target.value)}
-              className="w-full bg-cyan-950/40 border border-cyan-800/30 rounded px-2 py-1 text-xs text-cyan-200 outline-none"
+              className="w-full bg-slate-900 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-slate-200 outline-none"
             />
           </div>
 
           {/* Core Lifts Bests */}
           <div className="space-y-2">
-            <label className="block text-[10px] text-cyan-500/60 uppercase font-orbitron">Est. Bests (Weight × Reps)</label>
+            <label className="block text-[10px] text-slate-500 uppercase font-orbitron">Est. Bests (Weight × Reps)</label>
             <div className="grid grid-cols-2 gap-2">
               {CORE_LIFTS.map((l) => (
-                <div key={l.key} className="rounded border border-cyan-800/20 bg-cyan-950/10 p-2">
-                  <span className="text-[10px] font-semibold text-cyan-300 block mb-1">{l.label}</span>
+                <div key={l.key} className="rounded border border-slate-800/60 bg-slate-950/40 p-2">
+                  <span className="text-[10px] font-semibold text-slate-300 block mb-1">{l.label}</span>
                   <div className="flex gap-1">
                     <input
                       type="number"
@@ -172,7 +172,7 @@ export default function PowerLog({ state, setState }) {
                           [l.key]: { ...baselines[l.key], weight: e.target.value },
                         })
                       }
-                      className="w-1/2 bg-cyan-950/30 border border-cyan-800/40 rounded px-1 py-0.5 text-[10px] text-cyan-200 text-center outline-none"
+                      className="w-1/2 bg-slate-900 border border-slate-800 rounded px-1 py-0.5 text-[10px] text-slate-200 text-center outline-none"
                     />
                     <input
                       type="number"
@@ -184,7 +184,7 @@ export default function PowerLog({ state, setState }) {
                           [l.key]: { ...baselines[l.key], reps: e.target.value },
                         })
                       }
-                      className="w-1/2 bg-cyan-950/30 border border-cyan-800/40 rounded px-1 py-0.5 text-[10px] text-cyan-200 text-center outline-none"
+                      className="w-1/2 bg-slate-900 border border-slate-800 rounded px-1 py-0.5 text-[10px] text-slate-200 text-center outline-none"
                     />
                   </div>
                 </div>
@@ -194,7 +194,7 @@ export default function PowerLog({ state, setState }) {
 
           <button
             type="submit"
-            className="w-full flex items-center justify-center gap-2 text-xs py-2 rounded bg-cyan-900/40 border border-cyan-500/40 text-cyan-200 hover:bg-cyan-800/50 transition-colors font-orbitron"
+            className="w-full flex items-center justify-center gap-2 text-xs py-2 rounded bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 transition-colors font-orbitron"
           >
             <CheckCircle2 size={14} /> INITIALIZE BASELINE
           </button>
@@ -205,20 +205,20 @@ export default function PowerLog({ state, setState }) {
 
   // Active Logging / View Panel
   return (
-    <div className="glass-panel-khalifa p-4 border border-cyan-500/30 space-y-4">
+    <div className="glass-panel p-4 border border-slate-800 bg-slate-950/20 space-y-4 max-w-2xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between pb-2 border-b border-cyan-800/20">
-        <div className="flex items-center gap-2 text-cyan-400 text-sm font-semibold">
-          <Dumbbell size={16} /> PHYSICAL POWER LOG
+      <div className="flex items-center justify-between pb-2 border-b border-slate-900">
+        <div className="flex items-center gap-2 text-slate-300 text-sm font-semibold">
+          <Dumbbell size={16} className="text-khalifa-blue" /> PHYSICAL POWER LOG
         </div>
-        <div className="text-[10px] text-khalifa-steel/50 font-orbitron uppercase">
+        <div className="text-[10px] text-khalifa-steel/70 font-orbitron uppercase">
           {equipment} · {log.bodyweightKg} kg
         </div>
       </div>
 
       {/* Lift Table */}
       <div className="space-y-2">
-        <div className="grid grid-cols-12 text-[9px] text-cyan-500/60 uppercase tracking-wider font-orbitron px-1">
+        <div className="grid grid-cols-12 text-[9px] text-slate-500 uppercase tracking-wider font-orbitron px-1">
           <span className="col-span-4">Lift</span>
           <span className="col-span-3 text-center">Training Max</span>
           <span className="col-span-3 text-center">Next Target</span>
@@ -228,28 +228,27 @@ export default function PowerLog({ state, setState }) {
           const liftState = log.lifts?.[l.key] || { trainingMax: 0, history: [], lastTested: null };
           const prescription = nextSessionLoad(state, l.key);
           const historyCount = liftState.history?.length || 0;
-          const lastLog = historyCount > 0 ? liftState.history[historyCount - 1] : null;
 
           return (
             <div
               key={l.key}
-              className="grid grid-cols-12 text-xs items-center p-1.5 rounded border border-cyan-800/10 bg-cyan-950/5 hover:bg-cyan-950/20 transition-colors"
+              className="grid grid-cols-12 text-xs items-center p-1.5 rounded border border-slate-900 bg-slate-950/40 hover:bg-slate-900/40 transition-colors"
             >
               <div className="col-span-4 min-w-0">
-                <span className="font-semibold text-cyan-200 block truncate">{l.label}</span>
+                <span className="font-semibold text-slate-200 block truncate">{l.label}</span>
                 {liftState.milestone && (
-                  <span className="text-[9px] text-amber-500/80 truncate block">
+                  <span className="text-[9px] text-khalifa-gold/80 truncate block">
                     ★ {liftState.milestone}
                   </span>
                 )}
               </div>
-              <div className="col-span-3 text-center text-cyan-300 font-mono">
+              <div className="col-span-3 text-center text-slate-300 font-mono">
                 {liftState.trainingMax} kg
               </div>
-              <div className="col-span-3 text-center text-cyan-400/70 font-mono">
+              <div className="col-span-3 text-center text-khalifa-blue/90 font-mono">
                 {prescription.sets}×{prescription.reps} @ {prescription.kg} kg
               </div>
-              <div className="col-span-2 text-right text-[10px] text-khalifa-steel/40">
+              <div className="col-span-2 text-right text-[10px] text-khalifa-steel/50">
                 {liftState.lastTested ? liftState.lastTested.substring(5) : '—'}
               </div>
             </div>
@@ -258,14 +257,14 @@ export default function PowerLog({ state, setState }) {
       </div>
 
       {/* Main logging form */}
-      <form onSubmit={handleLogSubmit} className="space-y-2 pt-2 border-t border-cyan-800/10">
-        <div className="text-[10px] text-cyan-500/60 uppercase font-orbitron">Log Workout Session</div>
+      <form onSubmit={handleLogSubmit} className="space-y-2 pt-2 border-t border-slate-900">
+        <div className="text-[10px] text-slate-500 uppercase font-orbitron">Log Workout Session</div>
         <div className="grid grid-cols-12 gap-2">
           {/* Lift Picker */}
           <select
             value={logForm.lift}
             onChange={(e) => setLogForm({ ...logForm, lift: e.target.value })}
-            className="col-span-4 bg-cyan-950/40 border border-cyan-800/30 rounded px-1 py-1 text-xs text-cyan-200 outline-none"
+            className="col-span-4 bg-slate-900 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-slate-200 outline-none"
           >
             {CORE_LIFTS.map((l) => (
               <option key={l.key} value={l.key}>
@@ -281,7 +280,7 @@ export default function PowerLog({ state, setState }) {
             required
             value={logForm.weight}
             onChange={(e) => setLogForm({ ...logForm, weight: e.target.value })}
-            className="col-span-2 bg-cyan-950/40 border border-cyan-800/30 rounded px-1 py-1 text-xs text-cyan-200 text-center outline-none"
+            className="col-span-2 bg-slate-900 border border-slate-800 rounded px-1 py-1.5 text-xs text-slate-200 text-center outline-none"
           />
 
           {/* Reps */}
@@ -291,7 +290,7 @@ export default function PowerLog({ state, setState }) {
             required
             value={logForm.reps}
             onChange={(e) => setLogForm({ ...logForm, reps: e.target.value })}
-            className="col-span-2 bg-cyan-950/40 border border-cyan-800/30 rounded px-1 py-1 text-xs text-cyan-200 text-center outline-none"
+            className="col-span-2 bg-slate-900 border border-slate-800 rounded px-1 py-1.5 text-xs text-slate-200 text-center outline-none"
           />
 
           {/* Sets */}
@@ -301,14 +300,14 @@ export default function PowerLog({ state, setState }) {
             required
             value={logForm.sets}
             onChange={(e) => setLogForm({ ...logForm, sets: e.target.value })}
-            className="col-span-2 bg-cyan-950/40 border border-cyan-800/30 rounded px-1 py-1 text-xs text-cyan-200 text-center outline-none"
+            className="col-span-2 bg-slate-900 border border-slate-800 rounded px-1 py-1.5 text-xs text-slate-200 text-center outline-none"
           />
 
           {/* RPE */}
           <select
             value={logForm.rpe}
             onChange={(e) => setLogForm({ ...logForm, rpe: e.target.value })}
-            className="col-span-2 bg-cyan-950/40 border border-cyan-800/30 rounded px-1 py-1 text-xs text-cyan-200 outline-none"
+            className="col-span-2 bg-slate-900 border border-slate-800 rounded px-1 py-1.5 text-xs text-slate-200 outline-none"
           >
             <option value="10">@10</option>
             <option value="9">@9</option>
@@ -320,20 +319,20 @@ export default function PowerLog({ state, setState }) {
 
         <button
           type="submit"
-          className="w-full flex items-center justify-center gap-1 text-xs py-1.5 rounded bg-cyan-900/30 border border-cyan-500/40 text-cyan-300 hover:bg-cyan-800/40 transition-colors font-orbitron"
+          className="w-full flex items-center justify-center gap-1 text-xs py-2 rounded bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 transition-colors font-orbitron"
         >
           <PlusCircle size={12} /> LOG SESSION
         </button>
       </form>
 
       {/* Recalculate 1RM / TM Form */}
-      <form onSubmit={handleRecalculateTm} className="space-y-2 pt-2 border-t border-cyan-800/10">
-        <div className="text-[10px] text-cyan-500/60 uppercase font-orbitron">Recalibrate Training Max (Test)</div>
+      <form onSubmit={handleRecalculateTm} className="space-y-2 pt-2 border-t border-slate-900">
+        <div className="text-[10px] text-slate-500 uppercase font-orbitron">Recalibrate Training Max (Test)</div>
         <div className="grid grid-cols-12 gap-2">
           <select
             value={calcForm.lift}
             onChange={(e) => setCalcForm({ ...calcForm, lift: e.target.value })}
-            className="col-span-4 bg-cyan-950/40 border border-cyan-800/30 rounded px-1 py-1 text-xs text-cyan-200 outline-none"
+            className="col-span-4 bg-slate-900 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-slate-200 outline-none"
           >
             {CORE_LIFTS.map((l) => (
               <option key={l.key} value={l.key}>
@@ -348,7 +347,7 @@ export default function PowerLog({ state, setState }) {
             required
             value={calcForm.weight}
             onChange={(e) => setCalcForm({ ...calcForm, weight: e.target.value })}
-            className="col-span-4 bg-cyan-950/40 border border-cyan-800/30 rounded px-1 py-1 text-xs text-cyan-200 text-center outline-none"
+            className="col-span-4 bg-slate-900 border border-slate-800 rounded px-1 py-1.5 text-xs text-slate-200 text-center outline-none"
           />
 
           <input
@@ -357,13 +356,13 @@ export default function PowerLog({ state, setState }) {
             required
             value={calcForm.reps}
             onChange={(e) => setCalcForm({ ...calcForm, reps: e.target.value })}
-            className="col-span-4 bg-cyan-950/40 border border-cyan-800/30 rounded px-1 py-1 text-xs text-cyan-200 text-center outline-none"
+            className="col-span-4 bg-slate-900 border border-slate-800 rounded px-1 py-1.5 text-xs text-slate-200 text-center outline-none"
           />
         </div>
 
         <button
           type="submit"
-          className="w-full flex items-center justify-center gap-1 text-xs py-1.5 rounded bg-amber-950/30 border border-amber-500/40 text-amber-300 hover:bg-amber-800/40 transition-colors font-orbitron"
+          className="w-full flex items-center justify-center gap-1 text-xs py-2 rounded bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 transition-colors font-orbitron"
         >
           <RefreshCw size={12} /> RECALCULATE MAX
         </button>
