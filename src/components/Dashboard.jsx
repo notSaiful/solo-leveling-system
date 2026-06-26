@@ -1,4 +1,4 @@
-import { useMemo, useEffect } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import RankBadge from './RankBadge';
 import XpBar from './XpBar';
 import QuestCard from './QuestCard';
@@ -46,6 +46,7 @@ const rankColorMap = {
 export default function Dashboard({ state, setState, ready = true }) {
   const rank = getRankByLevel(state.user.overallLevel);
   const today = getLocalDateString();
+  const [arsenalOpen, setArsenalOpen] = useState(false);
 
   // Run the endgame cycle (seerah / job-gate / monarch / khalifate) after any
   // quest completion so the v3 endgame advances from quests now that the log
@@ -262,77 +263,27 @@ export default function Dashboard({ state, setState, ready = true }) {
       </div>
 
       {/* Weekly Pillar Focus Selector */}
-      <div className="glass-panel p-3 border border-slate-800/80 bg-slate-950/20">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2 text-slate-300 text-sm font-semibold">
-            <Star size={16} className="text-khalifa-gold" /> WEEKLY FOCUS
-          </div>
-          {state.weeklyFocus && (
-            <button
-              onClick={() => setState(prev => ({ ...prev, weeklyFocus: null }))}
-              className="text-[10px] text-slate-500 hover:text-slate-300 uppercase tracking-wider px-2 py-1 rounded hover:bg-slate-800 transition-colors"
-            >
-              Clear
-            </button>
-          )}
+      <div className="flex items-center justify-between glass-panel p-2 px-3 border border-slate-800/80 bg-slate-950/20 text-xs">
+        <div className="flex items-center gap-1.5 text-slate-400 font-semibold uppercase tracking-wider font-orbitron">
+          <Star size={14} className="text-khalifa-gold" /> Focus:
         </div>
-        <div className="text-[10px] text-slate-500 mb-2 uppercase tracking-wider">
-          {state.weeklyFocus
-            ? `${pillarLabels[state.weeklyFocus] || state.weeklyFocus} quests earn +50% XP this week`
-            : 'Select a pillar to focus this week for +50% XP'}
-        </div>
-        <div className="flex gap-2">
+        <div className="flex gap-1.5 flex-1 max-w-xs justify-end">
           {['deen', 'body', 'money'].map(p => {
             const active = state.weeklyFocus === p;
-            const Icon = pillarIcons[p];
             return (
               <button
                 key={p}
-                onClick={() => setState(prev => ({ ...prev, weeklyFocus: p }))}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border transition-colors ${
+                onClick={() => setState(prev => ({ ...prev, weeklyFocus: active ? null : p }))}
+                className={`px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wider border transition-colors ${
                   active
-                    ? 'bg-khalifa-gold/15 border-khalifa-gold/40 text-slate-100'
-                    : 'bg-slate-900/40 border-slate-800/60 text-slate-500 hover:text-slate-300 hover:border-slate-700'
+                    ? 'bg-khalifa-gold/15 border-khalifa-gold/40 text-slate-200'
+                    : 'bg-slate-900/30 border-slate-800/40 text-slate-500 hover:text-slate-300'
                 }`}
-                style={active ? { borderColor: pillarColors[p] } : {}}
               >
-                <Icon size={14} style={{ color: active ? pillarColors[p] : undefined }} />
-                {pillarLabels[p]}
+                {p}
               </button>
             );
           })}
-        </div>
-      </div>
-
-      {/* Flow State Banner */}
-      {flowDisplay && (
-        <div className="glass-panel p-3 border border-slate-800/80 bg-slate-950/20 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-khalifa-blue">
-            <Zap size={18} />
-            <span className="font-semibold text-sm tracking-wider">{flowDisplay.text}</span>
-          </div>
-          <span className="text-xs text-slate-500">{flowDisplay.timeLeft}</span>
-        </div>
-      )}
-
-      {/* Streak Bonus */}
-      {streakBonus.multiplier > 1 && (
-        <div className={`glass-panel p-3 border border-slate-800/80 bg-slate-950/20 flex items-center justify-between`}>
-          <div className="flex items-center gap-2 text-khalifa-gold">
-            <Sparkles size={18} />
-            <span className="font-semibold text-sm">{streakBonus.label} STREAK</span>
-            <span className="text-xs text-slate-500">+{Math.round((streakBonus.multiplier - 1) * 100)}% XP</span>
-          </div>
-          <span className="text-xs text-slate-500">{bestStreak} days</span>
-        </div>
-      )}
-
-      {/* Streak and Status Panel */}
-      <div className="flex items-center justify-between glass-panel p-3 border border-slate-800/80 bg-slate-950/20">
-        <div className="flex items-center gap-2 text-slate-400 text-xs">
-          <Activity size={14} className="text-khalifa-blue" />
-          <span className="font-orbitron uppercase tracking-wider">Pillar Streak:</span>
-          <span className="font-mono font-bold text-slate-200">{bestStreak} days</span>
         </div>
       </div>
 
@@ -358,22 +309,112 @@ export default function Dashboard({ state, setState, ready = true }) {
         );
       })()}
 
-      {/* Shadow Power */}
-      {state.shadows?.length > 0 && (
-        <div className="glass-panel p-3 border border-purple-500/30 bg-purple-950/10">
-          <div className="flex items-center gap-2 text-purple-400 text-sm font-semibold mb-2">
-            <Skull size={16} /> SHADOW ARMY ({state.shadows.length})
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {state.shadows.map(shadow => (
-              <span key={shadow.id} className="text-[10px] px-2 py-1 rounded border border-purple-700/30 bg-purple-900/20 text-purple-300">
-                {shadow.name}
-              </span>
-            ))}
-          </div>
-          <div className="text-xs text-purple-500/50 mt-1">
-            +{Math.round((shadowBonuses.allXp - 1) * 100)}% all XP from shadows
-          </div>
+      {/* System Inventory & Arsenal (Collapsible) */}
+      {(state.skills?.length > 0 || state.shadows?.length > 0 || Object.values(state.equipment || {}).some(Boolean) || state.weeklyStats?.soloClear) && (
+        <div className="glass-panel border border-slate-800/80 bg-slate-950/20 rounded-lg overflow-hidden">
+          <button
+            onClick={() => setArsenalOpen(!arsenalOpen)}
+            className="w-full flex items-center justify-between p-3 text-slate-400 hover:text-slate-200 transition-colors"
+          >
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest font-orbitron">
+              <Wrench size={14} className="text-khalifa-gold" /> SYSTEM INVENTORY & ARSENAL
+            </div>
+            <span className="text-[10px] text-slate-500 uppercase font-orbitron font-semibold">
+              {arsenalOpen ? 'COLLAPSE' : 'EXPAND'}
+            </span>
+          </button>
+          {arsenalOpen && (
+            <div className="border-t border-slate-800/60 p-3 sm:p-4 space-y-4 bg-slate-950/10">
+              {/* Equipment Status */}
+              {state.equipment && Object.values(state.equipment).some(Boolean) && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="text-[10px] text-slate-400 uppercase tracking-wider font-orbitron font-bold">Equipment</div>
+                    {(() => {
+                      const setBonus = getSetBonusStatus(state);
+                      return setBonus.active ? (
+                        <div className="text-[9px] px-1.5 py-0.5 rounded border border-slate-800 bg-slate-900/30 text-slate-300">
+                          {setBonus.label} +10%
+                        </div>
+                      ) : null;
+                    })()}
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {['weapon', 'armor', 'ring'].map(slot => {
+                      const item = state.equipment?.[slot];
+                      return (
+                        <div key={slot} className={`rounded-lg p-2 border ${item ? 'bg-slate-900/30 border-slate-800/60' : 'bg-slate-950/20 border-slate-800/50'}`}>
+                          <div className="text-[9px] text-slate-500 uppercase font-orbitron truncate">{slot}</div>
+                          <div className={`text-xs truncate ${item ? getItemColorClass(item) : 'text-slate-300'}`}>
+                            {item ? item.name : 'Empty'}
+                          </div>
+                          {item && (
+                            <>
+                              <div className="flex items-center justify-between mt-0.5">
+                                <span className="text-[9px] text-slate-500">{getItemTierLabel(item)}</span>
+                                {item.enchantLevel > 0 && (
+                                  <span className="text-[9px] text-purple-400">+{item.enchantLevel}</span>
+                                )}
+                              </div>
+                              <div className="mt-1 w-full bg-slate-900 rounded-full h-[3px]">
+                                <div
+                                  className={`rounded-full h-[3px] transition-all ${item.durability > item.maxDurability * 0.3 ? 'bg-green-500' : 'bg-red-500'}`}
+                                  style={{ width: `${(item.durability / item.maxDurability) * 100}%` }}
+                                />
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Active Skills */}
+              {state.skills?.length > 0 && (
+                <div className="space-y-1.5">
+                  <div className="text-[10px] text-slate-400 uppercase tracking-wider font-orbitron font-bold">Skills</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {state.skills.map(skill => (
+                      <span key={skill.id} className="text-[10px] px-2 py-0.5 rounded border border-slate-800 bg-slate-950/40 text-slate-300">
+                        {skill.name} {skill.active && <span className="text-green-400 text-[8px] ml-1">●</span>}
+                      </span>
+                    ))}
+                  </div>
+                  {state.skillPoints > 0 && (
+                    <div className="text-[10px] text-slate-500 font-orbitron">{state.skillPoints} skill points available</div>
+                  )}
+                </div>
+              )}
+
+              {/* Shadow Army */}
+              {state.shadows?.length > 0 && (
+                <div className="space-y-1.5">
+                  <div className="text-[10px] text-slate-400 uppercase tracking-wider font-orbitron font-bold">Shadow Army ({state.shadows.length})</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {state.shadows.map(shadow => (
+                      <span key={shadow.id} className="text-[10px] px-2 py-0.5 rounded border border-purple-900/30 bg-purple-950/10 text-purple-300">
+                        {shadow.name}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="text-[10px] text-purple-500/60 font-orbitron">
+                    +{Math.round((shadowBonuses.allXp - 1) * 100)}% all XP from shadows
+                  </div>
+                </div>
+              )}
+
+              {/* Solo Clear Bonus */}
+              {state.weeklyStats?.soloClear && (
+                <div className="flex items-center gap-1.5 text-xs text-slate-400 border-t border-slate-800/40 pt-2">
+                  <Zap size={12} className="text-khalifa-blue" />
+                  <span className="font-orbitron text-[10px] font-bold uppercase">Solo Clear Bonus Active</span>
+                  <span className="text-[10px] text-slate-500 ml-auto">2x shadow extraction rate this week</span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -535,82 +576,6 @@ export default function Dashboard({ state, setState, ready = true }) {
           </div>
         );
       })()}
-
-      {/* Equipment Status */}
-      {state.equipment && Object.values(state.equipment).some(Boolean) && (
-        <div className="glass-panel p-3 border border-slate-800 bg-slate-950/20">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2 text-slate-300 text-sm font-semibold">
-              <Wrench size={16} className="text-khalifa-gold" /> EQUIPMENT
-            </div>
-            {(() => {
-              const setBonus = getSetBonusStatus(state);
-              return setBonus.active ? (
-                <div className="text-[10px] px-2 py-0.5 rounded-full border border-slate-800 bg-slate-900/30 text-slate-300">
-                  {setBonus.label} +10%
-                </div>
-              ) : null;
-            })()}
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            {['weapon', 'armor', 'ring'].map(slot => {
-              const item = state.equipment?.[slot];
-              return (
-                <div key={slot} className={`rounded-lg p-2 border ${item ? 'bg-slate-900/30 border-slate-800/60' : 'bg-slate-950/20 border-slate-800/50'}`}>
-                  <div className="text-[10px] text-slate-500 uppercase capitalize">{slot}</div>
-                  <div className={`text-xs truncate ${item ? getItemColorClass(item) : 'text-slate-300'}`}>
-                    {item ? item.name : 'Empty'}
-                  </div>
-                  {item && (
-                    <>
-                      <div className="flex items-center justify-between mt-0.5">
-                        <span className="text-[9px] text-slate-500">{getItemTierLabel(item)}</span>
-                        {item.enchantLevel > 0 && (
-                          <span className="text-[9px] text-purple-400">+{item.enchantLevel}</span>
-                        )}
-                      </div>
-                      <div className="mt-1 w-full bg-slate-900 rounded-full h-[3px]">
-                        <div
-                          className={`rounded-full h-[3px] transition-all ${item.durability > item.maxDurability * 0.3 ? 'bg-green-500' : 'bg-red-500'}`}
-                          style={{ width: `${(item.durability / item.maxDurability) * 100}%` }}
-                        />
-                      </div>
-                    </>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Active Skills */}
-      {state.skills?.length > 0 && (
-        <div className="glass-panel p-3 border border-slate-800 bg-slate-950/20">
-          <div className="flex items-center gap-2 text-slate-300 text-sm font-semibold mb-2">
-            <Star size={16} className="text-khalifa-gold" /> SKILLS
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {state.skills.map(skill => (
-              <span key={skill.id} className="text-[10px] px-2 py-1 rounded border border-slate-800 bg-slate-950/40 text-slate-300">
-                {skill.name} {skill.active && <span className="text-green-400">●</span>}
-              </span>
-            ))}
-          </div>
-          {state.skillPoints > 0 && (
-            <div className="text-xs text-slate-500 mt-1">{state.skillPoints} skill points available</div>
-          )}
-        </div>
-      )}
-
-      {/* Solo Clear Bonus */}
-      {state.weeklyStats?.soloClear && (
-        <div className="glass-panel p-3 border border-slate-800 bg-slate-950/20 flex items-center gap-2">
-          <Zap size={16} className="text-khalifa-blue" />
-          <div className="text-sm text-slate-300 font-semibold">Solo Clear Bonus Active</div>
-          <div className="text-xs text-slate-500">2x shadow extraction rate this week</div>
-        </div>
-      )}
 
       {/* Debuffs Warning */}
       {Object.entries(state.pillars).some(([_, p]) => isDebuffActive(p.activeDebuff)) && (

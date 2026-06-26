@@ -18,8 +18,8 @@ cssclasses:
 
 > **Project Type:** Gamified Self-Development Web App (PWA + iOS)
 > **Target User:** Muslim man, India, seeking disciplined self-improvement
-> **Current Status:** Production-ready simplified web app + automated IPA builder (Schema v3 / Jargon-free UI)
-> **Last Updated:** 2026-06-25
+> **Current Status:** Production-ready simplified single-page web app + collapsible inventory drawer + automated IPA builder (Schema v3 / Jargon-free UI)
+> **Last Updated:** 2026-06-26
 > **Vault Root:** This folder is an Obsidian vault. Open it in Obsidian to browse project knowledge.
 
 ---
