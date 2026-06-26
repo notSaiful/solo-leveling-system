@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { LayoutDashboard, Settings, Zap, Heart, AlertTriangle, RefreshCw, Activity } from 'lucide-react';
+import { LayoutDashboard, Settings, Zap, AlertTriangle, RefreshCw } from 'lucide-react';
 import { useStore } from './hooks/useStore';
 import { useLevelUp } from './hooks/useLevelUp';
 import { usePenaltyCheck } from './hooks/usePenaltyCheck';
 import Dashboard from './components/Dashboard';
-import PowerLog from './components/PowerLog';
 import SystemMessage from './components/SystemMessage';
 import AIAssistant from './components/AIAssistant';
-import MissionCommandCenter from './components/MissionCommandCenter';
 import SectionErrorBoundary from './components/SectionErrorBoundary';
 import { getCurrentWeekId } from './logic/dungeons';
 import { getFlowStateDisplay, initializeWeeklyDungeon } from './logic/questEngine';
@@ -17,6 +15,7 @@ import { DEFAULT_STATE, initCloudSync, syncNow, loadState, STORAGE_KEY } from '.
 import { isCanonicalSyncConfigured } from './services/canonicalSync';
 import { getLocalDateString } from './utils/dateUtils';
 import { pruneExpiredCustomQuests } from './logic/customQuests';
+
 
 // Error Boundary to catch runtime crashes. This is the LAST-RESORT boundary —
 // it only fires if a throw escapes every SectionErrorBoundary (i.e. the app
@@ -129,6 +128,7 @@ export default function App() {
   const { state, setState } = useStore();
   const { notification, dismiss } = useLevelUp(state);
   const [cloudReady, setCloudReady] = useState(() => !isCanonicalSyncConfigured());
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const guidedEnabled = !!state.guidedMode?.enabled;
   const rank = getRankByLevel(state.user.overallLevel);
@@ -138,8 +138,6 @@ export default function App() {
 
   // Check penalties on mount (only when Guided Mode is on — no quests/dungeons to miss otherwise)
   usePenaltyCheck(state, setState, cloudReady && guidedEnabled);
-
-  const [activeTab, setActiveTab] = useState('quests');
 
   // Cloud init on mount — loads cloud state silently, syncs continuously afterward
   useEffect(() => {
@@ -179,8 +177,6 @@ export default function App() {
 
         // checkAndApplyPenalties returns a RESULT ENVELOPE ({ penalties, updatedPillars, ... }),
         // NOT a full state — keep nextState intact and read the envelope's fields separately.
-        // (Reassigning nextState to the envelope previously wiped .pillars/.weeklyDungeons and
-        // crashed the effect with "Cannot read properties of undefined (reading 'deen')".)
         const penaltyResult = hadPreviousWeek ? checkAndApplyPenalties(nextState) : null;
         const sourcePillars = penaltyResult ? penaltyResult.updatedPillars : nextState.pillars;
 
@@ -239,16 +235,9 @@ export default function App() {
 
   const flowDisplay = getFlowStateDisplay(state.flowState);
 
-  const tabs = [
-    { id: 'quests', label: 'Quests', icon: LayoutDashboard },
-    { id: 'workouts', label: 'Workouts', icon: Activity },
-    { id: 'ledger', label: 'Ummah Ledger', icon: Heart },
-    { id: 'settings', label: 'Settings', icon: Settings },
-  ];
-
   return (
     <ErrorBoundary>
-    <div className="min-h-screen pb-20 relative bg-khalifa-void">
+    <div className="min-h-screen pb-12 relative bg-khalifa-void">
       {/* System Messages */}
       <SectionErrorBoundary label="System Message">
         <SystemMessage notification={notification} onDismiss={dismiss} />
@@ -274,145 +263,114 @@ export default function App() {
             <div className="flex items-center gap-1 text-[10px] sm:text-xs text-khalifa-steel font-bold uppercase tracking-widest font-orbitron">
               {rank.title} · Level {state.user.overallLevel}
             </div>
+            <button
+              onClick={() => setSettingsOpen(!settingsOpen)}
+              className={`p-2 rounded-lg transition-all hover:bg-slate-800/50 text-khalifa-steel hover:text-khalifa-gold ${
+                settingsOpen ? 'text-khalifa-gold bg-slate-800/40' : ''
+              }`}
+              aria-label="Toggle Settings"
+            >
+              <Settings size={18} />
+            </button>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="relative z-10 py-4 px-2 sm:px-4">
-        {activeTab === 'quests' && (
-          <SectionErrorBoundary label="Quests">
-            {guidedEnabled ? (
-              <Dashboard state={state} setState={setState} ready={cloudReady} />
-            ) : (
-              <div className="max-w-2xl mx-auto p-6 text-center space-y-4 glass-panel-khalifa border border-yellow-500/20">
-                <LayoutDashboard size={48} className="mx-auto text-khalifa-gold/50" />
-                <h3 className="font-playfair text-lg font-bold text-khalifa-gold">Daily Quests Suspended</h3>
-                <p className="text-sm text-khalifa-steel/80 max-w-sm mx-auto">
-                  Guided Mode is currently disabled. Enable it in Settings to receive and track your daily Deen, Body, and Money quests.
-                </p>
-              </div>
-            )}
-          </SectionErrorBoundary>
-        )}
-        {activeTab === 'workouts' && (
-          <SectionErrorBoundary label="Workouts">
-            <PowerLog state={state} setState={setState} />
-          </SectionErrorBoundary>
-        )}
-        {activeTab === 'ledger' && (
-          <SectionErrorBoundary label="Ummah Ledger">
-            <MissionCommandCenter state={state} setState={setState} />
-          </SectionErrorBoundary>
-        )}
-        {activeTab === 'settings' && (
+        {settingsOpen && (
           <SectionErrorBoundary label="Settings">
-          <div className="max-w-2xl mx-auto p-2 sm:p-4 space-y-4">
-            <h2 className="font-orbitron text-xl font-bold text-cyan-400 tracking-wider">System Settings</h2>
-
-            <div className="glass-panel p-3 sm:p-4 space-y-3">
-              <div>
-                <label className="text-sm text-cyan-500/60">Player Name</label>
-                <input
-                  type="text"
-                  value={state.user.name}
-                  onChange={(e) => setState(prev => ({ ...prev, user: { ...prev.user, name: e.target.value } }))}
-                  className="w-full mt-1 bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-base text-cyan-100 focus:outline-none focus:border-cyan-500/50"
-                />
+            <div className="max-w-2xl mx-auto mb-6 p-4 space-y-4 glass-panel-khalifa border border-khalifa-gold/20">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                <h2 className="font-orbitron text-sm font-bold text-khalifa-gold tracking-wider">SYSTEM SETTINGS</h2>
+                <button
+                  onClick={() => setSettingsOpen(false)}
+                  className="text-xs text-khalifa-steel hover:text-khalifa-gold uppercase font-orbitron"
+                >
+                  Close
+                </button>
               </div>
-            </div>
 
-            <div className="glass-panel-khalifa p-4">
-              <div className="text-khalifa-gold font-orbitron text-sm mb-1">GUIDED MODE</div>
-              <div className="text-khalifa-steel/70 text-xs mb-3">
-                Optional daily quests and dungeons. Off by default — just log what you did.
-              </div>
-              <button
-                onClick={() => setState((prev) => ({
-                  ...prev,
-                  guidedMode: { enabled: !prev.guidedMode?.enabled, lastQuestDate: prev.guidedMode?.lastQuestDate || null },
-                }))}
-                className={`px-4 py-2 rounded-lg text-sm font-orbitron border ${
-                  guidedEnabled ? 'border-khalifa-gold/60 text-khalifa-gold bg-khalifa-gold/10' : 'border-khalifa-steel/30 text-khalifa-steel'
-                }`}
-              >
-                {guidedEnabled ? 'GUIDED: ON' : 'GUIDED: OFF'}
-              </button>
-            </div>
-
-            {/* Ummah Burden Tracker */}
-            <div className="glass-panel p-3 sm:p-4 space-y-3 border border-rose-700/30">
-              <div className="flex items-center gap-2 mb-2">
-                <Heart size={16} className="text-rose-400" />
-                <span className="font-orbitron text-sm font-semibold text-rose-300 tracking-wider">UMMAH BURDEN</span>
-              </div>
-              {[
-                { key: 'familySupported', label: 'Family Members Supported', step: 1 },
-                { key: 'zakatPaid', label: 'Zakat Payments (count)', step: 1 },
-                { key: 'sadaqahJariyah', label: 'Sadaqah Jariyah Projects', step: 1 },
-                { key: 'muslimVentures', label: 'Muslim Ventures Funded', step: 1 },
-              ].map(field => (
-                <div key={field.key}>
-                  <label className="text-sm text-cyan-500/60">{field.label}</label>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs text-khalifa-steel uppercase tracking-wider font-orbitron">Player Name</label>
                   <input
-                    type="number"
-                    min={0}
-                    step={field.step}
-                    value={state.ummahBurden?.[field.key] || 0}
-                    onChange={(e) => {
-                      const val = parseInt(e.target.value, 10) || 0;
-                      setState(prev => {
-                        const updated = {
-                          ...prev.ummahBurden,
-                          [field.key]: val,
-                        };
-                        updated.score = (updated.familySupported * 10) + (updated.zakatPaid * 5) + (updated.sadaqahJariyah * 3) + (updated.muslimVentures * 20);
-                        return { ...prev, ummahBurden: updated };
-                      });
-                    }}
-                    className="w-full mt-1 bg-system-dark border border-cyan-900/50 rounded-lg px-3 py-2 text-base text-cyan-100 focus:outline-none focus:border-cyan-500/50"
+                    type="text"
+                    value={state.user.name}
+                    onChange={(e) => setState(prev => ({ ...prev, user: { ...prev.user, name: e.target.value } }))}
+                    className="w-full mt-1 bg-khalifa-void border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-khalifa-gold/50"
                   />
                 </div>
-              ))}
-              <div className="text-xs text-rose-500/60 pt-1">
-                Current Score: {((state.ummahBurden?.familySupported || 0) * 10 + (state.ummahBurden?.zakatPaid || 0) * 5 + (state.ummahBurden?.sadaqahJariyah || 0) * 3 + (state.ummahBurden?.muslimVentures || 0) * 20).toLocaleString()}
+
+                <div>
+                  <div className="text-xs text-khalifa-steel uppercase tracking-wider font-orbitron mb-1">GUIDED MODE</div>
+                  <div className="text-khalifa-steel/70 text-[10px] mb-2">
+                    Optional daily quests and dungeons. Off by default — just log what you did.
+                  </div>
+                  <button
+                    onClick={() => setState((prev) => ({
+                      ...prev,
+                      guidedMode: { enabled: !prev.guidedMode?.enabled, lastQuestDate: prev.guidedMode?.lastQuestDate || null },
+                    }))}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-orbitron border transition-all ${
+                      guidedEnabled
+                        ? 'border-khalifa-gold/60 text-khalifa-gold bg-khalifa-gold/10'
+                        : 'border-khalifa-steel/30 text-khalifa-steel bg-transparent'
+                    }`}
+                  >
+                    {guidedEnabled ? 'GUIDED: ON' : 'GUIDED: OFF'}
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 pt-2">
+                  <button
+                    onClick={() => {
+                      if (confirm('Clear browser cache and reload? This fixes stale code and stuck API keys.')) {
+                        localStorage.removeItem('openrouter_api_key');
+                        window.location.href = window.location.href + '?nocache=' + Date.now();
+                      }
+                    }}
+                    className="bg-yellow-900/10 hover:bg-yellow-900/20 border border-yellow-700/30 text-yellow-400/90 py-2 rounded-lg text-xs transition-colors font-orbitron font-bold min-h-[36px]"
+                  >
+                    Clear Cache
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (confirm('Reset all progress? This cannot be undone.')) {
+                        await syncNow({
+                          ...DEFAULT_STATE,
+                          lastActiveDate: getLocalDateString(),
+                          lastUpdated: Date.now(),
+                          syncRevision: 1,
+                        }).catch(() => {});
+                        localStorage.removeItem(STORAGE_KEY);
+                        localStorage.removeItem('system_chat_history');
+                        window.location.reload();
+                      }
+                    }}
+                    className="bg-red-900/10 hover:bg-red-900/20 border border-red-700/30 text-red-400/90 py-2 rounded-lg text-xs transition-colors font-orbitron font-bold min-h-[36px]"
+                  >
+                    Reset Progress
+                  </button>
+                </div>
               </div>
             </div>
-
-            <div className="glass-panel p-3 sm:p-4 space-y-3">
-              <button
-                onClick={() => {
-                  if (confirm('Clear browser cache and reload? This fixes stale code and stuck API keys.')) {
-                    localStorage.removeItem('openrouter_api_key');
-                    window.location.href = window.location.href + '?nocache=' + Date.now();
-                  }
-                }}
-                className="w-full bg-yellow-900/20 hover:bg-yellow-900/40 border border-yellow-700/50 text-yellow-400 py-3 rounded-lg text-base transition-colors min-h-[44px] mb-2"
-              >
-                Clear Cache & Reload
-              </button>
-              <button
-                onClick={async () => {
-                  if (confirm('Reset all progress? This cannot be undone.')) {
-                    await syncNow({
-                      ...DEFAULT_STATE,
-                      lastActiveDate: getLocalDateString(),
-                      lastUpdated: Date.now(),
-                      syncRevision: 1,
-                    }).catch(() => {});
-                    localStorage.removeItem(STORAGE_KEY);
-                    localStorage.removeItem('system_chat_history');
-                    window.location.reload();
-                  }
-                }}
-                className="w-full bg-red-900/20 hover:bg-red-900/40 border border-red-700/50 text-red-400 py-3 rounded-lg text-base transition-colors min-h-[44px]"
-              >
-                Reset All Progress
-              </button>
-            </div>
-          </div>
           </SectionErrorBoundary>
         )}
+
+        <SectionErrorBoundary label="Quests">
+          {guidedEnabled ? (
+            <Dashboard state={state} setState={setState} ready={cloudReady} />
+          ) : (
+            <div className="max-w-2xl mx-auto p-6 text-center space-y-4 glass-panel-khalifa border border-yellow-500/20">
+              <LayoutDashboard size={48} className="mx-auto text-khalifa-gold/50" />
+              <h3 className="font-playfair text-lg font-bold text-khalifa-gold">Daily Quests Suspended</h3>
+              <p className="text-sm text-khalifa-steel/80 max-w-sm mx-auto">
+                Guided Mode is currently disabled. Enable it in Settings to receive and track your daily Deen, Body, and Money quests.
+              </p>
+            </div>
+          )}
+        </SectionErrorBoundary>
 
         {selfTestCrash && (
           <SectionErrorBoundary label="Self-Test">
@@ -425,29 +383,6 @@ export default function App() {
       <SectionErrorBoundary label="Forge-Master">
         <AIAssistant state={state} setState={setState} />
       </SectionErrorBoundary>
-
-      {/* Bottom Nav */}
-      <nav className="fixed bottom-0 left-0 right-0 z-20 bg-slate-950/95 border-t border-slate-900 pb-safe backdrop-blur-lg">
-        <div className="max-w-2xl mx-auto flex justify-around items-center p-1 sm:p-2">
-          {tabs.map(tab => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex flex-col items-center justify-center gap-1 px-2 sm:px-3 py-2 sm:py-2.5 rounded-xl transition-all min-w-[44px] min-h-[44px] sm:min-w-[56px] ${
-                  activeTab === tab.id
-                    ? 'text-khalifa-gold bg-khalifa-gold/5 border border-khalifa-gold/20'
-                    : 'text-khalifa-steel hover:text-slate-300'
-                }`}
-              >
-                <Icon size={20} className="shrink-0" />
-                <span className="text-[10px] font-orbitron tracking-tighter uppercase hidden sm:inline">{tab.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </nav>
     </div>
     </ErrorBoundary>
   );

@@ -88,23 +88,24 @@ process.on('SIGTERM', () => { cleanup(); process.exit(143); });
     const page = await ctx.newPage();
     await load(page, null);
     check('app boots (fresh state)', await healthy(page));
-    const navTexts = (await page.locator('nav button').allTextContents()).map((t) => t.trim()).filter(Boolean);
-    check('4 bottom-nav tabs', navTexts.length === 4, navTexts.join('|'));
-    check('Quests tab present', navTexts.some((l) => /^quests$/i.test(l)));
-    check('Workouts tab present', navTexts.some((l) => /^workouts$/i.test(l)));
-    check('Ummah Ledger tab present', navTexts.some((l) => /^ummah ledger$/i.test(l)));
+    
+    const navCount = await page.locator('nav').count();
+    check('no bottom-nav bar', navCount === 0);
 
-    await clickNav(page, /^Quests$/);
     check('Quests renders (fresh, no collapse)', (await healthy(page)) && (await page.getByText('Forge Status').count()) > 0);
 
-    await clickNav(page, /^Workouts$/);
-    check('Workouts renders (fresh, power log visible)', (await healthy(page)) && (await page.getByText(/PHYSICAL POWER/i).count()) > 0);
+    // Toggle settings open
+    const gearBtn = page.locator('header button[aria-label="Toggle Settings"]');
+    check('settings gear button exists', await gearBtn.count() > 0);
+    await gearBtn.click();
+    await page.waitForTimeout(250);
+    check('Settings panel renders (SYSTEM SETTINGS visible)', (await healthy(page)) && (await page.getByText('SYSTEM SETTINGS').count()) > 0);
 
-    await clickNav(page, /^Ummah Ledger$/);
-    check('Ummah Ledger renders (fresh, no collapse)', (await healthy(page)) && (await page.getByText('Readiness & Restraint Protocol').count()) > 0);
+    // Toggle settings closed
+    await gearBtn.click();
+    await page.waitForTimeout(250);
+    check('Settings panel hidden after click', (await healthy(page)) && (await page.getByText('SYSTEM SETTINGS').count()) === 0);
 
-    await clickNav(page, /^Settings$/);
-    check('Settings renders (fresh, no collapse)', (await healthy(page)) && (await page.getByText('System Settings').count()) > 0);
     await ctx.close();
 
     // ── 2. SEEDED ENDGAME STATE ──
@@ -112,15 +113,7 @@ process.on('SIGTERM', () => { cleanup(); process.exit(143); });
     const page2 = await ctx2.newPage();
     await load(page2, makeSeededState());
     check('app boots (seeded endgame)', await healthy(page2));
-
-    await clickNav(page2, /^Quests$/);
     check('Quests renders (seeded, overall level correct)', (await healthy(page2)) && (await page2.getByText(/LEVEL 10/i).count()) > 0);
-
-    await clickNav(page2, /^Workouts$/);
-    check('Workouts renders (seeded)', await healthy(page2));
-
-    await clickNav(page2, /^Ummah Ledger$/);
-    check('Ummah Ledger renders (seeded)', await healthy(page2));
     await ctx2.close();
 
     // ── 3. SELF-TEST: a render throw is ISOLATED, not a full collapse ──
@@ -134,15 +127,9 @@ process.on('SIGTERM', () => { cleanup(); process.exit(143); });
       (await page3.getByText('SYSTEM COLLAPSE').count()) === 0);
     check('self-test: SectionErrorBoundary fallback shown',
       (await page3.getByText(/SELF-TEST UNSTABLE/i).count()) > 0);
-    const navAfterCrash = (await page3.locator('nav button').allTextContents()).map((t) => t.trim()).filter(Boolean);
-    check('self-test: app still alive (nav present)', navAfterCrash.length === 4);
+    check('self-test: app header still alive', (await page3.locator('header').count()) > 0);
     check('self-test: no uncaught pageerror (boundary caught the throw)',
       selfErrs.length === 0, selfErrs[0] || '');
-    // The app must remain fully usable — click a real tab and confirm it renders.
-    await page3.locator('nav button').filter({ hasText: /^Ummah Ledger$/ }).first().click();
-    await page3.waitForTimeout(300);
-    check('self-test: app usable after isolated throw (Ummah Ledger renders, no collapse)',
-      (await page3.getByText('SYSTEM COLLAPSE').count()) === 0);
     await ctx3.close();
   } catch (err) {
     console.error('SMOKE SCRIPT ERROR:', err);
